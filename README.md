@@ -5,8 +5,8 @@ USA `SCUS-94306`) back into C, function by function, verified byte for byte
 against the original game.
 
 The goal is a complete, readable C source of the game. It is the foundation
-of [OpenTM2](#related-projects), a PC port of the game, which links to this
-repository; the Rogue Trip partial decompilation (same engine family) is a
+of [OpenTM2](https://github.com/Tokatta007/OpenTM2), a PC port of the game, which links to this
+repository; the [Rogue Trip partial decompilation](https://github.com/Tokatta007/Rogue-Trip-Vacation-2012-Decomp) (same engine family) is a
 sister project.
 
 ## Progress
@@ -181,8 +181,8 @@ engine family.
 
 ## Related projects
 
-- **OpenTM2**, the PC port this decompilation is the base of.
-- **Rogue Trip** partial decompilation (the same engine family); its
+- **[OpenTM2](https://github.com/Tokatta007/OpenTM2)**, the PC port this decompilation is the base of.
+- **[Rogue Trip](https://github.com/Tokatta007/Rogue-Trip-Vacation-2012-Decomp)** partial decompilation (the same engine family); its
   `docs/COMPILER.md` collects matching techniques.
 
 ## Rights
