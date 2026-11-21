@@ -1,0 +1,4 @@
+# Check every file out byte for byte, whatever core.autocrlf says: the build manifest
+# records each source's SHA-256, and the old-gcc shell scripts and patches need their
+# own line endings.
+* -text
