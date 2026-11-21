@@ -163,21 +163,10 @@ The `split/` folder (retail segments cut from your executable by
   - [`BALANCE`](docs/BALANCE.md)
   - [`CUSTOM_TOURNAMENT_ANSWERS`](docs/CUSTOM_TOURNAMENT_ANSWERS.md) (request 42: ordinary Dark Tooth, Sweet Tooth, mod car numbers, car select, arcs)
   - [`SUDDEN_DEATH`](docs/SUDDEN_DEATH.md) (request 43: soldiers on foot and storm clouds, questions answered; not built)
-  - [`ONLINE_ROLLBACK`](docs/ONLINE_ROLLBACK.md) (request 44: what rollback netcode needs from the game; questions answered, not built)
+  - [`ONLINE_ROLLBACK`](docs/ONLINE_ROLLBACK.md) (requests 44 and 48 on: what rollback netcode needs from the game, and the fixed-step, drawing-independent and re-run support built for OpenTM2's rollback)
   - [`PLAYTEST_ANSWERS`](docs/PLAYTEST_ANSWERS.md) (findings from the port's playtests, answered section by section)
   - [`FILE_FORMATS`](docs/FILE_FORMATS.md) (DMD / TMS / the PC's DPC / TPC, for mod converters)
 - [`docs/PERMUTER.md`](docs/PERMUTER.md): the source permuter for close functions.
-
-## Contributing
-
-Work on a branch and open a pull request. Pick a function from
-`config/US/ida_funcs.tsv` that is not yet matching, write it in
-`src/semantic/`, register it in the build manifest, and iterate with the
-`tools/match_*.py` scripts until it is byte-identical. Follow
-[`docs/RULES.md`](docs/RULES.md): pure C, with no asm or `volatile`
-outside hardware and BIOS access. The Rogue Trip
-decompilation's `docs/COMPILER.md` collects matching techniques for the same
-engine family.
 
 ## Related projects
 

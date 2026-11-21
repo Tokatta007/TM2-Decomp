@@ -1,6 +1,7 @@
 # Online play: what rollback needs from the game
 
-Answers request 44 of the port's `docs/DECOMP_REQUESTS.md` (2026-10-17, "questions first": nothing is built yet).
+Answers request 44 of the port's `docs/DECOMP_REQUESTS.md` (2026-10-17, "questions first"); the support was built from
+request 48 on (sections 10-12 and later).
 The port's side: `docs/ONLINE_PLAN.md` (the plan), `src/net/rollback.h` (the engine's `save / load / advance /
 checksum` callbacks, `RbInput` of 8 bytes per slot), `docs/HARDENING.md` 3-4 (items 9-26), `src/vplus/interp.c`
 (the in-between frames) and `src/vplus/four.c` (views 3-4).
