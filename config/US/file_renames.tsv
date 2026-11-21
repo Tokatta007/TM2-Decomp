@@ -1,0 +1,152 @@
+old_path	new_path	reason
+src/semantic/game_code1.c	src/semantic/weapon_bullets.c	bulletsMove, bulletSpawn (2 of 5); also missile trail UVs, LA/Moscow event start
+src/semantic/game_code2.c	src/semantic/car_wheel_sway.c	wheelSwayUpdate, carSpinOutById; also worldSectionAt, Mr. Slam carry
+src/semantic/game_code3.c	src/semantic/ai_route_setup.c	aiPlaceOnRouteNode, aiRoutePatchBossLevel, aiCarReset; also hudRadarInit, weaponBlockInit
+src/semantic/game_code4.c	src/semantic/car_damage_human.c	humanCarDamageUpdate (the human damage/death hook); also fxImpactParticlesDraw, warps setup, drop hit test
+src/semantic/game_code5.c	src/semantic/screen_deathmatch_result.c	screenDeathmatchResult, screenInitCardSprites; also vramPlaceTexture, carPairsUpdate
+src/semantic/game_code6.c	src/semantic/car_destroyed.c	carDestroyed (the death hook); also LA events, Moscow dish, HUD target panel, password cursor
+src/semantic/game_code7.c	src/semantic/ai_route_nodes.c	aiAdvanceRouteNode, aiChooseNextNode, aiCarSetupProfile; also body sway, trail effect
+src/semantic/game_code8.c	src/semantic/screen_card_draw.c	largest function screenDrawCard; also streaksDraw, modelRelocate, carSoundUpdate, Mr. Slam target
+src/semantic/game_code9.c	src/semantic/car_object_contact.c	carRicochetOffObject, carContactApplyObject, humanCarPlaceAtStart; also Moscow triggers, Eiffel tower
+src/semantic/game_code10.c	src/semantic/screen_pause_menu.c	pauseMenu, screenHistory; also carSuspensionUpdate, aiFollowRouteTarget, worldCollapseReset
+src/semantic/game_code11.c	src/semantic/hud_radar.c	hudDisplayRadar, hudRadarPlotCar; also carStatsDerive
+src/semantic/game_code12.c	src/semantic/car_crash.c	carCrashStart, carWreckUpdate, carUpdateContacts
+src/semantic/game_code13.c	src/semantic/car_tumble.c	carTumbleStep, carBarrelRollStep; also aiSetSegmentSpeed
+src/semantic/game_code14.c	src/semantic/world_collapse.c	worldCollapseUpdate, worldCollapseExplosions; also fxSpritesDraw
+src/semantic/game_code15.c	src/semantic/weapon_arcs_draw.c	weaponArcsDraw; also weaponSlamGrabUpdate
+src/semantic/game_code16.c	src/semantic/weapon_slam_swing.c	weaponSlamSwingUpdate; also projectileHitTest
+src/semantic/game_code17.c	src/semantic/car_contact_resolve.c	carContactResolve; also weaponProjectileSteer
+src/semantic/game_code19.c	src/semantic/weapon_ricochet.c	weaponRicochetUpdate
+src/semantic/game_code20.c	src/semantic/world_load_object.c	worldLoadObject (the DMD object loader)
+src/semantic/game_extra1.c	src/semantic/game_misc_accessors.c	functions IDA missed in 800D..8012: car, render and HUD getters and setters
+src/semantic/game_extra2.c	src/semantic/engine_misc_accessors.c	functions IDA missed in 8013..8016: pad, view FOV, math and timer helpers
+src/semantic/small_helpers.c	src/semantic/misc_one_liners.c	55 one-line game helpers (getters, file names, sessionTeardown)
+src/semantic/small_helpers2.c	src/semantic/arena_load_register.c	arenaLoad* per level, car part and level object registration, slot searches
+src/semantic/small_helpers3.c	src/semantic/ai_route_helpers.c	AI route edits and checks; also carRegisterModel, pickupRegister, power missile
+src/semantic/small_helpers4.c	src/semantic/world_object_register.c	level event and collapse registration, section heights; also missiles, Mr. Slam release
+src/semantic/small_helpers5.c	src/semantic/weapon_special_missiles.c	ghost and spiral missiles, Grimm special, projectile models; also music fade
+src/semantic/small_helpers6.c	src/semantic/ai_route_loaders.c	routeLoad<Track> (.PTS route files); also weaponDropsReset
+src/semantic/small_helpers7.c	src/semantic/fx_explosions.c	fxExplosion6..192; also light flicker, collapse unlink, aiCarShouldUpdate
+src/semantic/small_helpers8.c	src/semantic/screen_card_layout.c	card layout helpers; also shellLoadTmsDmd, sessionBindCars, level file names
+src/semantic/small_helpers9.c	src/semantic/weapon_fire_specials.c	special weapon fire (Roadkill, Dark Tooth, freeze), projectile spawn; also sound flags, fxRecordsUpdate
+src/semantic/small_helpers10.c	src/semantic/ai_car_start.c	aiCarStart, AI reroute and route node removal; also default top speed, camera offsets
+src/semantic/small_helpers11.c	src/semantic/fx_sprite_spawn.c	fxSpriteSpawn, impact particles, ground fires; also drops, shields, pickup respawn
+src/semantic/small_helpers12.c	src/semantic/car_parts_spin.c	carPartsSpin* per car; also car and level names, carBindAiSlot, screenLostALife
+src/semantic/mid_helpers1.c	src/semantic/weapon_fire_missiles.c	homing, napalm and coloured missiles; also Moscow dish destroy, car shake
+src/semantic/mid_helpers2.c	src/semantic/car_restart.c	carRestart, carBuildCollisionBox; also flame start, wheel block, section disable
+src/semantic/mid_helpers3.c	src/semantic/fx_debris_splash.c	fxImpactDebris, fxSplashAt, red screen; also warps, collapse release, car parts reset
+src/semantic/mid_helpers4.c	src/semantic/scene_init.c	sceneInit, sceneObjDraw; also roundStart, carBindHumanSlot, cards, password string
+src/semantic/mid_helpers5.c	src/semantic/weapon_missile_trails.c	missileTrailsInit, missileTrailStart; also weaponApplyHit, carSetViewMode, car shake
+src/semantic/mid_helpers6.c	src/semantic/ai_link_node_pick.c	aiPickLinkNode; also jitter, invisibility
+src/semantic/mid_helpers7.c	src/semantic/world_collapse_warps.c	collapse move and debris, worldWarpsUpdate; also aiCarDamageUpdate, demo spectator, texture remap
+src/semantic/leftovers1.c	src/semantic/arena_setup.c	arenaSetup (largest); also humanCarsRestart, tower reset, music mute
+src/semantic/shell_screens1.c	src/semantic/screen_controller_multiplayer.c	screenControllerLayout, screenMultiPlayer, screenWorldGlobe
+src/semantic/shell_screens2.c	src/semantic/screen_title_level_select.c	screenTitle, screenLevelSelect
+src/semantic/shell_screens3.c	src/semantic/screen_options_audio.c	screenOptions, screenAudio
+src/semantic/func_800EE950.c	src/semantic/world_surface_height.c	worldSurfaceHeightAt
+src/semantic/func_800F220C.c	src/semantic/world_section_poly_reset.c	worldSectionPolyReset
+src/semantic/func_8010A7A0.c	src/semantic/weapon_flame_update.c	weaponFlameUpdate (Thumper flame)
+src/semantic/func_8010C160.c	src/semantic/fx_ground_fires.c	groundFiresUpdate
+src/semantic/func_8010FD44.c	src/semantic/ai_dark_tooth_boss.c	aiDarkToothBossUpdate
+src/semantic/fd44_object.c	src/semantic/ai_dark_tooth_boss_object.c	data of the Dark Tooth boss controller (darkToothBossObject)
+src/semantic/fd44_scalars.c	src/semantic/ai_dark_tooth_boss_scalars.c	data of the Dark Tooth boss controller (aiDarkToothShotDelay)
+src/semantic/fd44_state.c	src/semantic/ai_dark_tooth_boss_state.c	data of the Dark Tooth boss controller (darkToothSwoopDelay)
+src/semantic/fd44_vectors.c	src/semantic/ai_dark_tooth_boss_vectors.c	data of the Dark Tooth boss controller (darkToothSwoopVectors)
+src/semantic/game_movie_helpers.c	src/semantic/menu_text_callbacks.c	menuCodeDetectorRun and the menu car and level name text callbacks (not movies)
+src/semantic/game_movie_record_index.c	src/semantic/menu_password_digit_set.c	menuPasswordDigitSet (not movies)
+src/semantic/game_movie_six_render.c	src/semantic/menu_password_digits_draw.c	menuPasswordDigitsDraw (not movies)
+src/semantic/game_movie_support.c	src/semantic/menu_password_digits_create.c	menuPasswordDigitsCreate, movieSkipCheck
+src/semantic/game_movie_grid.cpp	src/semantic/menu_slider_create.cpp	menuSliderCreate (not movies)
+src/semantic/game_movie_grid_render.cpp	src/semantic/menu_slider_draw.cpp	menuSliderDraw (not movies)
+src/semantic/movie_grid.hpp	src/semantic/menu_slider.hpp	slider class shared by the two menu_slider_*.cpp files
+src/semantic/game_movie_controller.cpp	src/semantic/menu_timed_command.cpp	constructor of a timed menu command (sub_8012D37C)
+src/semantic/game_movie_sequence.cpp	src/semantic/menu_code_sequences.cpp	button-sequence (code) detector command
+src/semantic/car_choice_builder.c	src/semantic/car_freeze_build.c	carFreezeBuild (car freeze switch objects)
+src/semantic/car_choice_dispatch.c	src/semantic/car_freeze_dispatch.c	carFreezeResetAll, carFreezeSetTemplate, carFreezeSetState
+src/semantic/car_choice_registry.c	src/semantic/car_switch_registry.c	per-car-group switch objects (damage stage, tire state) and pickup display objects
+src/semantic/car_choice_state.c	src/semantic/car_switch_registry_state.c	data of car_switch_registry.c (switch and pickup object tables)
+src/semantic/shield_update.c	src/semantic/weapon_tornado.c	weaponTornadoUpdate (Twister tornado)
+src/semantic/object_construction.c	src/semantic/sound_manager_play.c	soundMgrPlay* and soundMgrStop* (the sound manager)
+src/semantic/object_shell_sequences.c	src/semantic/sound_manager_reap.c	soundMgrStop, soundMgrReapFinished, soundMgrClearAll; also shell graphics init, arenaResetSystems
+src/semantic/object_type_initialization.c	src/semantic/sound_manager_init.c	soundMgrInitLists; also targetSetTrackVehiclePos
+src/semantic/game_option_available.c	src/semantic/car_is_selectable.c	carIsSelectable (car carousel unlock predicate)
+src/semantic/game_option_codec.c	src/semantic/password_codec.c	passwordEncode, passwordDecode
+src/semantic/game_radix_convert.c	src/semantic/password_rebase.c	passwordRebase
+src/semantic/game_random_options.c	src/semantic/tournament_pick_opponents.c	tournamentPickOpponents
+src/semantic/game_random_transition.c	src/semantic/screen_pick_opponents.c	screenPickOpponents
+src/semantic/game_state_cycle.c	src/semantic/shell_attract_demo.c	shellAttractDemo
+src/semantic/game_title_setup.c	src/semantic/shell_title_intro.c	shellPlayTitleIntro, shellAttractCycle
+src/semantic/menu_media_setup.c	src/semantic/screen_ending_setup.c	screenEnding (screen_ending.cpp holds the frame loop screenCarEnding)
+src/semantic/menu_intro_setup.cpp	src/semantic/screen_history_movie.cpp	screenHistoryMovie
+src/semantic/menu_credit_loader.c	src/semantic/screen_credits.c	screenCredits
+src/semantic/object_pointer_tables.c	src/semantic/fx_wake_object.c	fxInstallWakeObject; also objPoolGetStep
+src/semantic/object_record_lookup.c	src/semantic/target_level_object.c	targetGetLevelObject
+src/semantic/motion_target_update.c	src/semantic/track_vehicle_ground.c	trackVehicleGround
+src/semantic/motion_record_accessors.c	src/semantic/track_vehicle_accessors.c	worldTrackVehiclePos, trackVehicleGetTurn
+src/semantic/timer_consumers.c	src/semantic/timer_frame.c	frame timer (SysClkIntHandler, GetCurTics, frame rate); also soundUpdate, carSetResetWeapons
+src/semantic/effect_font_views.c	src/semantic/font_color.c	fontSetColor, fontResetColor
+src/semantic/effect_pool.c	src/semantic/weapon_effect_slots.c	weaponRicochetSlotFind, weaponShieldSlotFind
+src/semantic/homing_init.cpp	src/semantic/weapon_leap_homing_init.cpp	weaponHomingLeapInit (Grasshopper leap homing)
+src/semantic/homing_update.c	src/semantic/weapon_leap_homing_update.c	weaponHomingLeapUpdate (Grasshopper leap homing)
+src/semantic/event_object_slots.c	src/semantic/eiffel_tower_emitters.c	eiffelTowerSetEmitter
+src/semantic/actor_lookup.c	src/semantic/car_object_lookup.c	humanCarObject, aiCarObject
+src/semantic/anchor_consumers.c	src/semantic/audio_hud_helpers.c	listener pan and volume getters, HUD message post, armour icon, PadChkMtap
+src/semantic/anchor_state.c	src/semantic/audio_hud_state.c	data of audio_hud_helpers.c (listener, volumes, HUD message)
+src/semantic/shared_flags.c	src/semantic/view_watch_ai.c	viewIsWatchingAi, viewWatchNextAiCar, viewStopWatchingAi; also arenaLoadHolland
+src/semantic/player_loops.c	src/semantic/world_fall_limit.c	worldFallLimitZ; also worldTrackVehiclesReset, carPartsSpinAxel
+src/semantic/short_list.c	src/semantic/ai_start_nodes.c	startNodes* per track, startNodePickRandom
+src/semantic/short_list_state.c	src/semantic/ai_start_nodes_state.c	data of ai_start_nodes.c (startNodeList)
+src/semantic/track_presets.c	src/semantic/terrain_load_presets.c	terrainLoadRmp* and terrainLoadGrp* (siblings of terrain_load.c)
+src/semantic/aim_update.c	src/semantic/view_chase_camera_draft.c	older unlinked draft of viewChaseCamera (the build uses camera.c)
+src/semantic/camera_action_update.c	src/semantic/weapon_slam_swing_draft.c	older unlinked draft of weaponSlamSwingUpdate (the build uses weapon_slam_swing.c)
+src/semantic/lib_r148.c	src/semantic/engine_clut_anim.c	engine: CLUT animation, object pool (cs*), debris bursts, dbscan, pad start/stop
+src/semantic/lib_r14c.c	src/semantic/engine_fileio_debris.c	engine: file I/O (fileio*), fxDebrisDraw, light sources, VRAM line helpers
+src/semantic/lib_r14e.c	src/semantic/engine_hit_detection.c	engine: hit-detection pass (hdp*), TIM upload, texture packs
+src/semantic/lib_r150.c	src/semantic/engine_anim_hit_volumes.c	engine: texture animation sequencer, hit volumes, model draw helpers, renderInit
+src/semantic/lib_r152.c	src/semantic/engine_render_scene.c	engine: renderScene, model walker, lighting environments
+src/semantic/lib_r154.c	src/semantic/engine_math_near_pass.c	engine: math helpers, near-polygon pass, view-mode accessors, soundInit
+src/semantic/lib_r15c_eng.c	src/semantic/engine_sound_lists.c	engine: sound request lists, listener, CD audio player, sound object pool
+src/semantic/lib_r15c_f42c.c	src/semantic/engine_sound_object_update.c	engine: sndObjUpdate
+src/semantic/lib_r160.c	src/semantic/engine_sound_driver.c	engine: sound instance driver and task manager
+src/semantic/lib_r140_font.c	src/semantic/sdk_libgpu_font.c	PsyQ LIBGPU font.c (FntFlush)
+src/semantic/lib_r140_snd.c	src/semantic/sdk_libsnd_vs_vh.c	PsyQ LIBSND vs_vh.c (SsVabOpenHeadSticky, SsVabFakeHead)
+src/semantic/lib_r154_snd.c	src/semantic/sdk_libsnd_leftovers.c	PsyQ LIBSND functions of 80156E08..8015B868 not in sdk_libsnd*.c
+src/semantic/lib_r15c_snd.c	src/semantic/sdk_libsnd_ut.c	PsyQ LIBSND SsUtSetVVol, SsUtAutoPan
+src/semantic/lib_r15c.c	src/semantic/sdk_libspu_leftovers.c	PsyQ LIBSPU SpuSetNoiseClock, SpuGetCommonAttr
+src/semantic/lib_r15c_o0.c	src/semantic/sdk_unknown_o0.c	empty function compiled at -O0 among the libspu modules (library unknown)
+reference/hdp_walker_lib_r14e.c	reference/hdp_walker_engine_hit_detection.c	readable C of the asm in engine_hit_detection.c
+reference/near_pass_lib_r154.c	reference/near_pass_engine_math_near_pass.c	readable C of the asm in engine_math_near_pass.c
+reference/renderer_walker_lib_r152.c	reference/renderer_walker_engine_render_scene.c	readable C of the asm in engine_render_scene.c
+src/semantic/effect_bindings/func_80111314.c	src/semantic/effect_bindings/fxSparkOrange.c	named after its function (fxSparkOrange, 80111314)
+src/semantic/effect_bindings/func_801113F4.c	src/semantic/effect_bindings/fxSparkPink.c	named after its function (fxSparkPink, 801113F4)
+src/semantic/effect_bindings/func_8011195C.c	src/semantic/effect_bindings/fxExplosionB12.c	named after its function (fxExplosionB12, 8011195C)
+src/semantic/effect_bindings/func_801119A0.c	src/semantic/effect_bindings/fxExplosionB24.c	named after its function (fxExplosionB24, 801119A0)
+src/semantic/effect_bindings/func_801119E4.c	src/semantic/effect_bindings/fxExplosionB48.c	named after its function (fxExplosionB48, 801119E4)
+src/semantic/effect_bindings/func_80111A28.c	src/semantic/effect_bindings/fxExplosionB96.c	named after its function (fxExplosionB96, 80111A28)
+src/semantic/effect_bindings/func_80111A6C.c	src/semantic/effect_bindings/fxExplosionB96Fast.c	named after its function (fxExplosionB96Fast, 80111A6C)
+src/semantic/effect_bindings/func_80111AB0.c	src/semantic/effect_bindings/fxSmokePuffBlue.c	named after its function (fxSmokePuffBlue, 80111AB0)
+src/semantic/effect_bindings/func_80111D20.c	src/semantic/effect_bindings/fxFlame3.c	named after its function (fxFlame3, 80111D20)
+src/semantic/effect_bindings/func_80111D84.c	src/semantic/effect_bindings/fxFlameBurning.c	named after its function (fxFlameBurning, 80111D84)
+src/semantic/effect_bindings/func_80111DEC.c	src/semantic/effect_bindings/fxFlame10.c	named after its function (fxFlame10, 80111DEC)
+src/semantic/effect_bindings/func_80111E54.c	src/semantic/effect_bindings/fxFlamePair.c	named after its function (fxFlamePair, 80111E54)
+src/semantic/effect_bindings/func_80111F48.c	src/semantic/effect_bindings/fxGroundFlame.c	named after its function (fxGroundFlame, 80111F48)
+src/semantic/effect_bindings/func_80112094.c	src/semantic/effect_bindings/fxSmokeA6.c	named after its function (fxSmokeA6, 80112094)
+src/semantic/effect_bindings/func_80112100.c	src/semantic/effect_bindings/fxSmokeA12.c	named after its function (fxSmokeA12, 80112100)
+src/semantic/effect_bindings/func_8011216C.c	src/semantic/effect_bindings/fxSmokeA24.c	named after its function (fxSmokeA24, 8011216C)
+src/semantic/effect_bindings/func_801121D4.c	src/semantic/effect_bindings/fxSmokeA48.c	named after its function (fxSmokeA48, 801121D4)
+src/semantic/effect_bindings/func_8011223C.c	src/semantic/effect_bindings/fxSmokeA128.c	named after its function (fxSmokeA128, 8011223C)
+src/semantic/effect_bindings/func_801122A4.c	src/semantic/effect_bindings/fxSmokeB6.c	named after its function (fxSmokeB6, 801122A4)
+src/semantic/effect_bindings/func_80112310.c	src/semantic/effect_bindings/fxSmokeB12.c	named after its function (fxSmokeB12, 80112310)
+src/semantic/effect_bindings/func_8011237C.c	src/semantic/effect_bindings/fxSmokeB24.c	named after its function (fxSmokeB24, 8011237C)
+src/semantic/effect_bindings/func_801123E4.c	src/semantic/effect_bindings/fxSmokeB48.c	named after its function (fxSmokeB48, 801123E4)
+src/semantic/effect_bindings/func_801124BC.c	src/semantic/effect_bindings/fxSmokeC12.c	named after its function (fxSmokeC12, 801124BC)
+src/semantic/effect_bindings/func_80112528.c	src/semantic/effect_bindings/fxSmokeC24.c	named after its function (fxSmokeC24, 80112528)
+src/semantic/effect_bindings/func_80112594.c	src/semantic/effect_bindings/fxSmokeC48.c	named after its function (fxSmokeC48, 80112594)
+src/semantic/effect_bindings/func_8011270C.c	src/semantic/effect_bindings/fxBulletImpact.c	named after its function (fxBulletImpact, 8011270C)
+src/semantic/effect_bindings/func_801127E0.c	src/semantic/effect_bindings/fxExplosionQuiet8.c	named after its function (fxExplosionQuiet8, 801127E0)
+src/semantic/effect_bindings/func_80112928.c	src/semantic/effect_bindings/explodeStoreExplosionBAnimation.c	named after its function (explodeStoreExplosionBAnimation, 80112928)
+src/semantic/effect_bindings/func_80112950.c	src/semantic/effect_bindings/explodeStoreSmokeAAnimation.c	named after its function (explodeStoreSmokeAAnimation, 80112950)
+src/semantic/effect_bindings/func_80112978.c	src/semantic/effect_bindings/explodeStoreSmokeBAnimation.c	named after its function (explodeStoreSmokeBAnimation, 80112978)
+src/semantic/effect_bindings/func_801129A0.c	src/semantic/effect_bindings/explodeStoreSmokeCAnimation.c	named after its function (explodeStoreSmokeCAnimation, 801129A0)
+src/semantic/effect_bindings/func_801129C8.c	src/semantic/effect_bindings/explodeStoreBulletImpactAnimation.c	named after its function (explodeStoreBulletImpactAnimation, 801129C8)
+src/semantic/effect_bindings/func_801129F0.c	src/semantic/effect_bindings/explodeStoreSparkAnimation.c	named after its function (explodeStoreSparkAnimation, 801129F0)

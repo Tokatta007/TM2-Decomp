@@ -1,0 +1,18 @@
+{
+  "magic": "PS-X EXE",
+  "pc0": {
+    "symbol": "start",
+    "address": "0x8013878C"
+  },
+  "gp0": "0x00000000",
+  "t_addr": "0x800CDC54",
+  "t_size": "0xB3800",
+  "s_addr": "0x801FFFF0",
+  "s_size": "0x0",
+  "region": "Sony Computer Entertainment Inc. for North America area",
+  "region_offset": "0x4C",
+  "header_size": "0x800",
+  "file_alignment": "0x800",
+  "other_nonzero_header_bytes": {},
+  "note": "All other header bytes are zero. t_size is ALIGN(end of last loadable section - t_addr, file_alignment). gp (0x801809D4) is not in the header; crt0 loads it."
+}

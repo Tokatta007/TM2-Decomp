@@ -1,0 +1,49 @@
+--- toplev.c.orig
++++ toplev.c
+@@ -31,6 +31,9 @@
+ 
+ #include <sys/stat.h>
+ 
++#ifdef _WIN32
++#include <time.h>   /* Windows host: no sys/times.h or getrusage.  */
++#else
+ #ifdef USG
+ #undef FLOAT
+ #include <sys/param.h>
+@@ -45,6 +48,7 @@
+ #include <sys/resource.h>
+ #endif
+ #endif
++#endif /* not _WIN32 */
+ 
+ #include "input.h"
+ #include "tree.h"
+@@ -792,6 +796,11 @@
+ int
+ get_run_time ()
+ {
++#ifdef _WIN32
++  if (quiet_flag)
++    return 0;
++  return clock () * (1000000 / CLOCKS_PER_SEC);
++#else
+ #ifdef USG
+   struct tms tms;
+ #else
+@@ -824,6 +833,7 @@
+   return (vms_times.proc_user_time + vms_times.proc_system_time) * 10000;
+ #endif
+ #endif
++#endif /* not _WIN32 */
+ }
+ 
+ #define TIMEVAR(VAR, BODY)    \
+@@ -3506,7 +3516,7 @@
+     bc_write_file (stdout);
+ 
+ #ifndef OS2
+-#ifndef VMS
++#if !defined (VMS) && !defined (_WIN32)
+   if (flag_print_mem)
+     {
+       char *lim = (char *) sbrk (0);

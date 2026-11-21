@@ -1,0 +1,267 @@
+# Online rollback: what a snapshot copies and what the state hash covers (PC port request 48, docs/ONLINE_ROLLBACK.md
+# 3.3, 3.4, 8.4 and 12.4). Hand-kept; tools/rollback_regions.py resolves it against a link (the build's symbols and
+# sections) into <link>/rollback_regions.tsv (address, size, name, kind, snapshot, hash, reason; build.py --port-variant
+# publishes out/TM2_SOURCE_PORT/rollback_regions.tsv), and tools/check_rollback.py check 8 proves it: every row
+# resolves, and every static word a step's code stores to (the functions portStepBody reaches) lies in a row.
+#
+# kind:  range   a section range of the link: game.static = the game's .sdata/.sbss/.bss (retail 801809D4..801FAD48,
+#                the relocated build's equivalent), port.bss / port.data = the port variant's .port_bss / .port_data
+#        symbol  one symbol of the link; symbol? = the same, skipped when the build does not define it (a port define)
+#        fixed   an address range lo-hi of the machine's memory, not of the build (the scratchpad, the port's RAM)
+#        field   bytes of every element of an array symbol: size = SYMBOL:STRIDE:LO-HI (request 54: the scene objects'
+#                per-view fields); resolved into one row per element, NAME[i]
+#        dmd     the models' mutable node fields, listed at run time by portDmdMutableList (not static)
+#        ptr     the objects an array of pointers names: size = SYMBOL:WORDS:BYTES (WORDS a count or "next": the words
+#                up to the next symbol); resolved into one row per pointer word, NAME[i]:BYTES (address = the word, size
+#                0: no static byte); at run time a non-zero word names BYTES at the address it holds, which take the
+#                row's snapshot / hash over every static row (request 57: the cameras' scene objects in csObjectPool)
+# size:  bytes of a symbol row ("next" = up to the next symbol of the link); lo-hi (hex) of a fixed row; "-" else.
+# snapshot: yes = save / load copy it; no = never copied (and never restored). hash: yes = part of the state hash.
+# A symbol row inside a range overrides the range for its bytes (a "no" row is a hole in a "yes" range); a symbol
+# outside every range (the game's .data) is covered only by its own row. The reason column says why.
+# Request 54 (ONLINE_ROLLBACK.md 15.2): "hash yes" is game state only: what the drawing, the interrupts or the sound
+# side write (a re-run, with no drawing and SOUND_GATE, does not reproduce them) is "hash no", and "snapshot no" where
+# no step reads it; tools/check_rollback.py check 9 proves it for the drawing's static stores and the request's words.
+name	kind	size	snapshot	hash	reason
+game.static	range	-	yes	yes	the game's .sdata, .sbss and .bss: the car records, aiCars, the object pool, the pools, rtScheduledEvents, the rand() seed; the rows below cut out what is not state
+port.bss	range	-	yes	yes	.port_bss: the port variant's moved arrays (car records past 2, the pools) and the port's words; the rows below cut out the port's own settings and presentation
+port.data	range	-	yes	yes	.port_data: the port variant's initialised arrays (viewModeTable rows; carViewHotkeyReleased, each machine's own, has a row of its own below: ONLINE_ROLLBACK.md 18)
+dmd	dmd	-	yes	yes	every model file loaded for the match (the level file's every root, every installed car file: portDmdImages), whatever object holds a model now: animation frames (type 3, ANIM_IN_STEP; DISH and FREEWAY hold hit volumes in them), selects (damage stages, tires), transforms; portDmdMutableList(out, max) after the match's load and each portCarLoadGroupLive / portCarUnloadGroup (request 54: stable otherwise)
+timerFrameTicks	symbol	2	yes	yes	.data: the step's ticks (FIXED_TICKS: constant; read by the physics and the AI)
+timerFrameRate	symbol	2	yes	yes	.data: 60 / ticks (the cars rescale on a change)
+timerFrameCount	symbol	4	yes	yes	.data: the steps counted (its parity is read by the logic; SEED sets it at the load)
+timerLastFrameDelta	symbol	4	yes	no	.data: ticks x 70,618 (timerGetFrameUsec has no caller)
+timerFrameStart	symbol	4	yes	no	.data: the clock at the last measurement (not used with FIXED_TICKS)
+timerPrevFrameStart	symbol	4	yes	no	.data: the clock at the measurement before (not used with FIXED_TICKS)
+rtFieldCounter	symbol	4	yes	no	rtUpdateFieldCounter's total: written every step, read by nothing in a battle
+sndListenerRelPos	symbol	next	no	no	.data: the sound listener (viewProc's camera): presentation, never restored
+sndListenerWorldPos	symbol	next	no	no	.data: the sound listener: presentation
+sndObjPool	symbol	next	no	no	.data (the port variant moves it to .port_bss with TM2_PORT_CARS): the sound request pool: the sound manager's memory, never restored (restoring cuts or replays sounds)
+sndVabHeaderBuf	symbol	next	no	no	.data: the sound bank headers (load time, the sound side)
+sndVabIds	symbol	next	no	no	.data: the sound bank ids (the sound side)
+sndVoiceAttr	symbol	next	no	no	.data: the voice attributes (the sound side)
+soundOverflowInsts	symbol	next	no	no	.data: the sound driver's overflow list (the sound side)
+soundVoiceInUse	symbol	next	no	no	.data: the sound driver's voice map (the sound side)
+musicVolume	symbol	4	no	no	the music volume (the sound side)
+soundThrottleLastTime	symbol	4	no	no	the sound repeat throttle (timerFrameCount of its last yes; its rand() is drawn every call whatever it holds): decides only whether sound 0x23 plays (the sound side)
+soundThrottleLastGap	symbol	4	no	no	the sound repeat throttle (the sound side)
+audioDarkToothMusicFlag	symbol	1	no	no	the Dark Tooth music mode (music only; set at the load)
+soundLoop32ActiveP1	symbol	1	no	no	set by the sound manager (soundMgrPlaySided / StopSided): which loops play; must follow the sounds, not the state, for the loops' per-step stop tests to heal them after a rollback (ONLINE_ROLLBACK.md 12.2)
+soundLoop32ActiveP2	symbol	1	no	no	the sound manager's loop flag (as above)
+soundTurboLoopActiveP1	symbol	1	no	no	the sound manager's loop flag (as above)
+soundTurboLoopActiveP2	symbol	1	no	no	the sound manager's loop flag (as above)
+soundGunLoopActiveP1	symbol	1	no	no	the sound manager's loop flag (as above)
+soundGunLoopActiveP2	symbol	1	no	no	the sound manager's loop flag (as above)
+soundSharedLoopActive	symbol	1	no	no	the sound manager's loop flag (as above)
+soundActiveId21	symbol	19	no	no	soundActiveId21..65 (19 bytes): set by soundMgrPlay, cleared by soundMgrStop: which sounds play (the sound side; soundIsActive only decides a stop)
+soundDeniedPending	symbol	1	no	no	request 58: the denied buzz pending (soundSetDeniedPending: with TM2_PORT_HUMANS only through portHumanDenied, for a human local on this machine; worldUpdate plays and clears it): the sound side, each machine's own (ONLINE_ROLLBACK.md 19.1)
+audioAltMusicMode	symbol	4	no	no	the alternating music track (the CD player's track-ended flag, live steps only)
+cdAudioEndedFlag	symbol	next	no	no	the CD player: track ended (consumed by the live step only)
+cdAudioPlayCount	symbol	next	no	no	the CD player (music)
+cdAudioSector	symbol	next	no	no	the CD player (music)
+cdAudioEndSector	symbol	next	no	no	the CD player (music)
+cdAudioStartSector	symbol	next	no	no	the CD player (music)
+cdAudioLocParam	symbol	next	no	no	the CD player (music)
+cdAudioPlayState	symbol	next	no	no	the CD player (music)
+sndPoolFreeCount	symbol	4	no	no	the sound request pool's free count (the sound side)
+sndPoolSearchEnd	symbol	4	no	no	the sound request pool (the sound side)
+sndPoolSearchStart	symbol	4	no	no	the sound request pool (the sound side)
+sndListenerPan	symbol	4	no	no	the sound listener (viewProc; presentation)
+sndListenerDist	symbol	4	no	no	the sound listener (presentation)
+sndListenerPanView1	symbol	4	no	no	the sound listener of view 1 (presentation)
+sndListenerDistView1	symbol	4	no	no	the sound listener of view 1 (presentation)
+sndListenerViewMatrix	symbol	4	no	no	the sound listener (presentation)
+sndListenerEyeOffset	symbol	4	no	no	the sound listener (presentation)
+soundInstPool	symbol	next	no	no	the sound instances (the sound side; .data in retail, .port_bss with TM2_PORT_CARS)
+portSoundSortList	symbol?	next	no	no	the sound driver's priority list with more instances (the sound side)
+portSndObjSlots	symbol?	next	no	no	the raised sound request pool (the sound side)
+portCarSound	symbol?	next	no	no	TM2_PORT_CAR_SOUND's per-car sound instances (the sound side)
+portCarSoundLoops	symbol	next	no	no	per car slot, the loops started as its instance (the sound side, as the loop flags above)
+soundLoopKillFrom	symbol	4	no	no	request 54: the sound driver (soundDriverUpdate, from soundUpdate: skipped in re-runs with SOUND_GATE); the step reaches the driver only through the gated wrappers (check 4), no game logic reads it
+soundLoopKeepCount	symbol	4	no	no	request 54: the sound driver (as above)
+soundLoopCandidateCount	symbol	4	no	no	request 54: the sound driver (as above)
+soundActiveTail	symbol	4	no	no	request 54: the sound driver's active instance list (as above)
+soundActiveHead	symbol	4	no	no	request 54: the sound driver's active instance list (as above)
+soundActiveCount	symbol	4	no	no	request 54: the sound driver (as above)
+soundKeyedOnCount	symbol	4	no	no	request 54: the sound driver (as above)
+soundVoiceLimit	symbol	4	no	no	request 54: the sound driver (as above)
+soundSortedCount	symbol	4	no	no	request 54: the sound driver (as above)
+soundInstFreeCount	symbol	4	no	no	request 54: the sound driver's instance pool (as above)
+soundInstSearchEnd	symbol	4	no	no	request 54: the sound driver's instance pool (as above)
+soundInstSearchStart	symbol	4	no	no	request 54: the sound driver's instance pool (as above)
+sndObjNeedVoices	symbol	4	no	no	request 54: sndObjUpdate's working words (the sound request in progress: distance, pan, volumes; the sound side)
+sndObjUseVolumeScale	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjCurVoice	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjVolumeScale	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjDistance	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjPan	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjDistanceVolume	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjVolumeLeft	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjVolumeRight	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+sndObjDistanceDelta	symbol	4	no	no	request 54: sndObjUpdate's working words (as above)
+taskMgrCheckCursor	symbol	4	no	no	request 54: the task manager's cursors (the sound task runner, taskMgrRunFrame from soundUpdate and pauseMenu): set before each use, the sound side
+taskMgrRunNext	symbol	4	no	no	request 54: the task manager's cursors (as above)
+taskMgrRunCurrent	symbol	4	no	no	request 54: the task manager's cursors (as above; set to each task before it runs, read only after it)
+taskMgrStopNext	symbol	4	no	no	request 54: the task manager's cursors (as above)
+D_801A5398	symbol	next	no	no	request 54: libsnd's voice records (the sound library under the driver: the key-on and SPU calls; the sound side)
+D_801A5200	symbol	next	no	no	request 54: libsnd's voice state (the sound side)
+D_801A5380	symbol	next	no	no	request 54: libsnd's voice state (the sound side)
+D_801A5878	symbol	next	no	no	request 54: libsnd's key state (the sound side)
+D_801A5880	symbol	next	no	no	request 54: libsnd's key state (the sound side)
+D_801A5AF4	symbol	next	no	no	request 54: libsnd's state (the sound side)
+D_801B2D50	symbol	next	no	no	request 54: libspu's register shadow (the sound side)
+D_801B2D66	symbol	next	no	no	request 54: libspu's register shadow (the sound side)
+D_8017E15C	symbol	next	no	no	request 54: libspu's _spu_voice_centerNote (.data, .port_data with TM2_PORT_SPU48; the sound side)
+D_801A5AFC	symbol	next	no	no	request 57: libsnd's state next to D_801A5AF4 (8 bytes; libsnd's key-on path, reached from the step only through the sound wrappers and soundUpdate, which SOUND_GATE skips in a re-run): the sound side, each machine's own
+portSpuExt	symbol?	next	no	no	request 57: TM2_PORT_SPU48's bit words of voices 24..47 (libsnd / libspu key state; written and read by the sound library only, as D_801A5AFC): the sound side, each machine's own
+padRecvBufferPort1	symbol	next	no	no	request 57: the pad driver's receive buffer of port 1 (written by the pad interrupt, this machine's controllers; read only by padDecode from padUpdate, which portStepBody calls on live steps only; with INPUT_ALL the humans' inputs are portHumanPad)
+padRecvBufferPort2	symbol	next	no	no	request 57: the pad driver's receive buffer of port 2 (as above)
+timerTicsAccum	symbol	next	no	no	request 54: the root counter interrupt's tick accumulator (GetCurTics = it + the counter): real time, never state; restoring it parts the machines' pacing (rtMainLoop's start); with FIXED_TICKS no step decision reads the clock (ONLINE_ROLLBACK.md 15.2)
+renderView0Frames	symbol	next	no	no	view 0's frame records (OT, packet cursor, draw / display environments): rebuilt every frame
+renderView0FrameB	symbol	next	no	no	view 0's second frame record
+renderView1Frames	symbol	next	no	no	view 1's frame records
+renderView1FrameB	symbol	next	no	no	view 1's second frame record
+renderMirrorFrames	symbol	next	no	no	the mirror's frame records
+renderMirrorFrameB	symbol	next	no	no	the mirror's second frame record
+D_80180EE4	symbol	4	no	no	request 57: the frame record drawn into (view 0's parity): flipped by rtMainLoop at each iteration's top, outside the step (a re-run does not flip it); the step reads it only in rtToggleRearView (the mirror's parity, below)
+renderBufferView1	symbol	4	no	no	request 57: view 1's frame record (rtMainLoop's split-screen drawing flips it)
+renderBufferRearView	symbol	4	no	no	request 57: the mirror's frame record (rtMainLoop's mirror drawing flips it; rtToggleRearView, a local human's hotkey in the step, sets it from D_80180EE4's parity: read by the drawing only)
+D_80193950	symbol	next	no	no	request 57: libgpu's control word shadow (64 words; _ctl from PutDrawEnv / PutDispEnv after the step: +0x04 the display start, by the frame parity); no step reads it
+rtFrameTime	symbol	4	no	no	request 57 (check 9): the pacing (rtMainLoop's entry and portRollbackFrameTime set it; read only by rtMainLoop's wait for the frame time)
+renderPacketBuffer0	symbol	next	no	no	the packet buffer (rebuilt every frame)
+renderPacketBuffer1	symbol	next	no	no	the second packet buffer
+portPacketBuffers	symbol?	next	no	no	TM2_PORT_FAR_DISTANCE's packet buffers per view (rebuilt every frame)
+portRenderStats	symbol?	next	no	no	the render capacity counter: written by renderScene per drawn view, read by nothing in the game
+renderOtView1Buf0	symbol	next	no	no	request 54: an ordering table (ClearOTagR and the renderer each drawn frame, through the frame records): drawing only
+renderOtView1Buf1	symbol	next	no	no	request 54: an ordering table (as above)
+renderOtView2Buf0	symbol	next	no	no	request 54: an ordering table (as above)
+renderOtView2Buf1	symbol	next	no	no	request 54: an ordering table (as above)
+renderObjectMatrices	symbol	next	no	no	request 54: the renderer's per-object matrices (renderScene per drawn view; debrisStartBurst's capture in a step fills its own first: presentation)
+renderMeshList	symbol	next	no	no	request 58: the renderer's mesh list (renderInitState / renderScene per drawn view, the far-distance scaler through a pointer; debrisStartBurst's capture in a step fills its own first, as renderObjectMatrices): found by check 9 (d)
+dc_y	symbol	4	no	no	request 58: libpress's MDEC VLC decoder state (DecDCTvlc: MDEC_vlc2 / ivlc_dct_dc_size; the pictures the menus and screens decode): never read by a step (ONLINE_ROLLBACK.md 19.3)
+renderSharedWorkBuffer	symbol	next	no	no	request 58: the renderer's shared scratch (renderInit: the hit pass's node and entry stacks past the scratchpad, the draw walker's overflow stack, renderScene's near list, bitmapSetupStorage's decode storage): each use pushes before it pops within one call, nothing a later step reads (ONLINE_ROLLBACK.md 19.3)
+portFarLodTable	symbol?	next	no	no	request 58: TM2_PORT_FAR_LOD's records (filled at the load; portFarLodBegin marks and extends them for a drawn view, portFarLodEnd puts them back): the drawing's, read by no step: found by check 9 (d)
+portFarLodNear	symbol?	next	no	no	request 58: TM2_PORT_FAR_LOD's near bands (as portFarLodTable): found by check 9 (d)
+hudOrderTables	symbol	next	no	no	request 58: the HUDs' ordering tables (ClearOTagR by the HUD drawers per drawn HUD): found by check 9 (d)
+hudRadarArrowUpPrims	symbol	next	no	no	request 58: hudDisplayRadar's off-radar arrow sprite and draw mode per HUD (32 bytes each), rewritten whole per drawn radar and linked into this frame's OT (the tag word: the parity's OT pointer); hudDisplayRadar is the HUD drawers', never the step's (STEP_SPLIT moved only its hudRadarSwapBuffers): ONLINE_ROLLBACK.md 19.1
+hudRadarArrowDownPrims	symbol	next	no	no	request 58: as hudRadarArrowUpPrims
+hudRadarArrowLeftPrims	symbol	next	no	no	request 58: as hudRadarArrowUpPrims
+hudRadarArrowRightPrims	symbol	next	no	no	request 58: as hudRadarArrowUpPrims
+hudMessageTextMode	symbol	next	no	no	request 58: the HUD message's draw mode: fontSpritePrintCenteredXY from hudDrawSingleView, per drawn HUD (the message of this machine's local human): ONLINE_ROLLBACK.md 19.1
+hudMessageTextSprites	symbol	next	no	no	request 58: the HUD message's 30 glyph sprites (as above)
+hudLivesTextMode	symbol	next	no	no	request 58: the lives line's draw mode (hudDrawSingleView's print, the local human's lives; as above)
+hudLivesTextSprites	symbol	next	no	no	request 58: the lives line's glyph sprites (as above)
+hudSplitVertLivesMode	symbol	next	no	no	request 58: the vertical split HUD's lives line (fontSpritePrintXY from hudDrawSplitVertical): found by check 9 (d)
+hudSplitVertLivesSprites	symbol	next	no	no	request 58: as hudSplitVertLivesMode
+hudSplitHorzLivesMode	symbol	next	no	no	request 58: the horizontal split HUD's lives line (hudDrawSplitHorizontal): found by check 9 (d)
+hudSplitHorzLivesSprites	symbol	next	no	no	request 58: as hudSplitHorzLivesMode
+hudTargetNameModes	symbol	next	no	no	request 58: the target panel's name line per HUD (fontSpritePrintCenteredXY from hudDrawTargetPanel): found by check 9 (d)
+hudTargetNameSprites	symbol	next	no	no	request 58: as hudTargetNameModes
+renderMatrixSlots	symbol	next	no	no	request 54: the renderer's matrix slots (as above)
+renderSlotMatrixPtrs	symbol	next	no	no	request 54: the renderer's matrix slot pointers (renderInitState: as above)
+renderFrustumMatricesA	symbol	next	no	no	request 54: the renderer's frustum matrices (renderInitState: as above)
+renderFrustumMatricesB	symbol	next	no	no	request 54: the renderer's frustum matrices (renderInitState: as above)
+renderWalkerSaveRegs	symbol	next	no	no	request 54: the renderer walker's saved registers (within one call)
+renderCurrentOt	symbol	4	no	no	request 54: the renderer's current OT (renderScene per drawn view; the debris capture sets it before use)
+renderFarDistance	symbol	4	no	no	request 54: the renderer's far distance (renderScene per drawn view; the debris capture sets it before use)
+renderSkipNodeCull	symbol	4	no	no	request 54: the renderer's cull flag (renderScene per drawn view; the debris capture sets it before use)
+fxSpritesDrawParity	symbol	4	no	no	request 54: fxSpritesDraw's parity (written and read by the drawing only)
+hudOrderingTable	symbol	4	no	no	request 54: the HUD's ordering table pointer (the HUD drawers only)
+portMeshList	symbol?	next	no	no	request 54: TM2_PORT_FAR_DISTANCE's mesh list (renderScene per drawn view): drawing only
+portFarState	symbol?	next	no	no	request 54: TM2_PORT_FAR_DISTANCE's drawing state (renderScene per drawn view)
+viewEyePositions	symbol	next	yes	no	the cameras (local; HUMANS16 6.4)
+viewMatrices	symbol	next	yes	no	the cameras
+viewCameraObjects	symbol	next	yes	no	the cameras
+viewCameraObjectTable	symbol	next	yes	no	request 58: each view's pose object pointer (viewCreateWithCamera; lazily, only while null: arenaSetup makes views 0 and 1, the port's views 3-4 on a machine with 3-4 local players only, 18.7): the cameras, as viewCameraObjects (found by check 10 (b)'s pointer stores)
+cameraPrevPos	symbol	next	yes	no	the cameras
+viewCameraObjects.obj	ptr	viewCameraObjects:next:0x128	yes	no	request 57: each local view's camera object (csObjectPool, no model, never on csListHead): rot / pos from the local human's camera in the step (viewSetRotation / Position), the matrix +0x80 from rot by viewProc only, per drawn view (the drawing; a re-run leaves the last drawn one), mode 4's mirror copies view 0's rot / pos into view 1's in viewProc; read by viewProc only (ONLINE_ROLLBACK.md 17.3)
+viewCameraObjectTable.obj	ptr	viewCameraObjectTable:next:0x128	yes	no	request 57: each local view's camera pose object, the camera object's parent (viewSetCameraPose in the step, viewProc's matrix per drawn view, mode 4 copies view 0's): the cameras
+viewSharedRoot.obj	ptr	viewSharedRoot:1:0x128	yes	no	request 57: the cameras' shared root object (the parent of a camera without a pose object; viewProc's matrix, mode 4's copy): the cameras
+viewFollowObjects.obj	ptr	viewFollowObjects:next:0x128	yes	no	request 57: the camera-attached models (the level file's id-2 root, a copy for view 1): placed at a local view's camera (viewSetFollowObjPos); +0x0C clear, not in the hit pass; the drawing's (the nodes of its model are the dmd row's)
+viewAxisMatrixTemplate	symbol	0x20	yes	no	.data: the view mode's axis matrix (viewLoadMode, from carSetViewMode in a step: the camera, presentation)
+viewCameraLockFrames	symbol	4	yes	no	the cameras
+viewAxisScaleMatrix	symbol	next	yes	no	request 54: viewProc's per-view axis matrix (the cameras; viewLoadMode in a step too)
+viewSplitScreenMode	symbol	4	yes	no	section 18: this machine's split screen (sessionRun from the game mode; the port sets it per machine from its local players; carViewHotkeys' layout toggle, a local human's): in the step read only by presentation (the sound locate, the cameras, the HUD, the hotkeys: ONLINE_ROLLBACK.md 18, check_rollback.py check 10); the step's one game-state reader (humanCarTick's regeneration without TM2_PORT_HUMANS) reads portRollbackViewSplit (LOCAL_VIEWS); snapshot yes with the hotkey latch, so a re-run replays a toggle once
+rtRearViewActive	symbol	4	yes	no	section 18: this machine's rear-view mirror on (rtToggleRearView from a local human's hotkey or view mode; the port's hud_mirror): read by the drawing (rtMainLoop, hudDrawSingleView) and the step's view functions only (check 10)
+rtRearViewAllowed	symbol	4	yes	no	section 18: the mirror allowed (rtSetRearView from a local human's view mode, arenaSetup): read by rtToggleRearView only
+viewRenderSplitMode	symbol	4	yes	no	section 18: the split mode at the load (viewSetFollowObj from worldLoadObject): read by renderScene only (viewGetRenderSplitMode)
+viewFov	symbol	4	yes	no	section 18: the field of view of the last view mode loaded (viewLoadMode: viewCreate, a local human's carSetViewMode; the split screen's modes have their own): the drawing's (viewGetFov)
+viewModes	symbol	next	yes	no	section 18: each view's mode (viewCreate: arenaSetup's by the split mode, the split hotkey): the drawing's (viewGetMode, viewProc)
+viewEnvs	symbol	next	yes	no	section 18: each view's frame records (viewCreate, as viewModes): the drawing's
+viewExtraViewsUnlocked	symbol	4	yes	no	section 18: the extra camera views unlocked (uaInit; a local human's combo in carViewHotkeys, not tested in split screen): read by carViewHotkeys only
+hudRadarVisible	symbol	4	yes	no	section 18: each local HUD's radar shown (hudToggleRadar from a local human's hotkey, by local slot): read by the HUD drawers only
+hudWeaponListVisible	symbol	4	yes	no	section 18: each local HUD's weapon list shown (hudToggleWeaponList; the port's HUD style): read by the HUD drawers only
+carViewHotkeyReleased	symbol	next	yes	no	section 18: each human's view hotkey latch (.port_data; carViewHotkeys runs for local humans only, and its split-screen path latches other keys): read by carViewHotkeys only
+csObjectPool.view	field	csObjectPool:0x128:0x14-0x80	yes	no	request 54: each scene object's per-view fields: wpos +0x14..+0x1F and the matrices +0x20 / +0x40 / +0x60 (csUpdMat per object per drawn view, viewProc the root's): the 54 words of the port's re-run check; no logic reads them (ONLINE_ROLLBACK.md 11.6 (a), 13.5)
+csObjectPool.onscreen	field	csObjectPool:0x128:0x124-0x128	yes	no	request 54: each scene object's on-screen flag (csUpdMat's cull of the drawn view; read by csUpdMat and renderScene only)
+csObjectPool.rotpad	field	csObjectPool:0x128:0xA6-0xA8	yes	no	request 58: each scene object's rot pad (rot is s16[3] + 2 bytes): csReset clears rot[0..2] only, and the 8-byte copies fill it: weaponFireSelected's ricochet memcpy(rot, vec, 8) from a stack short[4] whose [3] is never set (retail: this machine's stack garbage), the shields' and the tornado funnel's object-to-object copies; no reader (RotMatrixYXZ reads three): csObjectPool element 40 of the request (ONLINE_ROLLBACK.md 19.2)
+humanCars.camease	field	humanCars:0x814:0x6-0x8	yes	no	request 58: each human record's cam_ease: the camera block, run for this machine's local humans only (H1; HUMANS16_PLAN.md 6.4, the port's mask): found by check 10 (b)'s pointer stores (viewCarCameraUpdate)
+humanCars.camera	field	humanCars:0x814:0xC-0x8C	yes	no	request 58: each human record's camera block +0x00C..+0x08B (cam_rot, cam_pos, goal, look, the offsets; viewCarCameraUpdate / viewChaseCamera for local humans only): presentation (HUMANS16_PLAN.md 2.5.2)
+humanCars.view	field	humanCars:0x814:0x10C-0x114	yes	no	request 58: each human record's view / view_last (carSetViewMode, carViewHotkeys: a local human's camera view; HUMANS16_PLAN.md 2.5.2)
+fxSprites.owner	field	fxSprites:48:0x2C-0x30	yes	no	request 56: each effect sprite's owner_pos, the position pointer fxSpriteSpawn was given; a spawn from a stack vector (explosions, smoke) leaves a stack address, so a re-run from portRunStep stores another one (0x400 deeper); read only by fxSpritesDraw when the follow flag +0x01 is set (follow spawns pass lasting vectors: fxSparkBlue's mathJitterResult) and by the port's car-range tests (portDropInIn), whose results a stack address never changes (ONLINE_ROLLBACK.md 16)
+fxSprites.pos	field	fxSprites:48:0x14-0x20	yes	no	request 58: each effect sprite's position: fxSpritesUpdate moves it in the step, and fxSpritesDraw copies a follow sprite's from *owner_pos per drawn view (a re-run does not): presentation, no collision, no logic reads a sprite's position (ONLINE_ROLLBACK.md 4.5, 12.7; found by check 9 (d))
+weaponArcs.to	field	weaponArcs:20:0x10-0x14	yes	no	request 59 (1): each taser / lightning arc's end pointer (+0x10; weaponArcsCountField +0xC): the victim's motion.pos when targeted (weaponTaserTarget, the port's retry), else retail's store of weaponArcsDraw's stack vector free_end by the tick pass (ONCE_PER_STEP's step call): a stack address that a re-run from portRunStep makes 0x400 deeper (801FF5E0 / 801FF1E0); never read back for an untargeted arc (the arcs take their local free_end; the port's car-range tests see no car record in it), the targeted end is the hashed target id's car: hash no, snapshot yes (ONLINE_ROLLBACK.md 20.1)
+hudRadars	symbol	next	yes	no	the radars (presentation; with STEP_SPLIT swapped in the step)
+hudMessageCurrent	symbol	next	yes	no	the HUD message (presentation; its timer runs per drawn HUD)
+hudMarkerBlinkCounters	symbol	next	yes	no	the weapon marker blink (presentation)
+hudMarkerBlinkPhases	symbol	next	yes	no	the weapon marker blink (presentation)
+hudSmoothedSpeeds	symbol	next	yes	no	the speed readout (presentation)
+hudPlayerRecords	symbol	next	yes	no	request 54: the HUD panels (the HUD drawers per drawn HUD; presentation)
+hudSplitDivider	symbol	next	yes	no	request 54: the split-screen divider (the HUD drawers; presentation)
+fontCursorX	symbol	4	yes	no	request 54: the font cursor (the HUD's prints per drawn HUD; a step's print sets it first)
+fontCursorY	symbol	4	yes	no	request 54: the font cursor (as above)
+fontSpriteTemplates	symbol	next	yes	no	request 58: the font's colour templates (fontSetColor / fontResetColor around each print: the HUD drawers, worldUpdate's, the menus): read by the prints only: found by check 9 (d)
+portVisualState	symbol?	next	yes	no	request 54: TM2_PORT_VISUAL's tails and shadows (renderScene per drawn view; presentation)
+padButtonsLatched	symbol	4	yes	no	the pad latch (inputs; with INPUT_ALL no game reader)
+padButtonsDecoded	symbol	4	yes	no	the decoded pads (inputs)
+padActionCache	symbol	next	yes	no	written only (its reader is unreachable: ONLINE_ROLLBACK.md addendum)
+debrisBursts	symbol	next	yes	no	the debris bursts' captured polygons (presentation, no collision)
+fxSheetTimer	symbol	4	yes	no	the screen flash countdown (presentation)
+fxSheetPolys	symbol	next	yes	no	the screen flash's quads (presentation)
+renderFrameParity	symbol	4	yes	yes	the animation guard's parity (ANIM_IN_STEP: stepped by the step)
+renderPrevFrameParity	symbol	4	yes	yes	the animation guard's previous parity
+portRollbackOptions	symbol	4	no	no	the port's switches (written by the port, the same on every machine)
+portResimulating	symbol	4	no	no	the port's re-run flag (set around a batch; restoring it would end the batch)
+portStepHold	symbol	4	no	no	the port's hold request (per step, from the input frame)
+portStepTicks	symbol	4	no	no	the port's setting (FIXED_TICKS)
+portRollbackSeed	symbol	4	no	no	the host's match seed (a setting; the mix count below is the state)
+portRollbackFrameCount	symbol	4	no	no	the host's frame count for the loads (a setting)
+portRollbackQuit	symbol	4	no	no	the port's quit request (from the input frame)
+portRollbackHolding	symbol	4	no	no	the HOLD latch of the current iteration (the loop's, not the step's)
+portRollbackReseeds	symbol	4	yes	yes	SEED's mix count: match state
+portRollbackVisualSeed	symbol	4	no	no	the visual rand() stream (each machine's own drawing)
+portRollbackSplitting	symbol	4	no	no	the STEP_SPLIT latch of the current iteration (the loop's)
+portRollbackEnded	symbol	4	no	no	a re-run's round end, pending for the loop (the port's batch)
+portClutShadow	symbol	next	yes	yes	CLUT_SHADOW: the palette rows the animations read back (game state: a fade's colours come from it; request 59 (3): emptied at each round's capture (portClutShadowReset), so it holds the round's rows only)
+portDmdImages	symbol	next	no	no	request 54: the model files installed for the match (assetInstallImage, at loads between steps): what portDmdMutableList walks; no step reads it
+portFarSprites	symbol	next	no	no	request 61: TM2_PORT_FAR_DISTANCE's copies of the far sprite and beam meshes (portFarDistanceScale, renderScene per drawn view): drawing only, no step reads it
+portHumanVacant	symbol	0x14C	yes	yes	request 50: the vacant human records and the hand-overs' AI map (match state: portHumanHandOver / Leave / Return / Rejoin write it between steps; part of port.bss, listed for the port)
+portHumanLocal	symbol	next	yes	no	request 58: which humans are this machine's (HUMANS16 H1; the port sets it per machine): the step reads it only through portHumanSlot / portLocalHuman / portHumanFeedback / portHumanSide for presentation (cameras, views, HUD, radar, sound sides, local feedback) and portHumanPadPort, which INPUT_ALL cuts before it: check 11 (ONLINE_ROLLBACK.md 19.1); snapshot yes: it moves with the records (portHumanCompact)
+portHumanRadarBlink	symbol	next	yes	no	request 58: the AI blips' blink counter on this machine's radars (worldRadarAiAll, portHumanOptions bit 4: drawing only, HUMANS16 H2): found by check 11
+scratchpad	fixed	1F800000-1F800400	no	no	the scratchpad: the renderer's and the math helpers' scratch within one call; nothing a later step reads
+port.interp_ots	fixed	80C00000-80C80000	no	no	request 48 (c): the port's interp OTs (src/vplus/interp.c): the port's drawing scratch above --port-ram-end, never game state
+port.precise_ring	fixed	80C80000-80DC0000	no	no	request 48 (c): the port's precise ring: the port's own memory, never game state
+port.views34	fixed	80DC0000-81000000	no	no	request 48 (c): views 3-4's OTs and frame records (src/vplus/four.c): the port's drawing scratch, never game state
+portPreciseEmit	symbol	4	no	no	request 61 addendum: the port's precise-corner switch and anamorphic factor for the C emitter (TM2_PORT_C_EMITTER): this machine's drawing setting (precise mode, widescreen), read only by the emitter
+portHumanControl	symbol	next	yes	yes	request 66: each human's control options (bit 0 the turn keeps its sign in reverse; the port sets it from each player's Controls option, the same on every machine): read by the step (carThrottleSteer, carRicochetOffObject): match state (ANALOG_STEERING.md 2.6, ONLINE_ROLLBACK.md 22)
+portCarSelLoads	symbol	528128	no	no	request 71: car select's in-game carousel models (portCarSelLoad, in the shell between frames): shell presentation, no step reads it
+portCarProfile	symbol	20480	yes	yes	request 70: each mod car's own numbers (the port writes them before a load, the same on every machine; carStatsLoad, weaponBlockInit, the AI's cruise speeds read them): match state
+portVisual	symbol	4	no	no	request 63: the port's visual switches (port_visual.h TM2_VIS_*): each machine's drawing settings, read live; bit 5 moves only this machine's chase camera (viewChaseCamera, the human records' camera block: hash no): never game state (ONLINE_ROLLBACK.md 22)
+portHiddenAreas	symbol	464	no	no	request 72: portVisual bit 6's patches of the level model (renderScene per drawn view; every word put back by the end of the walk): drawing, read by no step
+portSpecialProfile	symbol	9216	yes	yes	request 73: each mod car's special (the port writes it before a load, the same on every machine; weaponFireSpecial, weaponBlockInit, aiCarSetupProfile and the hooks read it): match state
+portSpecialState	symbol	3080	yes	yes	request 73: the free projectile records of a fire (weaponFireSpecial, in the step) and the computer cars' weight tables (aiCarSetupProfile; aiPickWeapon reads them in the step): match state
+portHiddenRoof	symbol	180	no	no	request 75: the church's roof under portVisual bit 6 (rebuilt by each view's portHiddenAreasBegin, walked only through the patched zone): drawing, read by no step
+portPickupSpecial	symbol	132	no	no	request 79: the special's pickup look (built at each level load from level data, the same on every machine; read by the walks and the hit walk through the pickups the port points at it): load state, written by no step
+portNearDepth	symbol	3200	no	no	request 82: the near-pass primitives' corner depths for the port's precise ring (written by the emitter, read by the near pass, each view): drawing, read by no step
+portStepScrub	symbol	4	no	no	request 86: the port's step stack fill size (this machine's setting, set before the match)
+portStepScrubFill	symbol	4	no	no	request 86: the port's step stack fill word (this machine's setting)
+portVoiceCar	symbol	48	no	no	request 87: whose sound each voice plays (the sound side, read by the port at the key-on)
+portVoiceKind	symbol	48	no	no	request 87: what kind of sound each voice plays (the sound side)
+portSndReqTag	symbol	128	no	no	request 87: the sound requests' tags (the sound side, as sndObjPool)
+portSoundTag	symbol	4	no	no	request 87: the play under way's tag, set and cleared around a special's sounds within one call (the sound side)
+portCameraWallWork	symbol	0x1000	no	no	request 89: the camera wall's pending nodes and spans, filled by each call before it reads them (each machine's own camera; were stack)
+portSteadyShadow	symbol	0x630	no	no	request 92: portVisual bit 7's saved shadow matrices, filled and emptied within each renderScene (the step's matrices are back before anything else reads them): drawing, read by no step
+portFarLodBudget	symbol	4	no	no	request 98: the port's far-LOD budget setting (each machine's drawing)
+portFarLodBudgetState	symbol	0x10	no	no	request 98: the far-LOD budget's per-view scales (drawing, read by no step)
+portStackGuard	symbol	16	no	no	request 89: below the stack, written only by an overflow (the port's guard)
+portStack	symbol	0x10000	no	no	request 89: the stack (crt0's sp is its end): never copied, never hashed, as the stack below 0x80200000 before; each step writes before it reads (request 86: the scrub, when on, fills below its frame)

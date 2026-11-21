@@ -1,0 +1,32 @@
+# Per-module override of --sdk-from-lib (docs/SPU_VOICES.md 4, docs/SOURCE_BUILD.md). Hand-maintained.
+# While the port define `define` is on (--port-define, port variant only), tools/gen_link.py leaves these exact PsyQ 3.3
+# modules (config/US/sdk_modules.tsv) to the C units instead of linking them from the .LIB: every function of a listed
+# module must have a C section (the link fails otherwise). Request 34: TM2_PORT_SPU48 needs libspu/libsnd with 48
+# voices, so every exact module of both libraries comes from C (the C of all 25 is byte-identical to retail, checked
+# in the hybrid; the other libspu/libsnd modules are 3.4-only and C anyway).
+define	lib	module	text	note
+TM2_PORT_SPU48	LIBSPU	S_M_M	801467D0	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_DCB	80147D68	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_M_INT	80147D8C	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_M_F	8014808C	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_W	80148108	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_STSA	80148168	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_STM	801481A4	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_ITC	801481D8	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_IT	80148290	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_SCA	801482CC	unchanged (its .rdata jump tables come with the C unit)
+TM2_PORT_SPU48	LIBSND	VS_MONO	801583A4	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSND	VS_SRV	801583C8	SsSetReservedVoice: up to 48
+TM2_PORT_SPU48	LIBSPU	S_I	8015D408	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_Q	8015D428	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_IH	8015D4A4	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_M_INIT	8015D4C4	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_SNV	8015D518	SpuSetNoiseVoice: no noise for 24..47
+TM2_PORT_SPU48	LIBSPU	S_SAV	8015D53C	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_SNC	8015D5F0	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_SR	8015D640	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_M_UTIL	8015D710	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_GCA	8015D7F8	unchanged; the library is taken whole
+TM2_PORT_SPU48	LIBSPU	S_SVA	80161C48	SpuSetVoiceAttr / _SpuSetVoiceAttr: voices 24..47 to the second block
+TM2_PORT_SPU48	LIBSPU	S_GKS	801622D8	SpuGetKeyStatus: voices 24..47
+TM2_PORT_SPU48	LIBSPU	S_N2P	8016236C	unchanged (its .data pitch table stays retail bytes)

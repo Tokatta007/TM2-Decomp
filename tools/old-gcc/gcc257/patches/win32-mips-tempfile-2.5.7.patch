@@ -1,0 +1,45 @@
+--- config/mips/mips.c.orig
++++ config/mips/mips.c
+@@ -3491,6 +3491,15 @@
+   char *base = getenv ("TMPDIR");
+   int len;
+ 
++#ifdef _WIN32
++  /* Windows host: temp dir from the environment, file deleted on close.  */
++  if (base == (char *)0)
++    base = getenv ("TEMP");
++  if (base == (char *)0)
++    base = getenv ("TMP");
++  if (base == (char *)0)
++    base = ".";
++#else
+   if (base == (char *)0)
+     {
+ #ifdef P_tmpdir
+@@ -3503,6 +3512,7 @@
+ 	else
+ 	  base = "/tmp/";
+     }
++#endif
+ 
+   len = strlen (base);
+   temp_filename = (char *) alloca (len + sizeof("/ccXXXXXX"));
+@@ -3513,11 +3523,18 @@
+   strcpy (temp_filename + len, "ccXXXXXX");
+   mktemp (temp_filename);
+ 
++#ifdef _WIN32
++  stream = fopen (temp_filename, "w+D");
++#else
+   stream = fopen (temp_filename, "w+");
++#endif
+   if (!stream)
+     pfatal_with_name (temp_filename);
+ 
++#ifndef _WIN32
++  /* Windows host: the "D" mode flag deletes the file on close instead.  */
+   unlink (temp_filename);
++#endif
+   return stream;
+ }
+ 

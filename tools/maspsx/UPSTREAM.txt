@@ -1,0 +1,5 @@
+maspsx from https://github.com/mkst/maspsx commit 746b895f02929ecd148af7b1f4ff05b69f973878 (2026-08-29), vendored 2026-09-07 on the user's order (the four former patches are retired under tools/ref/maspsx-patches-retired/ for provenance only)
+Local TM2 patches (2026-10-05), each gated on the ASPSX version where the real assembler (toolchain/psyq-candidates/*/ASPSX.EXE under DOSBox-X) was shown to do it:
+  - nop_load_waw (--aspsx-version=2.21 only): nop between a load and a next instruction that overwrites the loaded GPR (not lwl/lwr, not implicit $31 of jal/jalr/bltzal, not lwc2).
+  - nop_mflo_load (--aspsx-version=2.34 only): `mflo/mfhi; <1-word load>; mult/div` gets a nop before the mult/div (a load-delay nop or a multi-word load expansion already counts).
+  - store %lo(sym)(reg) passthrough (all versions): a store already written as `sw $r,%lo(D_X)($1)` (hand-written asm after `lui $1,%hi(D_X)`) is left to the assembler instead of being expanded, as the load handler already does; it keeps its LO16 relocation for the relocatable link.

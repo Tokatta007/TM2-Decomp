@@ -1,0 +1,299 @@
+site	function	name	class	reason
+800D3B48	800D3B34	sound_repeat_throttle	VISUAL	random 12-26 frame interval throttling a level sound (sub_800D3334); only its own gp+40/44 throttle state
+800D4134	800D4124	sub_800D4124 AI weighted behaviour pick	GAME_STATE	weighted table pick (table at car+0x840) -> AI state car+0x815/+0x814
+800D421C	800D420C	ai_pick_weapon_weighted	GAME_STATE	weighted pick from table rec+0x844 -> weapon/action choice rec+0x814/+0x815 (AI)
+800D4B2C	800D4AAC	event_debris_setup	GAME_STATE	test choosing debris launch speed stored in event record (later passed to sub_8014B820)
+800D4B44	800D4AAC	event_debris_setup	GAME_STATE	debris launch speed stored in event record (sub_8014B820 arg)
+800D4B5C	800D4AAC	event_debris_setup	GAME_STATE	debris rotation X stored in event record (sub_8014B820 arg)
+800D4B78	800D4AAC	event_debris_setup	GAME_STATE	debris rotation Y stored in event record (sub_8014B820 arg)
+800D4B9C	800D4AAC	event_debris_setup	GAME_STATE	frame delay before debris launch (event timer gating sub_8014B820)
+800D4BD0	800D4AAC	event_debris_setup	GAME_STATE	event record timer (+0x16) set at event start
+800D4DF8	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	gate (rand % f03) for sub_8010BDE8 smoke particle
+800D4E68	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	pick sub_8011160C vs sub_801116E0 particle
+800D4F74	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	1-in-3 sub_801117B4 particle
+800D513C	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	gate (rand % f03) for sub_8010BDE8 particle
+800D51AC	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	pick sub_8011160C vs sub_801116E0 particle
+800D52F8	800D4D58	sub_800D4D58 level destructible effects tick	VISUAL	1-in-3 sub_801117B4 particle
+800D593C	800D58BC	level_event_debris_setup	GAME_STATE	event timer test: launch-delay halfword that gates sub_8014B820 debris launch
+800D5954	800D58BC	level_event_debris_setup	GAME_STATE	event timer value (launch delay) gating sub_8014B820 debris launch
+800D596C	800D58BC	level_event_debris_setup	GAME_STATE	debris launch vector x passed to sub_8014B820
+800D5988	800D58BC	level_event_debris_setup	GAME_STATE	debris launch vector y passed to sub_8014B820
+800D59AC	800D58BC	level_event_debris_setup	GAME_STATE	event frame at which debris launches (+20..)
+800D5A1C	800D58BC	level_event_debris_setup	GAME_STATE	event movement direction +/-7 (then sub_800F20C8 AI node reset)
+800D5B88	800D5AF0	event_debris_update	VISUAL	rand % rate gates a sub_8010BDE8 smoke/fire particle only
+800D5C0C	800D5AF0	event_debris_update	VISUAL	picks particle type sub_8011160C vs sub_801116E0
+800D5D1C	800D5AF0	event_debris_update	VISUAL	1-in-3 gate for sub_801117B4 particle
+800D5FE0	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris flight time word_801B2DD6 (sub_8014B820 arg + phase timer)
+800D5FF8	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris launch angle word_801B2DFC (sub_8014B820)
+800D6018	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris launch angle word_801B2DFE (sub_8014B820)
+800D6044	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	event delay word_801B2DD4 (gates debris launch + sub_80124384 event)
+800D6064	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	sign of debris spin word_801B2DE8
+800D6078	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris spin word_801B2DE8 (sub_8014B820)
+800D608C	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris spin word_801B2DE8 (negated branch)
+800D60C0	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	sign of debris spin word_801B2DEA
+800D60D4	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris spin word_801B2DEA (sub_8014B820)
+800D60E8	800D5F94	sub_800D5F94 destructible debris event init	GAME_STATE	debris spin word_801B2DEA (negated branch)
+800D620C	800D6188	level_event_explosion_fx_tick	VISUAL	rand % rate gates only sub_8010BDE8+sub_8011160C/801116E0 smoke particles
+800D6270	800D6188	level_event_explosion_fx_tick	VISUAL	picks particle emitter 8011160C vs 801116E0
+800D62E0	800D6188	level_event_explosion_fx_tick	VISUAL	picks particle emitter 8011160C vs 801116E0
+800D649C	800D6188	level_event_explosion_fx_tick	VISUAL	1-in-3 gate for sub_801117B4 particle only
+800D6754	800D6710	level_event_start	GAME_STATE	event delay word_801AB81A gating timeline and sub_8014B820 debris launch
+800D6AEC	800D6800	level_event_update	VISUAL	rand % rate gates sub_8010BDE8 particle bursts
+800D6BCC	800D6800	level_event_update	VISUAL	picks particle type sub_801116E0 vs sub_801117B4
+800D6C04	800D6800	level_event_update	VISUAL	coin flip for extra sub_80111888/sub_801121D4 particles
+800D6CB4	800D6800	level_event_update	GAME_STATE	rotation arg (rand/1024) to sub_8014B820 debris launch
+800D8138	800D7E30	projectile_collision_tick	VISUAL	gates sub_80112094 impact particle only
+800D8170	800D7E30	projectile_collision_tick	GAME_STATE	gates sub_800DC65C hit/damage application
+800D9D64	800D9D38	spawn_projectile_variant	GAME_STATE	projectile record field word_801A5B10 = 20 or 99
+800DA7E4	800DA5B4	homing_projectile_steer	GAME_STATE	type-41 projectile yaw jitter (obj+164)
+800DA9DC	800DA5B4	homing_projectile_steer	VISUAL	projectile model word +0x11C and trail colour (sub_800D8A7C) flicker
+800DAA54	800DA5B4	homing_projectile_steer	GAME_STATE	type-49 projectile yaw jitter (obj+164)
+800DABE4	800DA5B4	homing_projectile_steer	GAME_STATE	type-41/49 projectile pitch jitter (obj+160)
+800DDA28	800DD304	car_speed_turbo_update	GAME_STATE	AI car: doubles threshold that clears car flag (+26, turbo/fire state) in car record
+800E1184	800E0C28	car_wall_collision	GAME_STATE	random heading deflection (rand%682) written to car heading target after collision
+800E127C	800E0C28	car_wall_collision	GAME_STATE	random heading deflection (rand%682) written to car heading target after collision
+800E4DEC	800E4D8C	sub_800E4D8C car tilt shake start	GAME_STATE	tilt repeat count (tilt+0x0C); car tilt/bump oscillation block (human car+0x114 / AI car+0x9C) -> body_m matrix in CarRotUpdate; conservative since body matrix may feed wheel/weapon geometry
+800E4E00	800E4D8C	sub_800E4D8C car tilt shake start	GAME_STATE	tilt phase (tilt+0x0E); car tilt/bump oscillation block (human car+0x114 / AI car+0x9C) -> body_m matrix in CarRotUpdate; conservative since body matrix may feed wheel/weapon geometry
+800E4E98	800E4D8C	sub_800E4D8C car tilt shake start	GAME_STATE	tilt X amplitude sign (tilt+0x20); car tilt/bump oscillation block (human car+0x114 / AI car+0x9C) -> body_m matrix in CarRotUpdate; conservative since body matrix may feed wheel/weapon geometry
+800E4ED0	800E4D8C	sub_800E4D8C car tilt shake start	GAME_STATE	tilt Y amplitude sign (tilt+0x22); car tilt/bump oscillation block (human car+0x114 / AI car+0x9C) -> body_m matrix in CarRotUpdate; conservative since body matrix may feed wheel/weapon geometry
+800E4F6C	800E4F30	car_bounce_init	GAME_STATE	car record bounce amplitude (+0x28); probably cosmetic body tilt but stored in car record, readers of +0x30/+0x32 not verified
+800E4FDC	800E4F30	car_bounce_init	GAME_STATE	car record bounce amplitude (+0x28); probably cosmetic body tilt but stored in car record, readers not verified
+800E5050	800E4F30	car_bounce_init	GAME_STATE	car record bounce amplitude (+0x2A); probably cosmetic body tilt but stored in car record, readers not verified
+800E50C0	800E4F30	car_bounce_init	GAME_STATE	car record bounce amplitude (+0x2A); probably cosmetic body tilt but stored in car record, readers not verified
+800E59C4	800E5628	apply_damage	GAME_STATE	heavy-hit chance gates sub_800E5FFC car knock/spin physics
+800E6394	800E5FFC	car_hit_reaction_physics	GAME_STATE	case 10 car record knock value (rec+0x6DC/0x71C)
+800E63F0	800E5FFC	car_hit_reaction_physics	GAME_STATE	case 10 car record knock value (negative branch)
+800E65D4	800E5FFC	car_hit_reaction_physics	GAME_STATE	wheel/suspension offsets in car record
+800E65F8	800E5FFC	car_hit_reaction_physics	GAME_STATE	wheel/suspension offsets in car record
+800E6644	800E5FFC	car_hit_reaction_physics	GAME_STATE	wheel/suspension offsets in car record
+800E6684	800E5FFC	car_hit_reaction_physics	GAME_STATE	rand&7 selects knock type: car angle/velocity/spin changes
+800E6FB8	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 0 record field (car wheels block +0x5A4) of this car
+800E7018	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 1 record field of this car
+800E7078	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 2 record field of this car
+800E70D8	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 3 record field of this car
+800E7138	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 0 record field of other car
+800E719C	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 1 record field of other car
+800E7200	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 2 record field of other car
+800E7264	800E6D14	sub_800E6D14 car-vs-car crash wheel kick	GAME_STATE	wheel 3 record field of other car
+800E7770	800E75F4	car_burning_update	VISUAL	1/16 gate for sub_8010BDE8 smoke particle
+800E77B8	800E75F4	car_burning_update	VISUAL	picks particle type sub_80112100 vs sub_8011216C
+800E7A0C	800E75F4	car_burning_update	GAME_STATE	coin flip increments car counter (+0x16) and sets car flag (+0x13)
+800E7A48	800E75F4	car_burning_update	VISUAL	particle X offset (stack only)
+800E7A58	800E75F4	car_burning_update	VISUAL	particle Y offset (stack only)
+800E7A68	800E75F4	car_burning_update	VISUAL	particle Z offset (stack only)
+800E7AB8	800E75F4	car_burning_update	VISUAL	particle type choice sub_801117B4
+800E7ADC	800E75F4	car_burning_update	VISUAL	particle X offset (dead/overwritten)
+800E7AEC	800E75F4	car_burning_update	VISUAL	particle Y offset (dead/overwritten)
+800E7AFC	800E75F4	car_burning_update	VISUAL	particle Z offset (dead/overwritten)
+800E7B70	800E75F4	car_burning_update	VISUAL	particle type sub_8011160C vs sub_801116E0
+800E8AD4	800E8A84	ai_mood_state_machine	GAME_STATE	AI state_time = attack_time*(rand&3)
+800E8C1C	800E8A84	ai_mood_state_machine	GAME_STATE	AI mood roll rand%100
+800E9924	800E97B0	ai_start_route_follow	GAME_STATE	discarded rand in AI route logic (advances shared stream)
+800E9B04	800E9A98	ai_decide_take_route	GAME_STATE	AI route decision (rand&15)==1
+800E9B20	800E9A98	ai_decide_take_route	GAME_STATE	AI route decision (rand&7)==1
+800E9B8C	800E9A98	ai_decide_take_route	GAME_STATE	AI route decision rand&1
+800EA130	800E9E20	sub_800E9E20 AI route step	GAME_STATE	AI state choice ai+0x815 (6 vs 2)
+800EA14C	800E9E20	sub_800E9E20 AI route step	GAME_STATE	AI state choice ai+0x815 = 5
+800EA170	800E9E20	sub_800E9E20 AI route step	GAME_STATE	AI state choice ai+0x815 (1 vs 2)
+800EA348	800EA270	ai_free_steer	GAME_STATE	AI steering choice (rand&3)==1
+800EB4B0	800EAB50	sub_800EAB50 AI follow route	GAME_STATE	AI state choice ai+0x815 = 2
+800EB90C	800EB714	ai_steer_ram_pass	GAME_STATE	AI pass decision rand%100 < pass_chance
+800ED72C	800ED128	car_ground_effects	GAME_STATE	deep water sinking: which front wheel level drops (wheel physics)
+800ED868	800ED128	car_ground_effects	VISUAL	selects wheel splash effect mode for sub_800ED920 (particles only)
+800ED934	800ED920	sub_800ED920 wheel surface particles	VISUAL	1-in-5 gate for wheel particle emitters (sub_8011244C..sub_80112594)
+800F29E4	800F2778	car_crash_impact	VISUAL	gates sub_80112C90 debris particle only
+800F2A00	800F2778	car_crash_impact	VISUAL	gates sub_80112528 effect sprite only
+800F3060	800F2DF4	sub_800F2DF4	VISUAL	gate sub_80112C90 effect
+800F307C	800F2DF4	sub_800F2DF4	VISUAL	gate sub_80112528 effect
+800F3E54	800F39D0	proximity_update	VISUAL	1/16 gate for sub_80111538 spark particle
+800F3F40	800F3F20	car_spark_emitter	VISUAL	spark position x jitter -> sub_800F3FB4 particle emitters
+800F3F58	800F3F20	car_spark_emitter	VISUAL	spark position y jitter -> sub_800F3FB4 particle emitters
+800F3F70	800F3F20	car_spark_emitter	VISUAL	spark position z jitter -> sub_800F3FB4 particle emitters
+800F3FC0	800F3FB4	contact_sparks	VISUAL	spark count for sub_80112C90
+800F3FD4	800F3FB4	contact_sparks	VISUAL	particle type choice (sub_80112528/80112100/801124BC)
+800F530C	800F4CC0	sub_800F4CC0 car special record step	GAME_STATE	sets flag f0A in car record (+0x810 / +0x850)
+800F6380	800F636C	sub_800F636C spawn point pick	GAME_STATE	start index into spawn table word_801B2B28
+800F64A4	800F636C	sub_800F636C spawn point pick	GAME_STATE	fallback random spawn entry word_801B2B28
+800F655C	800F6518	ai_pick_route	GAME_STATE	AI route/path node choice (ai+0x53C path)
+800F76C0	800F763C	ai_pick_next_node	GAME_STATE	AI next route node choice (ai+0x466)
+800FD7B8	800FD6C4	car_spawn_init	GAME_STATE	spawn neighbour node choice -> initial car heading (+0x710)
+800FFF6C	800FFEFC	sub_800FFEFC AI car (re)init	GAME_STATE	AI car field car+0x01 = rand%3
+80103D90	80103CA0	ai_weapon_fire_decision	GAME_STATE	AI fire roll rand/328 < aggression (+0x812) -> fire requests
+80103ED4	80103CA0	ai_weapon_fire_decision	GAME_STATE	AI rear-cone fire roll rand/328 < aggression
+80108768	801084D8	draw_tasers	VISUAL	taser bolt end jitter X (draw primitives)
+801087A4	801084D8	draw_tasers	VISUAL	taser bolt end jitter Y (draw primitives)
+801087E0	801084D8	draw_tasers	VISUAL	taser bolt end jitter Z (draw primitives)
+801088D4	801084D8	draw_tasers	VISUAL	taser bolt segment jitter (draw primitives)
+801088F4	801084D8	draw_tasers	VISUAL	taser bolt segment jitter (draw primitives)
+8010890C	801084D8	draw_tasers	VISUAL	taser bolt segment jitter (draw primitives)
+80108A9C	801084D8	draw_tasers	VISUAL	1/64 gate for sub_801124BC particle
+80108AC4	801084D8	draw_tasers	VISUAL	1/64 gate for sub_80111538 particle
+8010A948	8010A7A0	sub_8010A7A0 beam/stream emitter	VISUAL	1-in-50 gate for sub_80112094 particle
+8010AF10	8010AED0	sub_8010AED0 pickup respawn tick	GAME_STATE	pickup slot choice D_80183F7C (sub_8012493C respawn)
+8010AF74	8010AED0	sub_8010AED0 pickup respawn tick	GAME_STATE	50% gate for respawning pickup types 417/418
+8010BE14	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BE28	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BE68	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BEB8	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BECC	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BF0C	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BF5C	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BF70	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010BFB0	8010BDE8	random_offset_position	VISUAL	random position offset for effect particles (all callers feed emitters)
+8010CABC	8010C160	sub_8010C160 burning-car update	GAME_STATE	human car hp (+0x1F0) burn damage gate
+8010CB7C	8010C160	sub_8010C160 burning-car update	GAME_STATE	AI car hp (+0x5A0) burn damage gate
+8010E158	8010E040	sub_8010E040 shield volume update	VISUAL	1-in-10 gate for shield particles sub_801124BC/sub_80111314
+8010E44C	8010E040	sub_8010E040 shield volume update	VISUAL	gate sub_80112310 particle (human)
+8010E80C	8010E040	sub_8010E040 shield volume update	VISUAL	gate sub_80112310 particle (AI)
+8010FDA4	8010FD44	helicopter_boss_update	GAME_STATE	frames until next shot (D_80180B4C) gating weapon launch sub_800D9D38
+8011017C	8010FD44	helicopter_boss_update	GAME_STATE	frames until next swoop (D_80180F18) gating swoop attack/damage
+80111FBC	80111FB0	sub_80111FB0 particle emitter	VISUAL	particle texture pick
+80112004	80111FB0	sub_80111FB0 particle emitter	VISUAL	particle vel x
+80112018	80111FB0	sub_80111FB0 particle emitter	VISUAL	particle vel y
+8011202C	80111FB0	sub_80111FB0 particle emitter	VISUAL	particle vel z gate
+80112044	80111FB0	sub_80111FB0 particle emitter	VISUAL	particle vel z
+8011268C	80112678	effect_binding_80112678	VISUAL	random palette entry for effect sub_80110918
+80112720	8011270C	spawn_effect_sprite_random	VISUAL	random sprite frame (rand%6) for sub_80110918 effect
+80112DB0	80112C90	spark_debris_emit	VISUAL	spark X velocity (effect pool 80184E74)
+80112DC4	80112C90	spark_debris_emit	VISUAL	spark Y velocity (effect pool)
+80112DD8	80112C90	spark_debris_emit	VISUAL	spark Z velocity (effect pool)
+80112DEC	80112C90	spark_debris_emit	VISUAL	spark sprite choice
+80114D60	80114D08	hit_flash_tick	VISUAL	1-in-3 lighting table flicker on hit object (+4 = sub_80153E3C)
+801165D4	801163B8	GetNextTriggerPoint	GAME_STATE	chooses level trigger point to activate (sub_800F2420/80116F30)
+801169D0	801163B8	GetNextTriggerPoint	GAME_STATE	trigger platform motion target -> dword_8018744C -> sub_800F25F4
+801169EC	801163B8	GetNextTriggerPoint	GAME_STATE	trigger platform motion target -> sub_800F25F4
+80116A08	801163B8	GetNextTriggerPoint	GAME_STATE	trigger platform motion target -> sub_800F25F4
+80116A1C	801163B8	GetNextTriggerPoint	GAME_STATE	trigger platform motion target -> sub_800F25F4
+80117104	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+8011717C	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+801171D4	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117284	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+801172DC	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117388	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+801173E0	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+8011743C	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117494	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117538	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117590	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117638	80116FF8	sub_80116FF8 building collapse explosions	GAME_STATE	explosion position/height passed to sub_801176C0, which can move a level event object (sub_80119468 -> sub_80124384 event 686) and itself draws shared rand; conservative
+80117710	801176C0	ambient_explosion_fx	GAME_STATE	1/8 gate for positioned explosion sound emitter (sub_80119468, audio only) [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+80117728	801176C0	ambient_explosion_fx	GAME_STATE	Z offset of sound emitter position (caller stack vector) [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+80117820	801176C0	ambient_explosion_fx	GAME_STATE	effect type choice [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+80117834	801176C0	ambient_explosion_fx	GAME_STATE	effect type choice (sub_801119E4) [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+80117890	801176C0	ambient_explosion_fx	GAME_STATE	effect Z offset [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+801178B8	801176C0	ambient_explosion_fx	GAME_STATE	particle type sub_80112594 vs sub_80112528 [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+801178FC	801176C0	ambient_explosion_fx	GAME_STATE	effect Z offset for sub_80111A6C [review: positions a pooled explosion model via sub_80119468 / target event 686; VISUAL if those models have no collision]
+8011A0D0	8011A024	round_reset	GAME_STATE	right after srand: gp+1496 = rand % car count (round setup)
+8011A828	8011A700	world_update	VISUAL	1-in-5 radar blip draw (sub_800FC928 HUD, viewport 1)
+8011A8F0	8011A700	world_update	VISUAL	1-in-5 radar blip draw (sub_800FC928 HUD, viewport 0)
+8011AFA0	8011A700	world_update	GAME_STATE	AI state byte_80188B5D 2 vs 3 and timer word_80188B6E
+8011B460	8011A700	world_update	VISUAL	1-in-5 radar blip draw (sub_800FC928 HUD)
+8011B530	8011A700	world_update	VISUAL	1-in-5 radar blip draw (sub_800FC928 HUD, 2nd viewport)
+8011F0A4	8011EFDC	battle_round_respawn	GAME_STATE	subtracts rand&0x3F from AI car hp (D_80188B5C[i].hp)
+8011F0CC	8011EFDC	battle_round_respawn	GAME_STATE	spawn slot choice (rand%4) selecting spawn table
+8011F310	8011F284	spawn_table_8011F284	GAME_STATE	spawn table position variant rand&1
+8011F3A0	8011F284	spawn_table_8011F284	GAME_STATE	spawn table position variant rand&1
+8011F434	8011F284	spawn_table_8011F284	GAME_STATE	spawn table position variant rand&1
+8011F4C8	8011F284	spawn_table_8011F284	GAME_STATE	spawn table position variant rand&1
+8011F5A0	8011F510	spawn_table_level2	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); kept with spawn logic, may be camera-only
+8011F62C	8011F510	spawn_table_level2	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011F6B8	8011F510	spawn_table_level2	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011F748	8011F510	spawn_table_level2	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011F820	8011F794	sub_8011F794 spawn table variant 3	GAME_STATE	spawn table selection (spawn_tables.c)
+8011F89C	8011F794	sub_8011F794 spawn table variant 3	GAME_STATE	spawn table selection (spawn_tables.c)
+8011F91C	8011F794	sub_8011F794 spawn table variant 3	GAME_STATE	spawn table selection (spawn_tables.c)
+8011F9AC	8011F794	sub_8011F794 spawn table variant 3	GAME_STATE	spawn table selection (spawn_tables.c)
+8011FA84	8011F9F8	spawn_table_8011F9F8	GAME_STATE	spawn table position variant rand&1
+8011FB14	8011F9F8	spawn_table_8011F9F8	GAME_STATE	spawn table position variant rand&1
+8011FBA0	8011F9F8	spawn_table_8011F9F8	GAME_STATE	spawn table position variant rand&1
+8011FC20	8011F9F8	spawn_table_8011F9F8	GAME_STATE	spawn table position variant rand&1
+8011FCFC	8011FC6C	spawn_table_level5	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011FD90	8011FC6C	spawn_table_level5	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011FE20	8011FC6C	spawn_table_level5	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011FEAC	8011FC6C	spawn_table_level5	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+8011FF84	8011FEF4	sub_8011FEF4 spawn table variant 6	GAME_STATE	spawn table selection (spawn_tables.c)
+80120014	8011FEF4	sub_8011FEF4 spawn table variant 6	GAME_STATE	spawn table selection (spawn_tables.c)
+8012009C	8011FEF4	sub_8011FEF4 spawn table variant 6	GAME_STATE	spawn table selection (spawn_tables.c)
+8012012C	8011FEF4	sub_8011FEF4 spawn table variant 6	GAME_STATE	spawn table selection (spawn_tables.c)
+80120200	80120178	spawn_table_80120178	GAME_STATE	spawn table position variant rand&1
+80120284	80120178	spawn_table_80120178	GAME_STATE	spawn table position variant rand&1
+80120314	80120178	spawn_table_80120178	GAME_STATE	spawn table position variant rand&1
+801203A0	80120178	spawn_table_80120178	GAME_STATE	spawn table position variant rand&1
+8012047C	801203EC	spawn_table_level8	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+80120504	801203EC	spawn_table_level8	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+80120588	801203EC	spawn_table_level8	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+80120618	801203EC	spawn_table_level8	GAME_STATE	coin flip writes player record D_80187B10[0]+0x14 and D_80180FD4 (intro camera); may be camera-only
+80123210	8012305C	sub_8012305C TM2FourWay choice randomize	GAME_STATE	random choice entry choice[7] (target/script selection)
+80123284	8012305C	sub_8012305C TM2FourWay choice randomize	GAME_STATE	re-roll choice entry while accept() rejects
+801256CC	80125118	sub_80125118 damage target	VISUAL	pick sub_801116E0 vs sub_801117B4 explosion particle (types 505-507)
+80125A94	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125AB4	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125B00	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125BB8	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125BD8	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125C24	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125CA4	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125D8C	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125DBC	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125E00	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125E80	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125F48	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125F68	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80125FB4	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80126058	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80126088	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801260CC	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+8012614C	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+8012617C	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801261C0	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80126278	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801262AC	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801262F0	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80126340	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+80126360	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801263AC	80125A18	target_actor_place_random	GAME_STATE	target actor start row / position jitter (obj+168/172)
+801273FC	80127398	target_debris_event_init	GAME_STATE	sign of debris rotation word_80190DD4 (passed to sub_8014B820)
+80127410	80127398	target_debris_event_init	GAME_STATE	debris rotation word_80190DD4 (passed to sub_8014B820)
+80127420	80127398	target_debris_event_init	GAME_STATE	debris rotation word_80190DD4 (negated branch)
+80127444	80127398	target_debris_event_init	GAME_STATE	sign of debris rotation word_80190DD6
+80127458	80127398	target_debris_event_init	GAME_STATE	debris rotation word_80190DD6 (passed to sub_8014B820)
+80127468	80127398	target_debris_event_init	GAME_STATE	debris rotation word_80190DD6 (negated branch)
+80127570	801274C0	sub_801274C0 target event fuse effects	VISUAL	gate (rand % counter) for sub_8010BDE8 particle
+801275CC	801274C0	sub_801274C0 target event fuse effects	VISUAL	pick particle pair (801117B4+801121D4 vs 80111888+8011223C)
+80127880	801277A8	sub_801277A8 target event fuse effects	VISUAL	gate (rand % counter) for sub_8010BDE8 particle
+801278DC	801277A8	sub_801277A8 target event fuse effects	VISUAL	pick particle pair (80111888+8011223C vs 801117B4+801121D4)
+80127BCC	80127AE4	sub_80127AE4 target event object init	GAME_STATE	sign of launch angle word_80190E18
+80127BE0	80127AE4	sub_80127AE4 target event object init	GAME_STATE	launch angle word_80190E18 (event object record)
+80127BF0	80127AE4	sub_80127AE4 target event object init	GAME_STATE	launch angle word_80190E18 (negated)
+80127C28	80127AE4	sub_80127AE4 target event object init	GAME_STATE	sign of launch angle word_80190E1A
+80127C3C	80127AE4	sub_80127AE4 target event object init	GAME_STATE	launch angle word_80190E1A
+80127C4C	80127AE4	sub_80127AE4 target event object init	GAME_STATE	launch angle word_80190E1A (negated)
+80127EF0	80127CE0	target_burn_update	VISUAL	rand % rate gates sub_8010BDE8 particle
+80127F50	80127CE0	target_burn_update	VISUAL	particle type choice
+8012A22C	8012A0E0	screenDrawCard	VISUAL	menu card zoom wobble (v19[874]) in front-end draw
+8012CD88	8012CD08	random_car_options	GAME_STATE	random car/character selection for match options (rand%13)
+8012DECC	8012DE7C	demo_match_setup	GAME_STATE	random car (rand%13) for attract/demo match config
+8014B62C	8014B504	sub_8014B504 debris launch	GAME_STATE	debris piece velocity/time choice
+8014B760	8014B504	sub_8014B504 debris launch	GAME_STATE	debris piece spin field +0x0E
+8014B774	8014B504	sub_8014B504 debris launch	GAME_STATE	debris piece spin field +0x10
+8014BB70	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity (object +28)
+8014BBC4	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity (+40)
+8014BC18	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity (+52)
+8014BC6C	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity (+64)
+8014BC80	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+20)
+8014BC98	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+24)
+8014BCB0	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+32)
+8014BCC8	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+36)
+8014BCE0	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+44)
+8014BCF8	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+48)
+8014BD10	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+56)
+8014BD28	8014BAD4	debris_object_init	GAME_STATE	debris object piece velocity jitter (+60)
+8014BDEC	8014BAD4	debris_object_init	GAME_STATE	spin axis choice for debris object
+8014BE00	8014BAD4	debris_object_init	GAME_STATE	debris spin rate (+178)
+8014BE20	8014BAD4	debris_object_init	GAME_STATE	debris spin rate (+176)
+8014BE44	8014BAD4	debris_object_init	GAME_STATE	debris spin rate (+180)
+8014BE68	8014BAD4	debris_object_init	GAME_STATE	debris spin rate (+178, default case)
+80151C00	80151BC4	sub_80151BC4 model animator random frame	VISUAL	model animator frame choice; updated only from draw setup 80152284 -> sub_80151700 (render path)
+80151D30	80151CB8	sub_80151CB8 model animator weighted frame	VISUAL	model animator weighted frame choice; render path (sub_80151700)
+80151E24	80151DF4	sub_80151DF4 model animator random period	VISUAL	animator frame period (active range); render path
+80151EA0	80151DF4	sub_80151DF4 model animator random period	VISUAL	animator frame period (idle range); render path

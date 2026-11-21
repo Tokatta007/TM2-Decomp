@@ -1,0 +1,2650 @@
+{
+  "schema": "tm2-release-build-manifest-v1",
+  "units": [
+    {
+      "source": "src/semantic/car_object_lookup.c",
+      "source_sha256": "cf438985e99d6177e061f863c2b10d721c02b97b9a7ea53af2555ea9c7a207f6",
+      "object_sha256": "514092eec8a10fa1ab95080e357b3cdaa235317cb2240fa9f948fa20a702ff88",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/audio_hud_helpers.c",
+      "source_sha256": "6fe03cfd75b747ba581e252561055ec8b59c30a164f9c6bd4936986068d65cb7",
+      "object_sha256": "c40bc259a290f9ca86770903d40656b96aba23819e1ce241c5c6dd9b705194d1",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/animation_frame_update.c",
+      "source_sha256": "b5536b82c3583e4407a6e26305fdb6462b020ea121b3e2f9ca645b2127b48d97",
+      "object_sha256": "e344ad1eeb6c68437ad0bdabfb55a50d1aa83db5f345a835d462af6eb1ffafde",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/animation_pingpong_update.c",
+      "source_sha256": "dae0c3d1e21917ff629847c1b44b32ce32a86c65ea11abbf097a2d750f7cd02e",
+      "object_sha256": "302601d3bfada29c1d9731d07c8281d2f6e1ecbaac68f0357e3ccb610a026862",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/area_damage.c",
+      "source_sha256": "7c465a396cf6cd8267f3ea7db7a7a6af55798e6c80a541e92cea3bb166acc82c",
+      "object_sha256": "971f70270b9e18450e680711a87dfe3036496ab5581aa91d67bb850c3c0ea2e0",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/asset_header.c",
+      "source_sha256": "43144aa3328b52f69f04f1d0b6c406961116f79c51f146b28a682b571c113f63",
+      "object_sha256": "a5418265d68b5b4876bcb651ca1ae1951a7758fa1b17f30ca72f273a576036a3",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/asset_pools.c",
+      "source_sha256": "ae90f2962f596e17ae996654b8d7c9b05dd415702c03a448dbfd2b1831906781",
+      "object_sha256": "4d42b8b360f77576f23b1d887300e0879ce51fe27a281d52d4b1aa54ae656eed",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/base_object_accessors.c",
+      "source_sha256": "5af633cf4a4552db8adb96403d783ebf4f7a33057cd2d781edbcdc518bdd5ca7",
+      "object_sha256": "698a7a23c7e0f6170fe518a0e6509d282bbc92f16d4f71b960406fafd3163b4c",
+      "delay_slots": "assembler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/base_object_counter.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/base_object_init.c",
+      "source_sha256": "0215e182f35b9980bb6b712f0eaef86bb64b3c6b560258bd69df88b7676c55f1",
+      "object_sha256": "1a7a9e29fd701e861ecf72ce1a6bd9686cb4d1e5e86b36162a264b9efc0d670f",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bios_calls.c",
+      "source_sha256": "9236013a8c5b0c5378d76a6d6a2723e3283c2822625ef11841ad075c892ec1e5",
+      "object_sha256": "c702c6fbf78c0b9398fbe43adcc03ce78e51be680ce3458f48529de80bb8827a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bios_extra.c",
+      "source_sha256": "12c3f45a58cf7c3fa10458aa1bedaac66585e9fb0fea9bc74c5245ac5f36e56b",
+      "object_sha256": "9307155c69475acd6f00b0758d8a8e120f383e1b035bd30fbf97c7ec8a3e9ef1",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/bitmap_container_parse.c",
+      "source_sha256": "80be90986deaf2004a88a232d7441ad3f8e121ab93de9c6af5f90dda6e64ea84",
+      "object_sha256": "6da3d1928f9bb6a389e579e947d1f6cf047ae70c4b8826e912b23c606f2332e3",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_image_register.c",
+      "source_sha256": "868101030934f30f2faef9adcadfdc8eff4690b9f6b7447a7e10ebbeb72325c2",
+      "object_sha256": "090aa6824a98a1374269ca88ca59287179a8d49a35f409e85ac0a9c4d0fcebb9",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_init.c",
+      "source_sha256": "5ab03fe2035a30a221b194aede8a7950ebf802322e2ccb57cbb9c685f301178a",
+      "object_sha256": "769bbf6f6009828198ec74672d17935e38dbb9ef6da329c78ba48a67709de4c6",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_record_append.c",
+      "source_sha256": "84a5986cbcea07371e40d0771c7531db67ed829f94738eac309273369bf2ff05",
+      "object_sha256": "68a0f9bd7293e5588545ff5549b59780adbaea31e809d7d47e46f36645ac94de",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_rect_fill.c",
+      "source_sha256": "a581a9b62ef011a11f6623aacabcc144501d342643b5c6211cfbb4372d4e95f2",
+      "object_sha256": "c0b3e0180427a6e0b3af62abd716e9dcfe24f8888fe6832871b254c44954d29e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_state_helpers.c",
+      "source_sha256": "aab3ba81d915dba2d51fc65d729b19318517739a125c000d23305323d41e019a",
+      "object_sha256": "c0f8198edb521d540d49de995bbf526a62c6003911754a8364bc83fbd9e117f6",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/bitmap_storage_setup.c",
+      "source_sha256": "8ae86efdfdb6f810ed03221e0054f66a7a2cfe0232dae44a35790e154f62dd08",
+      "object_sha256": "2a93eebb0f4834f0026ce535cc6ffa3e94c09afe7ffbe41791d7e52f32426002",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_freeze_build.c",
+      "source_sha256": "a6722810e52cc5975908bbd81584d0b439d6233d5831f2ada81cd2ed58ca361f",
+      "object_sha256": "d458e597caa4cbca218703fbc836bf1eec8182379ad7df41b22410261827b25e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_freeze_dispatch.c",
+      "source_sha256": "2c2eeacf0c10c03116fa89af789a7fb4d76f0b0f8204e07c33edc7b59c6562ef",
+      "object_sha256": "11be191f99294ce8ba2ad15cb93b0d8ed1cf6e3fb30aa19e05a5ad56f73a7f32",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_switch_registry.c",
+      "source_sha256": "ee33a4249fa7e75377a7622d14c3e63fc48c12f524911d5a1542c76029e0336a",
+      "object_sha256": "828b43dacd87a6adda91c8728c25b0a5cd45f0d2bddd109523078749ecc417fd",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_tick.c",
+      "source_sha256": "4b704c5c4886d567f228445150644e5873f6018271309ddd7afbae4f2609127b",
+      "object_sha256": "d6637983dc87a4367dfd5a3fa541d728f5d43c03b5a1648d49ab9855c1057748",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/cd_control.c",
+      "source_sha256": "50dd47b618824303c9dc24aceb3dcc7ecf33f7530a1b692a71cb68263fa4d777",
+      "object_sha256": "eed9e71267ff1c8d5e7babf69cc7b7c192d789f7068717fea00c21e38cb705b4",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/cd_toc.c",
+      "source_sha256": "4d1db72587c8fabe6005d6c8b1fffebf0d83c81e1071eade8aef7245ce1d519d",
+      "object_sha256": "18114a1cd1a78f9d9e2af644501425dc3a253f1213254f44ec39d076131cfdce",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/check_rect.c",
+      "source_sha256": "9d5da457a95e5041bc54356796a6fc53268edcb9eb3db44dd20db4c42b159178",
+      "object_sha256": "c3ea77942a2801961eb870c9def2802495889bfe22b53586e431d39df6ec9c16",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/command_wrappers.cpp",
+      "source_sha256": "c6a9eded134a92e89f7b084ec9d2f11ae862747564910983b365cb3fcd2d446f",
+      "object_sha256": "fd64f5c3d369cf316ad34d96056743ac7eda603028c66295553756acaa7d185f",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreContrailAnimation.c",
+      "source_sha256": "930e4e4067ee632cf108ab0691a6037b645234212cfe322aace2b5365365f0c0",
+      "object_sha256": "306b628f257d45090349ba145dd3769b5ce33644b599612b8c7c8a54414ecb4f",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreExplosionAnimation.c",
+      "source_sha256": "24025652a77a6958def597763c9568a7404c23aafcf9c73d581786afcd3afb7f",
+      "object_sha256": "537d1482ddad183a9cf00b6321398ae7b13217a0cd9e5e21e0ad00241659564e",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreFlameAnimation.c",
+      "source_sha256": "0f4d821de942bc6c6b576b7fb6f1e1e370a89b9911b8c366391bf109a39a50fe",
+      "object_sha256": "c19136bf802afa1997c97e29deb0dcacb513474582699949d65388de47b1d50c",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSparkOrange.c",
+      "source_sha256": "81f0d93d657879f890d84f2147a7e0ab193b731def97a68dd1db13b28007ef5b",
+      "object_sha256": "be73eb62be5141dbae4df6521d93cd5080c6a4fe311a25742f016681744c0f95",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSparkPink.c",
+      "source_sha256": "196ae205b6f74cab9554040158dab98400910b2cf0e7477dd0a2e383e8a63008",
+      "object_sha256": "7dcbc081f4ee38c54c0639f00e4a7b92f0b3f4b62fe83c3eb5d48a3cf3905455",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionB12.c",
+      "source_sha256": "5bd51dfb61ed7e64e54e0dcaef2bc6ab450d3bbe00fe75fb5b2944537d96ba53",
+      "object_sha256": "bf449fc97a62535bdeabc87b549b2f57c196636ccdaa4527d0271b5e5b3595f2",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionB24.c",
+      "source_sha256": "32dd3d5eb9f91379f865d300dc04ed92755e6c6739cbd8a311498ce8ea82cc97",
+      "object_sha256": "c642db6f4fec6ac51303045ce0a49135fbf43d4fe309a4ad52aaeabf0ac94c73",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionB48.c",
+      "source_sha256": "55ae9a26db7166fbd901ce34785d1d55a3ff94e03248af940ed83c9504a2ce0a",
+      "object_sha256": "e888ed23946dff1641638588b08495f4ecacc76c98649a8e14c8424631389c06",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionB96.c",
+      "source_sha256": "4607f9101647b0de4b98ece64ba17c2af7f072f001439d9ef14481897db15a2b",
+      "object_sha256": "a83cecd6a971c317df909ed46f37c3c9023b113e0d7a0e3c751d8b03a19ba420",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionB96Fast.c",
+      "source_sha256": "0938c566d0d0ced277a52e52c053f82d0847f896320e4a1d4ae2ed4298892fce",
+      "object_sha256": "7a5c6b1e5217187bfcde52ee1d0263744c45ef3bf77272ae90fa8fea83ec0364",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokePuffBlue.c",
+      "source_sha256": "bad701bc8f9e5b79d136fe80e256f13f206c6aad102e6a2aa10ca4298de37de0",
+      "object_sha256": "a2cec70ea7798338a3ef50c7684ef182728091926c0b77c6168c5360684a8bbf",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxFlame3.c",
+      "source_sha256": "18cdbcada7ae7352a45e3d059d1659830e1804cae44b07b2f006f55044fc76b0",
+      "object_sha256": "6ae6e496b621132efe3d5da806dcb2e3d8cea474592f1818e03b096a18b11b28",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxFlameBurning.c",
+      "source_sha256": "5882f26f2877d37c5daf1f041f7ade4f60aed3237a815403a6797fcc3474c3b8",
+      "object_sha256": "284d37c2c22f8cd1c2293617b49a1b65709f15374c1e95c4985bc11124ece150",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxFlame10.c",
+      "source_sha256": "7c8a06319c4d175688321e22a73ecd0c98c3624004fa7b5002f19d8554232bbf",
+      "object_sha256": "7e6e2f0f095e7d8a23989cd82ef026a80d287a0760ad49ed2efb7bee79304550",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxFlamePair.c",
+      "source_sha256": "ff69f386c8d67c9795d299bad7830e56c587d209dd42d98dcdaa194982ab37fe",
+      "object_sha256": "8d1980093d5487840e10a5aa176aa36b580a4da2131bb5bc4f96f77048895b2f",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxGroundFlame.c",
+      "source_sha256": "c5bad3a31e9738244c5d8e828446abdee9573d3cc96f6cc6c3daf1a84a5ba02a",
+      "object_sha256": "6064450b00a79347919c42a4d1b316b28c08f0c975b0b4d9801fb99ee4f6d97c",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeA6.c",
+      "source_sha256": "f6ec146cfca2ce3ec326e2c6cfed4d015532ce7935cc4fdf9574f5062b7cd6e3",
+      "object_sha256": "41d3af1f0582ec1f841ef6f8d9f6de887ada8c0f32ca26cf6565ae4754ee014a",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeA12.c",
+      "source_sha256": "b795c4596d14f6eec611bf188d0f64d202c607d3d3894edc7e8defe515d3db8a",
+      "object_sha256": "2c1293c61ee71c6539e9d74d9863b34b7ae7a8be36dce61f3e48f3947ac78044",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeA24.c",
+      "source_sha256": "3559220d500f1abd916221c507c23229b066e09704b27ad64bf3b7534bfdd321",
+      "object_sha256": "848636dc7de94d25d5fbd6c96fbd2716872bc9ec817a0018268bedf223728307",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeA48.c",
+      "source_sha256": "89a2cdaf73f18d8d20290711b65888dd648877871e1b0df47037d5e7e86aa4dc",
+      "object_sha256": "95ba04ee34f67e71b63c7ea1b4736dc51b7de263b33310c3b6b788d577cd8b6f",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeA128.c",
+      "source_sha256": "bb4cb29eab470f5eeedadcbded33197b08ed9f241a5b8a98065dd675448766a7",
+      "object_sha256": "072fe14c2ce6242bf722923a4f81afa39f83549e908c1216a551aa07b447274b",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeB6.c",
+      "source_sha256": "8de31c7923425002c47b731231dce4644f2584c766e314b01f33741246931bd6",
+      "object_sha256": "9694c27c6fba4941e932864cd12b570141b38c83f7a33d92e297aea1eb90cfe6",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeB12.c",
+      "source_sha256": "b1dc009eec3e94c41a696f91636737b1dc5c4944104d9cb9dba14c7656013555",
+      "object_sha256": "99af78aebd860fdd3ce581634b93f0787052a4ce1802ce9ea9c4335611b2f037",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeB24.c",
+      "source_sha256": "71e240f05b153c28a1b4cc6880afe481384ed25e13514a0e239f4d5a54a57590",
+      "object_sha256": "087c823f79054f47f290146ca2732c1ca3b539729ed09306b03c499fb9a7791c",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeB48.c",
+      "source_sha256": "86b8513196502de3b69a3ecbca5ef885399c9b68cdda882edf6367d56efe1db7",
+      "object_sha256": "266a6fa21a5109a0ec26f69a6d9f43ba2571c33c4b2d4a91aab2f45e70918ad4",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeC12.c",
+      "source_sha256": "d3f46e7c35aa6d7b54dfbab460e7034d31cd39a05d76ae8b0619d8de7af6c29c",
+      "object_sha256": "d8c28ea855235055b3935a4b81009aa7bedd8f070c17c9de918788da5865adfb",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeC24.c",
+      "source_sha256": "2401d3e8bf3f3dc086af06d0f815abed0c22b393fd8369cb968bb94d44278edc",
+      "object_sha256": "e0e32b06c19bca03f890b1635cf94a4589df153b44c9961a22fbe7a2ac345ea5",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxSmokeC48.c",
+      "source_sha256": "8bd2fa5a392453121c729e6d55af3a96d2f248ae615cc1b7038ab1f31c087642",
+      "object_sha256": "cc74d3818dc2e6801aeb699a535ca56a272143d8cd0591b2fb2f2cc983fc1af9",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/func_80112678.c",
+      "source_sha256": "8722c81d6fc49aad4e9499138911a58a1bc01f2f018488aa9e0fd8919f781fa0",
+      "object_sha256": "34b23ee67db5cad0288f65b35000d2ea1123f7886aaca6e1fac11107e0a12fd8",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxBulletImpact.c",
+      "source_sha256": "6cb11432d552c40f7cad6974d2de3adcb66b7da49d03e6957ee273f4b41bfe8b",
+      "object_sha256": "50f777e68d29fd169a335bc26cb91befbb5be8a4f387ae4337068a317e83472a",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/func_801127A0.c",
+      "source_sha256": "139d2230096c1126f319a9c1ef94a61e25fe87c992aba0bb21831e20916338bd",
+      "object_sha256": "36bcdeb6f66c35df07de9b4f46d4faba3f7afe318367fdb10f17413b7d510174",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/fxExplosionQuiet8.c",
+      "source_sha256": "a0818a853ca5b716b768df0de9d6cfb1360a23d1d88b231ecd033d974352654f",
+      "object_sha256": "aa68752b1d4cf87d6c92f0968c9c2383af6bf503e1e97d6fb4b0947194125a2a",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreExplosionBAnimation.c",
+      "source_sha256": "e174cbc826ce9520d5d9b1578e5aaae43d30a713362ea0f352a638594c18a426",
+      "object_sha256": "2ee9fa4ed1d5936cc3609f277bfa25502ad4253b11e117f3630fa02242411ce9",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreSmokeAAnimation.c",
+      "source_sha256": "e139f7e8b7271751f229daf43b53538deb56d8befa4bbc0a0c0edd26efb4bb10",
+      "object_sha256": "9bd9585afb4869167e17e53208a5cb781ddf5bab3e48683f406fa751bfd33fc9",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreSmokeBAnimation.c",
+      "source_sha256": "1b1466b35e27a5f334226281222fecf04288ba47681e312c4f66c64ca6fea32d",
+      "object_sha256": "0262f7f96fa65c0cbcc12be6c5f4f6dd257682d806ca5c0b69844d7dbf264966",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreSmokeCAnimation.c",
+      "source_sha256": "e1f516dcc579c48745fc2f7b3fc587eb70191223740e0106bf29d93c1d866511",
+      "object_sha256": "9054c2ca0760938a4140c7e782374061f3381a61764ef62881fc58c4193d6e46",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreBulletImpactAnimation.c",
+      "source_sha256": "d28eea368d9e91f030980e986e959a4621b2cc36d3bc37fa57fad19f31117d0b",
+      "object_sha256": "e5ac4a2e7b50dcb85f200c194dfbdf4d51b2cc5933bb589b6e67b36261e93f43",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/explodeStoreSparkAnimation.c",
+      "source_sha256": "d6f29cb5216610841212e8ba19de80c7e8313c3844c205ee9fbb4eea65a42846",
+      "object_sha256": "a082d0b93d4a54db6231ddc9a4a4a7b8e8d9c9d715311acec9686cfecad7e5b2",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/func_80112AD8.c",
+      "source_sha256": "b4bb4eada3b38db2cba6cf72f2e540cec328a0b2ee8b31dce6cd7f84eb02a6ec",
+      "object_sha256": "6f416022a33ee2fa35bb28df751d4e433e7a269f9a3a8907a5827cdda4d31233",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/effect_bindings/func_80112B00.c",
+      "source_sha256": "828a1e48691c7af57977500e368a07c26d646aaea832e39963d945f4d8b1af99",
+      "object_sha256": "689210b6a31a20bf8bf33e01aaabca41c91d6135d7fd54913e2be783b6218c14",
+      "delay_slots": "compiler",
+      "preserve_common": true
+    },
+    {
+      "source": "src/semantic/font_color.c",
+      "source_sha256": "6bee08dc79c16dc84b98e90267e232e31f89cda320519a23cae4bbe918e677e3",
+      "object_sha256": "fff6b38c476c6240f21765c43bb1c1f070c9f6730aa908835249ad1831e6e264",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/effect_packet.c",
+      "source_sha256": "2f0e71b82fef1b52ba43a2e82632d6787f28a687b8c19d73c98e411fcc16338e",
+      "object_sha256": "68569ede6b7b3f2e42a91575a4064a624a5d36afad0854d56cea7bbb67ab5b6a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_effect_slots.c",
+      "source_sha256": "8f4bf428425355232dda55a86ad4627bdd55f1427237c024a180ff73f07bc50e",
+      "object_sha256": "72601a8e2952db5a5497ed10f25b3d6262fa0feaf78ae144328da449f3bffc46",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/eiffel_tower_emitters.c",
+      "source_sha256": "0bb27013cc6b585b3fe8a23b05946652c97836182a3c5eebac3d1209e78b5e84",
+      "object_sha256": "3c37c69c92f0b6c19eadebb59c44ed618eac94da8be0546f87aab66b25cc2843",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/font_buffer.c",
+      "source_sha256": "c28e49fa60cf5a2b76c7019c15eddf0b4e2051596ebc2e96bece19fc7d676b9a",
+      "object_sha256": "1e4887612788ba16f58deb45bf08562c76d89e0fe434c33ec1d2035fb05d6539",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/font_init.c",
+      "source_sha256": "3dfded8fdf8bfda11b4c891d8282a90fe1aa9be06a072cecca908caf2885eea2",
+      "object_sha256": "ce6f7e888f108a5a7d5b0e32398266455c7fd74487e39d3e92b9a3f82c79614f",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/font_measure.c",
+      "source_sha256": "a53a75955575eb7400aed59c7b9bb937d55520e492a4f1f17698b0418dbaf2b5",
+      "object_sha256": "b808ba45c78813a4969a403659a7de6a0b8a0dd97b831c3f531fa79f9286f4ff",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/font_print.c",
+      "source_sha256": "2e447c4ac860ee214c9d47f3cbf3884afdf98fb1b8a311e0fb1a66dfe082b235",
+      "object_sha256": "0765bb5de1d1b656cb3ce50900d1fef33759e3cfb86ec5a3b3915ae21c206acd",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_surface_height.c",
+      "source_sha256": "00ea2caff571f5a8d8a07b783c88a19883cb89ff3b0db9d00b06e4febe85232c",
+      "object_sha256": "2804b7d83142fcf67eaf488375d16264a26b8f2bc4cf786501638b268cfe61de",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_section_poly_reset.c",
+      "source_sha256": "ea3ecf2549b8bedc6890aca0498e460b48e57875d75be003348974b5927faa10",
+      "object_sha256": "b5c357ab88d738d921d1efca9cbaf6a2a851ee6ae1e239c668f8495725340759",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/weapon_flame_update.c",
+      "source_sha256": "dd2ee05d650031034df1dd9fd1f95607b5650772f919889794d0274b9f8f2c0c",
+      "object_sha256": "8eab0bf5db4d7cc1472a1aea8434acd82341c67f0513b89095c5ebb25abb2c78",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/fx_ground_fires.c",
+      "source_sha256": "d7472f0c20ab699a50feb09d0f968c99d84cf887fa231c7dc9d195e954254f4f",
+      "object_sha256": "ad19cd004fc4d24ff177a0d2ea829176fa07c8ccc1f3265fe7f0538976f5ee37",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_dark_tooth_boss.c",
+      "source_sha256": "5e13c0e777629c673dc3d5fd4c3339a67d8590a326655c5595485263924988fb",
+      "object_sha256": "b4ce9b967722d2e9b39b7eb91a896551ed324e9d869d32cd813feef8ee99b53b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/game_mode_audio.cpp",
+      "source_sha256": "14dd9bed0e52c41793d816bcaa52b8d0d5e19232e0b5e00dfa8537240725cf31",
+      "object_sha256": "b8a55757a1d6055ed7a936335ed3e64a0d0039a63e73abef192d2227378040fc",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/menu_timed_command.cpp",
+      "source_sha256": "f3467dce023078f131674d45d2f5eaf6c18a5c30847fe85c1131753eb2e75781",
+      "object_sha256": "7e992f83bcdc054c61661cee1199cb1dbace0beb29f2b631f1e15501a1f2f623",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_slider_create.cpp",
+      "source_sha256": "fd6943dc2cf8c53569e3ed15ddb6d4dc276d8d643a6e3fd978f8ab5f9b6e9d33",
+      "object_sha256": "44a40d1eff1a449160641e12c6b1ad16cd5753af823f3014cbf44eebf819eae1",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_slider_draw.cpp",
+      "source_sha256": "66814c02402be06dcd72828b9c3f10992f363b1e7428186e96e223106601c301",
+      "object_sha256": "b269f09577bc9679a993f44e19ea9a54843f77ac7a6a95ae1ed2633c2714ad9d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_text_callbacks.c",
+      "source_sha256": "3399022c07764105f09f5cee60cd4bc44d6187237b2676a30b291816e8389390",
+      "object_sha256": "d69886e912fdf76160c7ba584bc3aa6617d544c72d522d12e30f6aad49d29750",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_password_digit_set.c",
+      "source_sha256": "e7761488b8732b65d7de7780f7361448110e4ad628e3244fc3ca90086f34bb30",
+      "object_sha256": "13da5c2ab61b5ce61272a4474f56f7c290543a2ee24b16ec53afc3d74cb4c43a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_code_sequences.cpp",
+      "source_sha256": "5537ae9f19d950e31eac77f7bb43b3ecfaa243179c915f48b9ad26bcd77db27f",
+      "object_sha256": "f8bed3abe8b1d3f30d6456f75d86483eb158ee1d66dd397a322591dccf4f532b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_password_digits_draw.c",
+      "source_sha256": "e0e43ea78337de810fe68a21e59b4e8b4c475c5133b8c33d860225a521cf4f9c",
+      "object_sha256": "378cedaf5de135820d4a3554e4e2f04f09c1bf18da18cf1e5106173a7b6b1508",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_password_digits_create.c",
+      "source_sha256": "bd18672d1915e279ee9e8f855ca556eddd2ad5052bb3ee7f5e4d70cc8b220d69",
+      "object_sha256": "bc95450824300d54562f697252713cf16d98c0157e5e9bf20941721be6a75fe8",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_is_selectable.c",
+      "source_sha256": "0e60aba09e6a7ceebdfc9f4ffd4b1a8e4a14e52541ad181c41ce114ee74a6b74",
+      "object_sha256": "b00f309e9855f7e18f2033fea6a405161e73e59a444f20854a795796d4267f9d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/password_codec.c",
+      "source_sha256": "c894992d0e65cc71a7a16b0bab43924024138433fd345bd3b7ae9e78dcb8f2d1",
+      "object_sha256": "2493f3f45a1931c9fd863035ed9e9cae8a855df539f7be60fd16940af819ba53",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6",
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/password_rebase.c",
+      "source_sha256": "f11d0a98f98bfdda0cfe60bfbb39e5010adbfb0338f5808e658754ee3057d377",
+      "object_sha256": "a6c3c3bebf330b68595b210885cdd80bbc03a0596cd1f966a7e57d342590b2a7",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/tournament_pick_opponents.c",
+      "source_sha256": "69440292a408b209953de3085b01951cdd9e466527cb5267d06ff105f4cb2754",
+      "object_sha256": "a6552ffa5749cc81ebd24d3d1b4f1197e9f3e26f154ead46ad7e475c05644336",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_pick_opponents.c",
+      "source_sha256": "3334bd33b98eb0951bce85a3bc5dff12b4047f2c27b63d1a5dfef5b0641432b7",
+      "object_sha256": "c772cfd7381c54c148a589c2f5eb2cd36c7be2ec3f3a1ea1aaa04f472e9a7dbf",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/game_setting_accessors.c",
+      "source_sha256": "a2888253324146a706f256029d85c1ad3139fcc7deff70b01e1c07e83063e36b",
+      "object_sha256": "de4e5fbf3272bcfb1ba76c3b51a2785ade9e8f8126d2a435b80d80b1c549d2d3",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/game_settings_extra.c",
+      "source_sha256": "c04d49a20ae7d9512f58b344d3d7a061ab2c2f2831c8048f6cd1547cf62dbbae",
+      "object_sha256": "f8486606c3d87cb1b4670529e9f7ce25efc5e81571dc86abfb4600260988145d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/shell_attract_demo.c",
+      "source_sha256": "85eaf7674b2eef72fa797f9718dc3026909ef10c1f365786fd54d5e1757932a3",
+      "object_sha256": "faa487a76046387ebd05122f62a1a97b4d00983c12bd294e747f7572709de528",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/shell_title_intro.c",
+      "source_sha256": "95861d4e2c46ff83f08e123f0dce07cde53d591d78d076f5f5397acefdd9a3ac",
+      "object_sha256": "dd71dea52de3e42dc4aa813f123e96f5cde50bed09511e15fa182e5711f338e7",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/gpu_addprim.c",
+      "source_sha256": "3714c2c14527d4f2eb18504f477166b96970ae20c409ffa4a809c92e0e06676b",
+      "object_sha256": "f23bdb48778af57e008bc8a356d395c92dab757cf323379f03d22c6a5ecc66ee",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.5"
+    },
+    {
+      "source": "src/semantic/gpu_bindings/DrawOTag.c",
+      "source_sha256": "ad70c9e3780134bb83897187725c3a5f2f330c81674c35d978db04d4bf358c36",
+      "object_sha256": "30880d52d1a47c5f360a0d31b63882b666d9180ac01eeac190ecca908c2586aa",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gpu_bindings/DrawSyncCallback.c",
+      "source_sha256": "093250069d484c843cc3d85ef78a4ee646d5fc97ca17d6a3ecb7debce7cc57e9",
+      "object_sha256": "25956d05ce6ff6a286c6320ebaa93f042b6949853270d6f8e128620da41048f3",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gpu_bindings/GetDispEnv.c",
+      "source_sha256": "db9eb52a4f98391aece1d04cea7b674254f80f4ca0cacfe7d70c16b32d2ad12f",
+      "object_sha256": "583ece1df15f8cd567187a3320d63995491516ff3958ca44f845a89753d5785c",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gpu_bindings/GetDrawEnv.c",
+      "source_sha256": "701ed04ec1cbd2b28fac90967adf5131715741921d0d098ce661491a3778e52e",
+      "object_sha256": "f0b62c1f419d3c17959ffb72b6b34418569ee06f7724e3201f3019b4fb651b84",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gpu_clear.c",
+      "source_sha256": "2687f54d7c24444aea952fd930d5d9c36247fad6c3735897c455d50d7c3ce58f",
+      "object_sha256": "4182d6715e9a2c981d6e38e2cf92d9f948f22d84451485a9d890381ef637ae97",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/gpu_control.c",
+      "source_sha256": "58a6897b890f82294f453a662edf80c0c0df85575942ed4b2067ad719dc1cede",
+      "object_sha256": "7bb9a441060a64a952374fe9abba2c843ae72c37fd62e2ba647344b486dac61a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/gpu_display.c",
+      "source_sha256": "a6369e1e3b3754449d53fd0a3dd3366ea05980680c192309428730368d9045fc",
+      "object_sha256": "9b2c3cb083e8824937421511eaf70eb63443ae798aee4b406ffd58fb917ce2fc",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/gpu_reset.c",
+      "source_sha256": "044e69a27e19c3e52a33f5ae2c358d58eb2682b465e7caecf7088bc575242873",
+      "object_sha256": "5b5053465287804d812aa0d16d597ca58121f175801b562ddcb975fd51e8d364",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "gp_size": 0,
+      "compiler": "psyq3.3"
+    },
+    {
+      "source": "src/semantic/gpu_video_mode.c",
+      "source_sha256": "369213b2ef2e6facbca661846f2a019f56db8097afbb3801ab7f0a4cfa5689f1",
+      "object_sha256": "9e6f723b2c00aa807bf67b805f7aa1fa64d32c6795f4b1523e770780d8435133",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gte_depth.c",
+      "source_sha256": "ace30f0832bf0baac912fb2b1e0ead83bd2d63a8c17682d82d8dc692e9465578",
+      "object_sha256": "4f06b015bed33f420d2598666e4307fe8d6eb9ff3b2ca5e053cb52ec31c421b8",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/gte_setters.c",
+      "source_sha256": "a0509f078eeab675a15c8f1419a7705f37d1828b370ccac0ad41f4b9a4af7e62",
+      "object_sha256": "ea0e2878e7adb85a961e1f37ab2e883344c4d40ce190c0c82c5bc06b582f4ec5",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.5"
+    },
+    {
+      "source": "src/semantic/weapon_leap_homing_init.cpp",
+      "source_sha256": "b2d549a805dc629aee0b9c987496fdfce3eaf02350ee8dccce7832c31ae5cc98",
+      "object_sha256": "a1e14ff27d6d3aeb1fb416008836fcec327ac9930c7960f4c372e2de51cee68d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/weapon_leap_homing_update.c",
+      "source_sha256": "8fb1f0f656a943f2d3753b57f7bf5c29489fe8075d76a7acfe051d24dd9befe6",
+      "object_sha256": "efc09a97d71065e5d114257092010a886e25761270991a64a7cfe5c2f8e45d44",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/hud_icons.c",
+      "source_sha256": "97e542d3bf7c805978e77dfcb1c469b351249439398f65043f93692806798c51",
+      "object_sha256": "83427b793ef650d35b718102f5049235eb429bead398f32ebfd471b4cec7a663",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/hud_init.c",
+      "source_sha256": "b3757114ddf4be6ee8585815df1a768ffce288ecf3431c1676991830c0cb5ebc",
+      "object_sha256": "53e537029e8abc8a1b603937dff0085aaa5cb401a4fe08acd44e0c1194612c34",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/hud_main.c",
+      "source_sha256": "c2701c1b9d8be72b4d64908d00d4bab599c93a9ceac9d0dd24a175a8baaab2c7",
+      "object_sha256": "4fbe4e1feb1bbf7d82f45c0f3e72b35609016a093e9bde4c876de27e6d69f901",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/hud_numeric.cpp",
+      "source_sha256": "0dfeedb12da4036054791811ac706f285f280a5a49cc6f61e67b8127fafa2f7b",
+      "object_sha256": "30a2eb97ba39563ce191abef1ec6f9028fea2c0b39639dbb982559a3d38c6256",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/hud_split.cpp",
+      "source_sha256": "7510581c08fe32ed26b734d8213b7c8c919c4bd1c4316e77c77571dfe298cbe1",
+      "object_sha256": "594ab20cc74baba0abb66c4a54f300e3710cb38feaa91436745efeea34962ab4",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/hud_state.c",
+      "source_sha256": "961a3f9c9f6bdcbb0f05f6988c2d6437ba6f0c7911863b3dad578a497e508fe4",
+      "object_sha256": "8495ee4b39f6a66c36a77638deb7cf994a9ebaf26dfa6efbe24b851d0d1c8a19",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/input_commands.cpp",
+      "source_sha256": "095d91d2f18f265ce61c6f98b7483237de81ca16bd48e19c1ca166dd988d1f21",
+      "object_sha256": "147cce1e84bf01b49c0eee21bda5761e82123ec2840ad92f31405bd5b33c7be4",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/math_vec.c",
+      "source_sha256": "6309f2747fd45d5ad8ccfc86e2e937ad63b1e1e989444163bd2f27af097fa5a1",
+      "object_sha256": "e2d21dbf495fa5c2b312e9c2ce56ec9379c29d363bc6c4876f7af0a79e6b51ec",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/mdec_transfer.c",
+      "source_sha256": "f8b70c7dd59170f391bd95b277a8ef83573dcfcfe2fb49ce42ca45cf1f0d3a1b",
+      "object_sha256": "7d007f5846c7cce1b4e1f596b74c13f609688549075124911a7454f3eaec3797",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.5"
+    },
+    {
+      "source": "src/semantic/menu_callback_chain.c",
+      "source_sha256": "131eea1cdb58993d2b94c20495fcfe8d91a3fcd00aa6daf77cf2eb6081d2b111",
+      "object_sha256": "a21e7a7ac6a3116d3d4d47daea84ebf3b3e81ac67c64151ed8d2f52efa8a1412",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_controller.cpp",
+      "source_sha256": "afb1eceef3c97c7d967f8eb53525b7733775514bd6bdb82ba69ec5838607c04e",
+      "object_sha256": "96bfcfd877287b042dd67bc61c9e41e2098fc6b319fa3ede3afd59ea62fb1750",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/screen_credits.c",
+      "source_sha256": "5ca12f70883848044b719299d8d7f26066aa37bc2ad1cef52b95a6df92180506",
+      "object_sha256": "f9ebbf065b4b86cf872e7831e8e1ccd1acc75ee15b8e967b59af5973c7630a45",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_history_movie.cpp",
+      "source_sha256": "9a257029b346cd8c8f5159e73b71d47bf907bdaa62c86d88a77e0f8b7e8c727c",
+      "object_sha256": "f8ce2ffc661fd9cdb415a44c45f80e52feab4f3f9c5d4fa7b2f7cf84cf9fe65a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/screen_ending_setup.c",
+      "source_sha256": "20491addb515c61185795bbc87a84ed75c253da97e61842871b034986f5c05bb",
+      "object_sha256": "7154c6d7ea46f4d8176eac28effa4b4d37a9fcf614366c1f7f212063d6455202",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_object_helpers.c",
+      "source_sha256": "8c125daf038ad85393c20db942e8143a7adcd353f306148096664f17fae50f78",
+      "object_sha256": "4886eda2e71a9736894e858ba20f4b97cb490f6c6a3c2254a7bebd79fd8157c7",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_object_initializers.c",
+      "source_sha256": "29c7b583aa8ed60208a539ce7626465716999f2634ba528865cc90441b013751",
+      "object_sha256": "8b0365fc5664c5973d5ea98351f5a0741fce89c4a755dcdb004b11a9cab7d1ed",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_object_initializers_more.c",
+      "source_sha256": "43769c50eebd2f70a009eb660d6592fb67f755e616c71ebc222eba8c65753ac5",
+      "object_sha256": "b46be3bc259f7a8cc1d84b206092c2eb04b07b17b873eb1844837cbde7627541",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_object_leaves.cpp",
+      "source_sha256": "7f7bf0618fbf2d489a7c2e952a986b16536c8b7d04ca965e41fb482af17cb322",
+      "object_sha256": "fcc5fa2119cc3fdcdc189203c6b5fd546235035077628eea2b8c9a65c5392a5b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_object_logic.c",
+      "source_sha256": "686e9a252c41bbaff8ce15b083eab965dcfab7cddd41f6c8a81cb3e16005dbfb",
+      "object_sha256": "a45dbbcddaf8157e1eba1fa81584bea1a39804ae3bc65eea5723ef2751102339",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_object_setup.c",
+      "source_sha256": "287d925b59ad70bd9f5ccd33a4d0ee497772a28cf3b46ade87be478db045e559",
+      "object_sha256": "42c91355d5f0b4070fb159457bf9eef235ea90c65af30dbf4152a2c437e0086a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_object_virtual.cpp",
+      "source_sha256": "90986db71dc2a3567fe1df43d8d57f00a00c694d8ae1458c4c7451c9363a9b8d",
+      "object_sha256": "8daf370a246995e5ab0d180e98c61634257efd75d7fdf11139ecb1117312843a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_object_wrappers.c",
+      "source_sha256": "7cedb321108c1a02277b044e1a86b5ffd80f1bc4d43196f3d65b9f502bdf0785",
+      "object_sha256": "62e47cc826ed0955ab404eebee7a0074fcef72f6f334331989b47bc59ecf2658",
+      "delay_slots": "compiler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/menu_render_dispatch.c",
+      "source_sha256": "49df9b4a53832d9e00585dc65c18b9774c147285f510d500a6ad9dfd36be6961",
+      "object_sha256": "9172ad292effd275f96725a2b9ef0f70338460491311c7f48b1fd7ba8fc09498",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_scroll_text.c",
+      "source_sha256": "1fa3c25a3f3f366c70daf735a49681d0659cb0d6e4a1966011e0efff6fffdf5a",
+      "object_sha256": "d643c40ab3c296708b4505ccd3778ab300d1ce33507a96393725da4429676b6b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/menu_state_accessors.c",
+      "source_sha256": "65cfc631173e366857546d18a272aaf006620ad79cbecc3a1dfdb828a441e4ac",
+      "object_sha256": "71909ed2a626f63add3ad0a4700e7fbecd953201218d96ad8e632907a7211273",
+      "delay_slots": "assembler",
+      "preserve_common": false
+    },
+    {
+      "source": "src/semantic/menu_state_copy.cpp",
+      "source_sha256": "15567e0c87720dda7e98b086b5a48571ff95b160c7675e9e70d7751c9b52de59",
+      "object_sha256": "7fc1c851a4788ffff3fa68dccd668c6d674af52e8e1557f89a4747e6c58d5e6d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/menu_volume_action.cpp",
+      "source_sha256": "14935608ea13160bab8f1d19e754543416eb90bdd96d5a416fe30f0e3afe3ba1",
+      "object_sha256": "f6795a865911a6a8129c3878c5ad9e868380d44a57e201ec028aef6b7314fc36",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/motion_commands.c",
+      "source_sha256": "222790fbccae32995aa29dc947a2da444158d4f7259d2e0210a85cac6fd8e70f",
+      "object_sha256": "c690dd9a93e5097328cb5e7fcf83afff0340643fd767925cc2d64a82677a7cc5",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/track_vehicle_accessors.c",
+      "source_sha256": "df3044782a941fbcfc494bbb617323542f6cfc5b787855b227f979ed6308b92e",
+      "object_sha256": "f29abe5a9892a0b9b84636b6c7cc0bcbe804e8685dc932d8fa4ab5f6dfd80e9d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/track_vehicle_ground.c",
+      "source_sha256": "b086b89f03eb50ea33efe747b602dcf86eff860e09c244f9dbdf1dab42714142",
+      "object_sha256": "bdd8ce810992728b2a45fcd507c6ce5ccc2d4206f6d4cbe8b97f821893f599e3",
+      "delay_slots": "compiler",
+      "preserve_common": true,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sound_manager_play.c",
+      "source_sha256": "070dca82844f6590828a23335bf97f782cc644bfdf60e5c0e89be9b051dfbf8b",
+      "object_sha256": "5fbd75ae4f76a80fe1f7bfe3c57a88adfe0264c2408a995074a9ef66b95a226e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/object_control_helpers.cpp",
+      "source_sha256": "b1aeea98422f08bd1f7d080ee648d4db20c5606ad8d50007aefcb23dead4870b",
+      "object_sha256": "86d7ec8390d007e963c52cbd188674c7a06a993782c18d62c5388790e6e1fe25",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/object_list_consumers.cpp",
+      "source_sha256": "55ae121496ab2e7ef160f0340bc9644d346922dad829dec519d9530c0533c8b2",
+      "object_sha256": "90b057ce1445e88c65fe7af0f15f248eda535a2bcb35168d10237158fef03194",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/object_list_helpers.c",
+      "source_sha256": "c3f0075aee4f6ca0fdd4734d98dd051db5ba800360d6575ef58b2e30e37732c9",
+      "object_sha256": "424379fe0711953bb7c220435e660c56d1e4ea4ec45280df0a5f64af77415732",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/fx_wake_object.c",
+      "source_sha256": "91881b5973bec7b3cc3d6173aca8c96374612da046c3d4e70776773a1b241208",
+      "object_sha256": "bd8a0b6c75930972cf94822455c797f2ff3725ca1b9c121e22d6d67f61b4fc8d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/target_level_object.c",
+      "source_sha256": "a655e19bbd87596999218012ad99312ca7145d7dc05c40983c6d9ab42b1f74d5",
+      "object_sha256": "048e2009aaea8a0761a2d01f3c4f6559e9d2623721b429408c8c156cc93f4e77",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/object_registry.c",
+      "source_sha256": "f921e6e79c96a45a614ebe6649e34da0d25b2d92107044c4b98b23389740f004",
+      "object_sha256": "d85ee74c5078163415c359328cbf8ce1cd4db31a57b344f6fec4a53764450307",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sound_manager_reap.c",
+      "source_sha256": "9b6b2499a8db7c1e0171e56f8fd8b78a3958400b468278591a53023cec7bd874",
+      "object_sha256": "55a52249bd5b2fe7ff1e0c6bf463929f007aefba304ae843b17b1c434d163a29",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sound_manager_init.c",
+      "source_sha256": "b384b1f1e43e7b509b14a510ac383303fc26914e0cba13e999eca7d30a3fa3a3",
+      "object_sha256": "ec99b86ac6af53f4ea8478368f9aa3bb020d8cd0927ab9bf2c5a8c644be25e0b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/object_virtual_dispatch.cpp",
+      "source_sha256": "9a6569a5a3199a4d73297ed459282075863f256f178bbeb064d2d51f5656a350",
+      "object_sha256": "b276a8c25a28ca160798b494fdf5a905e55841c3229eba395481cba96b88aa25",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/packet_digits.c",
+      "source_sha256": "902b270bf532ca31befb41dcc10bd3d9542464980f8a31dc5887d784fcaadd62",
+      "object_sha256": "41e1351a9dad4583fa3d92e9465f18d5d98b36fbf0825705f452013659072230",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6",
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/pickup_apply.c",
+      "source_sha256": "5fa6df5a757d7f11df192b184f84d62bc4a7e09729affd8e2f22af9d6cfb777c",
+      "object_sha256": "5397b0f6a7e76e89e8a87afbd97cf781f4b78bba49a1f03be0b38cec96385b99",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/proximity_update.c",
+      "source_sha256": "ce750538559ba6adb65666b0bd064c8cd57b6026e41b868b45cb4ae9592c3d70",
+      "object_sha256": "46c48508b870bea67eff3e785af6550005d75b52bf7b492320a17d563373b688",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/registry_reset.c",
+      "source_sha256": "dee50691fec50d9117c684433d0acabe27bf491a96b75952c2efac7d76baf823",
+      "object_sha256": "3d09f845e292f6e1a95a82e331f5221e0aada7c2fcda0acc725fcbe7f2b994f5",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/round_reset.c",
+      "source_sha256": "74b73a0e65b856cf1b38037f465c0fbc2807d5e3dcdc64b6e618e73a50430db8",
+      "object_sha256": "42f43e8bddb6bdd77a674575145d241200bf815806e60d4a3e70b69f6423b083",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/rt_buffer_getters.c",
+      "source_sha256": "137081b63d7140149c26e14015bf9194bf528328bd853f8e4d75945fa945ec26",
+      "object_sha256": "ebd18437b6d78c1a313cfbe8283f07250d6ce739c67c4dbd046552ef8d6de3a4",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/rt_buffer_init.c",
+      "source_sha256": "4580a266551135697616a5f383b3ff60c7458fdd5b7c3ff2ae765832b6a3b9e6",
+      "object_sha256": "516de56089ba697074355fd92e567c16734f821bb15d7c4cc2245bc2b74822bb",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_basic.c",
+      "source_sha256": "f2f3d45d2087092b315024aed2728d6c6c0e3d851ac1299a2dcc90b8f3be7282",
+      "object_sha256": "4878bebde7e557bf1ab20e95de095159ab8336758adf7121795929434db27315",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_ending.cpp",
+      "source_sha256": "d48b9a073cda5578a2fafb00d728a049061136103bc268cb7f1ca8ef5b16ef71",
+      "object_sha256": "eb2fc105acebba6f50410659d7d15e1f4469b0e7c346a4fce1315bef8cd9159a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/screen_resource_records.c",
+      "source_sha256": "1aa2711ed01bc4ff336a628844cbdd4d46d2930b84dd705241cbbbed9ac99a78",
+      "object_sha256": "43ae4b1ac9414b32d9edf4e27ff1974bc45b023f00df46e946a847da1b4afc2d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_transfer.c",
+      "source_sha256": "eb7b8c1c98109a083221407ff18195343d5240151a6b62b83773558b2ba749b5",
+      "object_sha256": "a5479ef8e3c5195bb7c1facf078317e915af2a4d9cfcb0816b749b6c579687aa",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/selection_commands.cpp",
+      "source_sha256": "98066f7aca7fa1ef87bb814af81c6974524cce5de61b9e47343ec66192820605",
+      "object_sha256": "6aff6f6947696120162fc00d8cec65201faf46af7137561ad0c39c047f323124",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true
+    },
+    {
+      "source": "src/semantic/view_watch_ai.c",
+      "source_sha256": "0a143aeb464668d7803163f0b6059fb8971e14f867c0774a6a82b9ff72b2e66c",
+      "object_sha256": "ab1cb331f96d47389c166231d01510c406b1a72fcf3df5e53abb72a245eebf5a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/shared_pad.c",
+      "source_sha256": "60c914fd98951d9f86f9b857bab7fe644dbe6235f1cdcbc5f113ee14acf541f5",
+      "object_sha256": "8ffc496e8738340c1034f0766c0fa2d983a6d57bb2965da021ecea58ab209773",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/shell_machine.c",
+      "source_sha256": "2bdd3c6dcab7450c77f7c5c7f3e886dea345cb955683607c928495b7927fd7da",
+      "object_sha256": "620730383d3b876f46b81f2d335e2cfe48fde967005eaebf8c9a056d397261df",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_tornado.c",
+      "source_sha256": "e8fc1734a1d9af106f175bf220dbdd550c7e9e02d42d8d992aca563049545547",
+      "object_sha256": "75306584fdcc23dd17c35207ef7b4da8ad8dfbfb59a62d6379bd7c0fdaf3a92e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_start_nodes.c",
+      "source_sha256": "9f4d0e02b8d72dff882d2491bc2fab0adc40e10bcf16fe7d3149e1e64ffd5e40",
+      "object_sha256": "a22961de761f6753feb34b805d0aa1b179555639366698c5cb83bdec910fc349",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6",
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/small_game_helpers.cpp",
+      "source_sha256": "2cc07150931953edbc70fa9decc4614aa2f0ced4c0720c2da973479047d26399",
+      "object_sha256": "98b3009e50829a45dfbb0980f9d51a7abf84071601449bb5909602800614f302",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sound_xa_repeat.c",
+      "source_sha256": "ec2e93912bf54683d97f967be02749957cc1080b331d7f97d8d4ee48ad035a3b",
+      "object_sha256": "dea8273e4d268e233befa63864bd5b8ae0c34a4494ce82268649bc49b0a25755",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/strike_update.c",
+      "source_sha256": "4ff0f6f1e94f7aa73537d8c2c96365f9a974e1035f681391570dc9d6a627f5ff",
+      "object_sha256": "b488f05faa0301070aac1e8d98ef7aa118752c66d8ebc52708f29feeea1d5c6f",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_actor_events.c",
+      "source_sha256": "53ecc9dffbaf0a810061eeb52f0c1d02cfe34c90ef85c8332dd25e377c12c517",
+      "object_sha256": "b2636694499eab10ce885a4059bdb5cec0ede74bfcfa0b103228bb33be064366",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_actor_init.c",
+      "source_sha256": "9dbf7a1aefb4eab8df6fc02b0067b5c451148a6a0198494c5152efb032c5b663",
+      "object_sha256": "4a110ee32059ebe0d325bb9e53ebc0333d85b60e785f92ae37de6d373ab620a4",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_actor_lifecycle.c",
+      "source_sha256": "e86182f876a85982152e91c61cf3dd48ad8315a607e8d1efa3dcf8f19c667f16",
+      "object_sha256": "26b8f733ae7375d41328b78488e25d831d0b9e004f97079fa8f947aaf89c00e9",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_actor_update.c",
+      "source_sha256": "a6d2d916af4533ca4f160e6ac92b5a2b82c6a652c638ce59546150e97947343e",
+      "object_sha256": "1e56bbc326a93c5f15bc31fe26784d8b194c25823a2c02028b9eabb69619eeaa",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_executor.c",
+      "source_sha256": "52da653cc60bdb6438dc55f9f397be882485d48dcbb33fa277f81d474579eca6",
+      "object_sha256": "e6ab920f67873465a4bf054a837b17dbb935873e80ffc544b0f70f80335de99a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_pool.c",
+      "source_sha256": "824aa9e73770d5e30f1565ca9d10ce8fe68b4715dba215bd403395567dfb11f7",
+      "object_sha256": "69f1472db7bb19c6e0fee6c04c01187fb8e819551c94e5431671b8eaf416e069",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_secondary_events.c",
+      "source_sha256": "43cddc62796ddf3ab80c09b014c478d1ce789443356606568104086552f9c076",
+      "object_sha256": "2a9b73848d683d384df276e88aafcab81086553da231d353d4e77693532858ab",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/target_slot_update.c",
+      "source_sha256": "0e9a59ad823ea053a5490871b1aca475c61e191c6fcec1acff406d810da852f5",
+      "object_sha256": "9c58aa872f2808c1e7669b296e012ec9b62cd8cf188bc5da7fe817db6bf8f64e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/terrain_load.c",
+      "source_sha256": "c493dda55d5b60f49ad0491f6d49552d355204b7649e82b9ab6fec6d3bf6b3fd",
+      "object_sha256": "4ae701a48b44aac8e7817aff7a86749ff64ccbb2ce9764f72846aa810736da7a",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/timer_frame.c",
+      "source_sha256": "d03cf2ac0bc5118c5aab153aa8657806bc8140225bdab2c7aa6f7d7d11937eb8",
+      "object_sha256": "a491a7923a06f54af73f3497d5fcb6c2a2767bc469f243a84ffec05f5335ac1b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/update_guns.c",
+      "source_sha256": "33d3fbe8bc647864b187f86370285e375c46ed68fc74b3253fc9340208137139",
+      "object_sha256": "aba7fe6a14699e4df1210078ae3ce012ba50b6141c13c561b9fa465e296e2aa1",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/vab_retry.c",
+      "source_sha256": "66ede553749c5979669121b37b8495cf8eb20f2ef4ea5405656cfea3a0a6ded4",
+      "object_sha256": "69d6a37404e7cfdb6b9e860cf039e9e2d9ed3af42236dbb4d26904a018c7768e",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_basic.c",
+      "source_sha256": "cc62dd29c9d6bf001e74c55e173afe38f70a7bc5d35399328ea2a98fba13840c",
+      "object_sha256": "bf441b883299e439df37371d5a558bbb1a79099c5fb8045861c3aaf7b880e50d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_helpers.c",
+      "source_sha256": "fe928afd46686d941cee6909b14f5f765532f0a950db1430b3b0ef4816dcc8ef",
+      "object_sha256": "3bee0cb60a192c194354259f163ed2fd3425389caa711855b48e1ea672cf0cf2",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_launch.c",
+      "source_sha256": "ae0c54fd2ab5c3f6e3f827c20b4ef77b90d715fed6118047d1e54aeedc83c638",
+      "object_sha256": "09c0ce03b73da817d54de3b054afe5ec405b4393b29d136684d25689114b3fb3",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_select.c",
+      "source_sha256": "ba132b0c105462b7302046ef0711207ad4012b076ddeab8d4ab31b53d6faf84d",
+      "object_sha256": "d1648846e82abfa4fef69747a4c3ebd95359de4f4b94abb158f811e4330fad05",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_slot_scan.c",
+      "source_sha256": "0247322a9e7f9280166fec686d56327b82c163a71fef6f0ad669ffc6eb94ad58",
+      "object_sha256": "4a4928e5bccbf27e063687bbbe7ace15b09213660c0ab28b1fd1dd1435332f51",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_slot_target.c",
+      "source_sha256": "b895e59cf231a9f838875731a3468d017260565f5c48d588aae34fbaf0406320",
+      "object_sha256": "e6ab10cb08deab1bead77b6b53ec1ae86fe26d5f18d5ed8938aad43a14029ed2",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_slot_writer.c",
+      "source_sha256": "68c6ba678f6eb5bd77f79548c8b356d43aecf40856b6da4abbeb7147e6a6ea51",
+      "object_sha256": "5a7ded87ac72760dd19fcdc55bc9929bd66f8c82fa70ce32210ffbfe7392cf3b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_special.c",
+      "source_sha256": "7233d51903d31605d972f3941026dddeb225123111135066a2190526c72d2eb8",
+      "object_sha256": "2e2de8c8a5c839b71b8f74107e8f022efb4aeae60fb15238755181fcf1e90216",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_tables.c",
+      "source_sha256": "72a1e85a0a4223f0d448c0912718fbd715f088f59d9174ce06c81fec5eb82e7a",
+      "object_sha256": "5619aaa1ce2a741678d37d9703cae1f42ce3839b6fdfbf74e45335697736e2d2",
+      "delay_slots": "compiler",
+      "preserve_common": true,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_targets.c",
+      "source_sha256": "6b64403871f13a92a6504ac736d00bc7eb20c112ee4a6b434cc830469159f71d",
+      "object_sha256": "dd08435cf577df625d852fa898599be99ec66945b40cb3b036539e4961e02f2d",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_tick.c",
+      "source_sha256": "8b0a45568ad7400307f0ebe37505730d9ab91d6805c05c050f50bde02ec3b555",
+      "object_sha256": "563362e68918084e5c188e505ee6d12d4e0ce251c7a79e61426a03858b399a0b",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_tick_init.c",
+      "source_sha256": "873a0b2ee6809ed4d07d3d7b1cfbbf59da2c0aab68d93ee786d099eee2dcf860",
+      "object_sha256": "32d4c073cf01d11492fe0c401a8dea29ca40f4d16039aa8e53c3ed1df224c206",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/controls.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_records.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_input.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/rt_main.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_update.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ua_init.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/session_runner.cpp",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/view_system.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/camera.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/spawn_tables.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/pickup_spawn.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_single.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_car_select.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_ai_select.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_motion.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_fall_limit.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_body_pose.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_physics.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_contacts.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_driver.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_steps.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_wheels.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/track_vehicles.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_stats.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/tournament_tables.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_damage.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_spin.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/global_accessors.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/misc_one_liners.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/arena_load_register.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_route_helpers.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_object_register.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_special_missiles.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_route_loaders.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/fx_explosions.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_card_layout.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_fire_specials.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_car_start.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/terrain_load_presets.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/fx_sprite_spawn.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_parts_spin.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_fire_missiles.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_restart.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/fx_debris_splash.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/scene_init.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_missile_trails.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_link_node_pick.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_collapse_warps.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/shell_main.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_bullets.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_wheel_sway.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_route_setup.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_damage_human.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_deathmatch_result.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/arena_setup.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_destroyed.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/ai_route_nodes.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_card_draw.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_object_contact.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_pause_menu.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/random_event_level2.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/hud_radar.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_crash.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_tumble.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_collapse.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_controller_multiplayer.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_arcs_draw.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_title_level_select.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/screen_options_audio.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_slam_swing.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_contact_resolve.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_rollover.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/weapon_ricochet.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_control.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/projectile_hit.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/world_load_object.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/car_collision.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sdk_libetc.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libcd.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libgpu.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libspu.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libsnd.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libpress.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libapi.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libgte.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libc.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libsnd2.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libspu_sva.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/nullsubs.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/lib_r138.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/lib_r140.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/engine_clut_anim.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_fileio_debris.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_hit_detection.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_anim_hit_volumes.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_render_scene.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_math_near_pass.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/sdk_libspu_leftovers.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/engine_sound_driver.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/sdk_libsnd_leftovers.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/movie_stream.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/sdk_libsnd_vs_vh.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0
+    },
+    {
+      "source": "src/semantic/sdk_libsnd_ut.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0,
+      "fvolatile": false,
+      "extern_gp": false
+    },
+    {
+      "source": "src/semantic/engine_sound_lists.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_sound_object_update.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/model_emitter.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "fvolatile": true,
+      "extern_gp": true,
+      "compiler": "psyq3.6"
+    },
+    {
+      "source": "src/semantic/sdk_libgpu_font.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.6.3",
+      "gp_size": 0,
+      "fvolatile": false,
+      "extern_gp": false
+    },
+    {
+      "source": "src/semantic/game_misc_accessors.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/engine_misc_accessors.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.6",
+      "fvolatile": true,
+      "extern_gp": true
+    },
+    {
+      "source": "src/semantic/sdk_extra.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0,
+      "fvolatile": false,
+      "extern_gp": false
+    },
+    {
+      "source": "src/semantic/gte_extra.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0,
+      "fvolatile": false,
+      "extern_gp": false
+    },
+    {
+      "source": "src/semantic/sdk_extra_snd.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "gcc2.5.7",
+      "gp_size": 0,
+      "fvolatile": false,
+      "extern_gp": false
+    },
+    {
+      "source": "src/semantic/sdk_unknown_o0.c",
+      "delay_slots": "compiler",
+      "preserve_common": false,
+      "compiler": "psyq3.3",
+      "gp_size": 0,
+      "opt": "-O0"
+    }
+  ],
+  "maintained_functions": 517,
+  "replaced_functions": 1775,
+  "expected_image_sha256": "9219f7ba6531477280c4c907c20db0c45f83d433bf9f9d63b076054e829bb10a",
+  "expected_source_only_sha256": "d755c86ed01f437f9289d996a0dddffe7c78a6c2de565032143caf2d711acb55",
+  "expected_source_only_sdk_lib_sha256": "f557c1e3e8708e706382043eaf420e552d2170237b33152265035b1f8f39a5f1",
+  "retail_sha256": "12864f090a02c94b8b6e6d21d40119c12e59fd5a7327db4f80052c7e674e1bac",
+  "source_only": false
+}

@@ -1,0 +1,17 @@
+# Retail game files (copyrighted, not distributed)
+bin/
+cdimage/
+# Third-party toolchains (see README)
+toolchain/
+# Build outputs and scratch
+work/
+__pycache__/
+*.pyc
+# Retail segment bytes from tools/split_retail.py (copyrighted)
+split/
+# build.py --source-only: the published source-only image for the PC port and its maps.
+# The image contains retail bytes (the retail pieces of split/), so it is never committed.
+out/
+# Build records written by build.py, and the optional file list of tools/make_package.py
+LAST_*.json
+PACKAGE.json
