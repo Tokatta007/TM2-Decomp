@@ -10,6 +10,7 @@
 #include "semantic/cars.h"
 #include "semantic/car_groups.h"
 #include "semantic/port_humans.h"   /* HUMANS16_PLAN.md H1: the local-player map; request 50: vacant records */
+#include "semantic/port_team_locks.h"   /* request 123: a team game's player at -1 */
 
 typedef struct TM2HumanCar Human;
 typedef struct TM2AICar AICar;
@@ -322,7 +323,11 @@ void *__attribute__((section(".text_8011CF0C"))) aiGetTargetCar(s32 i, u8 *human
     void *car;
     if (aiCarTargets[i] == -1) {
         *human = 1;
+#ifdef TM2_PORT_TEAM_LOCKS
+        car = &humanCars[portTeamNearestFoe(i)];    /* request 123: the nearest player not of its team */
+#else
         car = &humanCars[humanCarNearest(aiCars[i].pos, -1)];
+#endif
     } else {
         *human = 0;
         car = &aiCars[aiCarTargets[i]];

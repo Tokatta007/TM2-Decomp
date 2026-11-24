@@ -1814,3 +1814,146 @@ Bits 9 and 14 were reserved with no effect and already in `TM2_BAL_ALL` (0xFDFFF
 **Checked:** the counts and offsets above were read from the USA disc image with `tools/dmd_lod_dump.py`'s `Disc`
 reader (HKONG.DMD in dbscan's pop order; BB.DMD's trees and primitive records). Nothing was built and nothing was
 tested in game.
+
+## 37. Request 123: computer teammates' aim in a team game (`portAiAim`'s `t < 9`; built: `TM2_PORT_TEAM_LOCKS`)
+
+Asked 2026-11-24 (KinggzZ, v1.0.14, King of the Hill with teams: red was him and 14 computer cars, blue Dark Tooth
+alone). His teammates' homing missiles and specials locked onto him. Items 1 and 2 are the port's own function
+(`decomp/files/src/port/port_ai.c` in the port repository, read only); item 3 is the game's code.
+
+| Item | Result |
+|---|---|
+| 1. `t < 9` | **the port's code**: 9 is retail's AI record count (`TM2_RETAIL_AI_CARS`); bound it by `aiCarTotal` and `TM2_MAX_AI_CARS` (16 with `TM2_PORT_CARS=16`). The code is in 37.2 |
+| 2. No target with teams: no lock | **the port's code**: write `*out = 0` and return 1 (37.2). Every caller handles a 0 target: the shot flies straight (CONFIRMED, 37.1) |
+| 3. Other homing searches | **none re-locks in flight** (37.1). Two locks pick their own car with no team test: Grasshopper's leap and Outlaw's taser. **Built:** `TM2_PORT_TEAM_LOCKS` (37.3); with `TM2_PORT_DT_SWOOP` it also covers Dark Tooth's swoop at -1 |
+| Added (the user's ask) | **built** under the same define: a computer car's player at `aiCarTargets` -1 is the nearest player **not of its team** (driving, the melee machine-gun check; 37.3) |
+
+### 37.1 Where a computer car's shots get their target (CONFIRMED, read in the C)
+
+- **At the fire, once.** Every steering shot asks `weaponFindTargetAhead` (80109F94) or `weaponFindTargetBehind`
+  (8010A2AC) for its target when it is fired:
+  - the pickups: fire (1), homing (2) and napalm (5) missiles, the freeze (100) and napalm (102) energy shots, all
+    through `weaponLaunchProjectile` (801052BC);
+  - the specials in `weaponFireSpecial` (80105A7C), each through its `AIM` step:
+    - Sweet Tooth 0x10 (the spiral missile);
+    - Warthog 0x40 (three missiles);
+    - Mr. Grimm 0x50;
+    - Spectre 0x80 (the ghost missile);
+    - Roadkill 0x90 (the boomerang);
+    - Minion 0xE0 (three missiles and the freeze missile);
+  - energy 106 in `weaponFireEnergyAttack`;
+  - Dark Tooth's missiles in `aiDarkToothBossUpdate`.
+  
+  Your `portAiAim` hook at the top of both searches therefore covers every one of them.
+- **In flight, no new pick.** `weaponProjectileUpdate` (800DB110, `projectile_hit.c`) steers at `p->target` through
+  `weaponProjectileSteer` as long as it is set. The target can be dropped (type 0x29 past a 341 turn; with
+  `TM2_PORT_ROLLBACK`, `portSeekerTargetOk`), but nothing searches for a new car. The one target set in flight is
+  Roadkill's boomerang turning back to its own thrower (`p->victim->pos`), never another car.
+- **A 0 target is safe.** `*out = 0` is retail's own "nothing in the cone" result. A 0 target never steers, and
+  Dark Tooth's and the specials' fire functions take it as such.
+- **Own-pick locks (no aim search, no team test):**
+  - Grasshopper's homing leap, `weaponHomingLeapInit` (8010EF44): the nearest car within 400 inside a 682 cone ahead;
+  - Outlaw's taser, `weaponTaserTarget` (801075C8): the nearest car within 80 (a mod car's range), which it spins out
+    (6).
+  
+  Both are built in 37.3.
+- **Hits, not locks** (they hit every car in reach, a teammate too): Axel's shockwave 0xB0, Twister's tornado, Mr.
+  Slam's grab, Thumper's flame, Shadow's 0xD0 strike (`areaDamage`) and the Moscow lightning. Friendly fire is decided
+  where the port filters damage, not by a target.
+- **`aiGetTargetCar` at -1** (8011CF0C): `humanCarNearest`, the nearest player of any team. It is used for where a
+  computer car drives and in `weaponFireSelected`'s melee check, which only forces the straight machine guns when that
+  car is within 400 and ahead. It is not a lock. Your `teams_retarget` writes -1 only when an enemy player is in, but
+  a nearer teammate player was still the one returned: the car drove at its teammate, and the melee check could
+  force the machine guns at him. **Built** with `TM2_PORT_TEAM_LOCKS` (37.3).
+- **Why KinggzZ's teammates hit him:**
+  1. Dark Tooth's record was past the 9th, so `portAiAim` skipped him and fell to its player search.
+  2. The only player was a teammate, so `best < 0` and it returned 0.
+  3. Retail then wrote `AI_AIM_TARGET(owner)`, human 0's position: him.
+
+### 37.2 `portAiAim` with items 1 and 2 (for `decomp/files/src/port/port_ai.c`)
+
+```c
+int portAiAim(int owner, int *out, int mode)
+{
+    struct TM2AIRecord *me;
+    int t, i, best;
+    unsigned int d, best_d;
+
+    if (!portConfig.ai_vs_ai || mode || owner < 0 || owner >= aiCarTotal)
+        return 0;
+    me = (struct TM2AIRecord *)&aiCars[owner];
+    if (me->state.dead)
+        return 0;
+    t = aiCarTargets[owner];
+    if (t >= 0 && t < aiCarTotal && t < TM2_MAX_AI_CARS) {         /* item 1: every target record (was t < 9) */
+        struct TM2AIRecord *a = (struct TM2AIRecord *)&aiCars[t];
+
+        if (t != owner && !a->state.dead &&
+            !(portConfig.teams && t < 16 && owner < 16 && portConfig.team_ai[t] == portConfig.team_ai[owner])) {
+            *out = (int)aiCarObject(t)->pos;
+            return 1;
+        }
+        if (!portConfig.teams)
+            return 0;                       /* without teams as before: the retail pick */
+        /* teams: the target is dead (respawning) or a teammate: a player of another team, else no lock */
+    }
+    best = -1;
+    best_d = 0;
+    for (i = 0; i < humanCarTotal && i < TM2_MAX_HUMANS; i++) {
+        /* ... unchanged: the nearest living player not of its team ... */
+    }
+    if (best < 0) {
+        if (portConfig.teams) {
+            *out = 0;                       /* item 2: no foe: no lock, the shot flies straight */
+            return 1;
+        }
+        return 0;
+    }
+    *out = (int)humanCarObject(best)->pos;
+    return 1;
+}
+```
+
+- **The teammate test on `t`:** an extra guard. Your `teams_retarget` never picks a teammate, but its third pass can
+  pick a dead enemy record (one respawning). That record now falls to the player search instead of being aimed at.
+- **Without teams:** everything is as before, except that targets in records 9..15 now count (the bound).
+- **Online:** state only from the records and `portConfig`, so the same on every machine. Your baselines with teams
+  change wherever a computer car's target was record 9 or above, or a teammate was the only player.
+
+### 37.3 The own-pick locks pass a teammate (`TM2_PORT_TEAM_LOCKS`)
+
+- **Built:** with `--port-define TM2_PORT_TEAM_LOCKS` (`port_team_locks.h`), a lock's candidate of the firer's team is
+  passed. The candidate after it, if any is in reach, is taken, and with none in reach there is no lock: the leap
+  stays inactive, and the taser's arc fires with no target and spins nobody, as retail with nobody near.
+  - `weaponHomingLeapInit` and `weaponTaserTarget` add `TM2_TEAM_FOE(firer slot, candidate slot)` to their pick test.
+    Retail's tests come first, so the call is made only for a car in reach.
+  - **The teams:** `portCarTeam[slot]` (`.port_bss`, every variant, 1 byte per car slot, `TM2_MAX_CAR_SLOTS`). Write
+    each car's team + 1 at its slot (`humanCars[h].slot`, `aiCars[k].slot`) when a team game starts and whenever a
+    car changes team. Write 0 for no team, and clear the table for a game without teams. Two cars are teammates when
+    both entries are nonzero and equal (`portTeamMates(a, b)`). All 0, the default, is retail's pick. The slot stays
+    with a car through `portHumanCompact`, so the table needs no update there.
+  - **A computer car's player at -1:** `aiGetTargetCar` (8011CF0C) takes `portTeamNearestFoe(k)` instead of
+    `humanCarNearest`: the nearest player not of its team, by retail's measure (`|dx| + |dy|`, the first such present
+    player when none is within 0x7FFF). With every player its teammate, retail's `humanCarNearest` is kept. Every
+    reader of a computer car's target goes through `aiGetTargetCar`: its driving and attack steps (`ai_steps.c`,
+    `aiCarDrive`) and `weaponFireSelected`'s melee check, which forces the machine guns only at that car. So a
+    computer car drives at an enemy player and never forces its guns at a teammate. Its target turns from a teammate
+    to an enemy the moment the port's `teams_retarget` gives it -1 again.
+  - **With `TM2_PORT_DT_SWOOP`:** at `aiCarTargets` -1 (your "a player of another team"), `portDtSwoopPick` takes
+    `portTeamNearestFoe` too. Your targeting never leaves him at -1 with every player his teammate.
+- **Retail unchanged:** without the define, `TM2_TEAM_FOE` is the constant 1 and both functions compile to the same
+  code. With the define and the table all 0, both picks are retail's.
+- **No `rand()`**, and the same on every machine: the table is match state (snapshot and hash) written from your
+  settings.
+- **Checked:** `check_custom.py` check 32, LinkMips on made-up records:
+  - 2 players and 3 computer cars on a line, each lock fired from a computer car and from a player, under 8 team
+    tables;
+  - the pick is the nearest car in reach that is neither the firer nor its teammate; with every team 0 it is retail's
+    nearest; with no foe in reach there is no lock;
+  - `portTeamMates` on its own: equal nonzero teams only, slots out of range 0;
+  - `portTeamNearestFoe` and `aiGetTargetCar` at -1 for each computer car under the same tables, and at a target
+    >= 0 (its computer car, as retail).
+  
+  **Not tested in game.** To test: a team game with a computer Grasshopper and Outlaw on your team. Neither leaps at
+  nor tasers you, and both still go for the other team. With an enemy player in, your computer teammates drive at
+  him, not at you.

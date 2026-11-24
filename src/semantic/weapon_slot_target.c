@@ -47,6 +47,7 @@ extern s32 aiCarCount(void);
 #include "semantic/car_numbers.h"   /* request 73: TM2_SPECIAL_NUM (a mod car's taser reach and arc) */
 /* the firer's car slot, for its numbers (evaluated only with TM2_PORT_SPECIAL_PROFILE) */
 #define TASER_SLOT (human != 0 ? HREC(car)->slot : AI(car)->slot)
+#include "semantic/port_team_locks.h"   /* request 123 item 3: no teammate in a team game */
 
 /* @801075C8. Allocate the requested five-entry weapon slot and associate it
  * with the closest actor from either active actor collection. car is a human
@@ -91,7 +92,8 @@ weaponTaserTarget(void *car, s32 human, s32 id)
     for (; index < group_count; index++) {
         actor = humanCarObject(index);
         distance = DISTANCE(origin, actor);
-        if (actor->identity != self_identity && distance < TM2_SPECIAL_NUM(TASER_SLOT, TM2_SPN_RANGE, 80) && distance < best_distance) {
+        if (actor->identity != self_identity && distance < TM2_SPECIAL_NUM(TASER_SLOT, TM2_SPN_RANGE, 80) && distance < best_distance
+            && TM2_TEAM_FOE(TASER_SLOT, humanCarGet(index)->slot)) {
             best_distance = distance;
             best_identity = actor->identity;
             attachment = humanCarGet(index)->motion.pos;
@@ -104,7 +106,8 @@ weaponTaserTarget(void *car, s32 human, s32 id)
         if (aiCarGet(index)->stats.hp > 0) {
             actor = aiCarObject(index);
             distance = DISTANCE(origin, actor);
-            if (actor->identity != self_identity && distance < TM2_SPECIAL_NUM(TASER_SLOT, TM2_SPN_RANGE, 80) && distance < best_distance) {
+            if (actor->identity != self_identity && distance < TM2_SPECIAL_NUM(TASER_SLOT, TM2_SPN_RANGE, 80) && distance < best_distance
+                && TM2_TEAM_FOE(TASER_SLOT, aiCarGet(index)->slot)) {
                 best_distance = distance;
                 best_identity = actor->identity;
                 attachment = aiCarGet(index)->motion.pos;
