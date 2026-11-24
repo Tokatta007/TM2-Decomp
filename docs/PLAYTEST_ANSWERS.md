@@ -1716,3 +1716,101 @@ Bits 9 and 14 were reserved with no effect and already in `TM2_BAL_ALL` (0xFDFFF
   stage flag, so he does not swoop the moment he is back if his swoop timer ran on.
 - A boss Dark Tooth brought back would need more (the stage flag to 0, and lives taken only after his second phase,
   not while he waits for it); not asked.
+
+## 36. Request 122: Dark Tooth's phase, the bad mesh named (two players' logs; the writer not found yet)
+
+### 36.1 The object: `csObjectPool[40]` = `weaponRicochetPool.slots[0]`, drawing Dark Tooth's ricochet look (CONFIRMED by reading and the disc)
+
+- **Index:** 0x2E40 / 0x128 = **40** exactly.
+- **The phase's allocation order** (`arenaResetSystems` after `sessionLoadArenaAndCars` loads HKONG.DMD; HKONG.DMD's
+  roots read from the disc in `dbscanHierarchy`'s order). `viewInit` only clears its objects (they are made later,
+  by `viewCreate`).
+
+  | Objects | Made by |
+  |---|---|
+  | 0 | `csPoolInit`: the root |
+  | 1-8, 9, 10 | `debrisInit`: 8 chunks, the debris root, the burst object |
+  | 11, 12 | id 2 (root 1): the camera-attached model and `viewSetFollowObj`'s copy |
+  | 13-16 | id 2217 (0x8A9): `weaponShieldPool`, 4 |
+  | 17-39 | id 2212 (0x8A4): `weaponMineObjects`, 23 |
+  | **40-49** | **id 2210 (0x8A2): `weaponRicochetPool.slots[0..9]`** |
+  | 50, 51 | id 2209 (0x8A1): the remote bombs; then the rest of the level, the missiles, the trails and the car installs |
+
+  These counts hold with retail's pool sizes, which is `portCarOptions` bit 3 clear (`TM2_POOL_LIVE`). With bit 3
+  set the shield and mine pools are larger, and object 40 would be a shield or a mine.
+- **Why the counts are right:** the mesh confirms the retail sizes. Only a ricochet slot ever takes a model from
+  `BB.DMD`. `weaponFireSelected`'s case 6 (and the port's own fire path, `port_variant_arrays.c`) sets
+  `slots[n]->model = weaponRicochetModelAlt` when the firing car's type is 0xF0. `weaponRicochetModelAlt` is asset
+  2214 (0x8A6, `weaponAssetBind`), written by every BB.DMD install, so it is in the **last** BB.DMD loaded.
+
+### 36.2 The model: frame 5 of the ricochet's 15-frame animation in the boss's BB.DMD (CONFIRMED from the disc)
+
+- **The offsets fit both logs:**
+
+  | Log | Files before BB.DMD in `portCarDmdArea` | Mesh offset | Into BB.DMD | Verts offset | Into BB.DMD |
+  |---|---|---|---|---|---|
+  | Supr | RK.DMD 39,168 + MN.DMD 32,736 = 0x118E0 | 0x20400 | **0xEB20** | 0x136B0 | **0x1DD0** |
+  | Mohamed | MN.DMD 32,736 + his own BB.DMD 61,660 = 0x170BC | 0x25BDC | **0xEB20** | 0x18E8C | **0x1DD0** |
+
+  The BB.DMD in question is the boss's, group 3, in both logs (Mohamed's group 2 is his own BB.DMD).
+- **The node at BB.DMD + 0xEB20** is mesh frame 5 of the ricochet look:
+  - the tree: root 3, group 2214 (0xF09C) > group (0xF07C) > animation (0xEFAC: type 3, 15 frames 0..14, loop, period
+    1, not registered: the walker steps it while drawn) > frame 5, the mesh at 0xEB20;
+  - the mesh: 2 primitives (FT4, 9 words each), verts at +0x1DD0, normals at +0x1FD8, **primitives at +0xEB4C** (right
+    after its 44-byte header).
+- **On the disc** the 44 bytes are `00 ff 00 00 | 10 ba 01 80 | 18 bc 01 80 | 8c 87 02 80 | 02 00 00 00 | 00 00 01 00 |
+  00 00 00 00 | 5b 00 00 00 ea ff ff ff 65 00 00 00 | 43 00 00 00`. In RAM, after relocation, +0x0C should hold
+  `base + 0xEB4C`: 0x80663BB0 for Supr and 0x8066938C for Mohamed.
+- **The level's ricochet look** (HKONG.DMD 2210) has the same shape: 15 frames of 2 primitives each.
+
+### 36.3 What the damage says about the writer (CONFIRMED by reading; the writer not found)
+
+- **Only the primitive pointer is wrong.** The vertex pointer at +0x04 is right in both logs (base + 0x1DD0). A
+  32-byte matrix written at a node's +0x04 (`carBodyPoseUpdate`, `portVisualSteadyPose`) or 20 bytes
+  (`portCarPartsSpin`) aimed at this mesh would have broken +0x04 too. A matrix written there would need its node at
+  mesh + 4 or mesh + 8, which is not a node in BB.DMD.
+- **The bad value does not depend on the load address.** It is `FDA1F14C` in both logs, with different load addresses
+  and different correct values; request 110 (other cars) had `FDA1F150`. So it is neither a relocation applied twice
+  nor a pointer that is off by a delta. Something stores an absolute value: two s16s, -3764 and -607, which is still
+  the shape of matrix entries (28.1), now landing on +0x0C..+0x0F only.
+- **A stale pointer from the regular battle cannot explain both logs.** The word is at the same place inside the
+  boss's BB.DMD in both, but at area +0x2040C in one and +0x25BE8 in the other. Before the phase, those addresses
+  held different files at different offsets. No retail car file other than BB.DMD is longer than 0xEB2C (the next
+  largest is RK.DMD at 39,168), so the regular battle would have needed BB.DMD in the same group at the same
+  address, in both sessions.
+- **Ruled out by reading:**
+  - **The disc data and the load:** every frame's primitive records are consistent (lengths 9, one 10; each list ends
+    exactly at the next mesh header), so `modelRemapTextures` and `meshSetPrimQuadrants` cannot run past frame 4's list
+    into frame 5's header.
+  - **The asset hooks:** `carFreezeBuild` writes the head root's +0x20 (child 2 = the freeze record), not this model.
+  - **The ricochet code:** the fire path and the update write the slot object only, never its model.
+  - **Other node writers:** the blast and lava-splash pools write +0x04..+0x0C together, which would break +0x04.
+- **Not ruled out:** a writer that keeps a pointer computed inside this load's BB.DMD copy of the boss, a port
+  feature included. A write watch names it (36.4).
+
+### 36.4 For the next playtest: the write watch (asked step 3)
+
+- **What to watch:** let G = the boss's BB.DMD base, the load address of the last BB.DMD group (`portDmdImages.base[n]`
+  or the area offset as in 36.2).
+  - **The word:** G + 0xEB2C, 4 bytes (frame 5's +0x0C). It should always read G + 0xEB4C.
+  - **Wider, to catch a writer that sweeps:** the 15 ricochet frame headers. Each frame's +0x0C should read its header
+    + 0x2C (each primitive list follows its header). The headers are at G + 0xE8DC, 0xE950, 0xE9C4, 0xEA38, 0xEAAC,
+    0xEB20, 0xEB94, 0xEC08, 0xEC7C, 0xECF4, 0xED68, 0xEDDC, 0xEE50, 0xEEC4 and 0xEF38. Or watch the whole look,
+    [G + 0xE8DC, G + 0xF0B8).
+  - **Also worth a watch, the same way:** Dark Tooth's head (root 249 at G + 0xE8B8 and its children, [G + 0xBB1C,
+    G + 0xE8DC)), the model just before.
+- **What to log on a write:** ra, pc, the old and new value and the step / frame number. Arm the watch as soon as
+  `assetInstallImage` returns for that group, because the damage may come at the load and not in play.
+- **A cheaper check:** compare the word with G + 0xEB4C once per step, and log the first step at which it differs. A
+  difference right after the load points to the load (the install or a port hook in `sessionLoadArenaAndCars`); a
+  difference later points to play.
+- **To reproduce:** the bad mesh is drawn only by a ricochet shot fired by a Dark Tooth (type 0xF0): frame 5 of 15,
+  so "every few frames" while one flies. The 50 s test with Hammerhead and Warthog had no Dark Tooth ricochet, so the
+  mesh was never drawn even if it was already broken. The watch or the per-step check does not need the mesh to be
+  drawn.
+- **Stopgap if wanted:** the emitter guard can write G + 0xEB4C back. Only the pointer is wrong (36.3), so the frame
+  then draws correctly.
+
+**Checked:** the counts and offsets above were read from the USA disc image with `tools/dmd_lod_dump.py`'s `Disc`
+reader (HKONG.DMD in dbscan's pop order; BB.DMD's trees and primitive records). Nothing was built and nothing was
+tested in game.
