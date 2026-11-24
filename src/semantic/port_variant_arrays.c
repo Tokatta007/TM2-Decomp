@@ -1632,6 +1632,7 @@ signed char portHumanLocal[TM2_MAX_HUMANS] PORT_BSS = {0};
 int portHumanOptions PORT_BSS = 0;
 unsigned short portHumanPad[TM2_MAX_HUMANS] PORT_BSS = {0};
 short portHumanSteer[TM2_MAX_HUMANS] PORT_BSS = {0};
+extern short portHumanThrottle[TM2_MAX_HUMANS];    /* request 121: defined after portDtPhase2Truck (nothing moves) */
 unsigned char portHumanLayout[TM2_MAX_HUMANS] PORT_BSS = {0};
 unsigned char portHumanLives[TM2_MAX_HUMANS] PORT_BSS = {0};
 unsigned char portHumanBindings[TM2_MAX_HUMANS][128] PORT_BSS = {{0}};
@@ -6925,12 +6926,14 @@ void PORT_TEXT portHumanCompact(int from, int to)
     /* H2: its inputs, layout, bindings and lives too (the port writes the next frame's word at the new index) */
     portHumanPad[to] = portHumanPad[from];
     portHumanSteer[to] = portHumanSteer[from];
+    portHumanThrottle[to] = portHumanThrottle[from];      /* request 121 */
     portHumanLayout[to] = portHumanLayout[from];
     portHumanLives[to] = portHumanLives[from];
     for (i = 0; i < TM2_HUMAN_BINDINGS; i++)
         portHumanBindings[to][i] = portHumanBindings[from][i];
     portHumanPad[from] = 0;
     portHumanSteer[from] = 0;
+    portHumanThrottle[from] = 0;
     /* request 66: its control options (match state) */
     portHumanControl[to] = portHumanControl[from];
     portHumanControl[from] = 0;
@@ -8695,7 +8698,8 @@ typedef char tm2_h4_human_words[(sizeof(humanCarObjects) == 4 * TM2_MAX_HUMANS &
     4 * TM2_MAX_HUMANS && sizeof(padConfigs) == 4 * TM2_MAX_HUMANS && sizeof(humanCarTypes) == 4 * TM2_MAX_HUMANS &&
     sizeof(hudSmoothedSpeeds) == 4 * TM2_MAX_HUMANS && sizeof(carViewHotkeyReleased) == 4 * TM2_MAX_HUMANS) ? 1 : -1];
 typedef char tm2_h4_human_map[(sizeof(portHumanLocal) == TM2_MAX_HUMANS && sizeof(portHumanPad) == 2 * TM2_MAX_HUMANS
-    && sizeof(portHumanSteer) == 2 * TM2_MAX_HUMANS && sizeof(portHumanLayout) == TM2_MAX_HUMANS &&
+    && sizeof(portHumanSteer) == 2 * TM2_MAX_HUMANS && sizeof(portHumanThrottle) == 2 * TM2_MAX_HUMANS
+    && sizeof(portHumanLayout) == TM2_MAX_HUMANS &&
     sizeof(portHumanLives) == TM2_MAX_HUMANS && sizeof(portHumanBindings) == 128 * TM2_MAX_HUMANS) ? 1 : -1];
 typedef char tm2_h4_bind_group[(sizeof(portCarBindGroup) >= TM2_MAX_HUMANS + TM2_MAX_AI_CARS) ? 1 : -1];
 #if TM2_MAX_HUMANS > TM2_VARIANT_HUMANS
@@ -9639,6 +9643,7 @@ static void PORT_TEXT portHumanVacateRecord(int h)
     portHumanLocal[h] = -1;
     portHumanPad[h] = 0;
     portHumanSteer[h] = 0;
+    portHumanThrottle[h] = 0;                             /* request 121 */
     portCarBindSet(0, h, 0);
     HO.mask |= 1u << h;
     HO.ai[h] = 0;
@@ -10519,7 +10524,7 @@ int PORT_TEXT portBalancePeriod(void *car, int human, int period)
     return period;
 }
 
-/* weaponHomingLeapUpdate (inside the leaping Grasshopper's selection): the hit's damage, 18 with bit 7. */
+/* weaponHomingLeapUpdate (inside the leaping Grasshopper's selection): the hit's damage, 20 with bit 7 (request 121). */
 int PORT_TEXT portBalanceLeapDamage(int damage)
 {
     return BAL(TM2_BAL_GRASSHOPPER) ? TM2_BAL_LEAP_DAMAGE : damage;
@@ -10710,6 +10715,24 @@ int PORT_TEXT portBalanceLocked(void *car, int human)
 int PORT_TEXT portBalanceEnergyLocked(void *car, int human, int kind)
 {
     return kind != TM2_BAL_LOCK_FREE_KIND && portBalanceLocked(car, human);
+}
+
+/* request 121 item 5 (bit 14, BALANCE.md 25): weaponFireSelected, his special (kind 0): 1 when a Thumper (his special
+ * Thumper's: a borrower of it too) still has a flame of his own burning: a flame emitter whose timer runs and whose
+ * car object is his. Refused at no cost, as bit 15's lock; his pickups and guns as retail. No rand(). */
+int PORT_TEXT portBalanceFlameLocked(void *car, int human)
+{
+    struct TM2Object *obj;
+    int e;
+
+    if (!BAL(TM2_BAL_THUMPER_LOCK)
+        || TM2_SPECIAL_TYPE(balSlot(car, human), balType(car, human)) != TM2_BAL_THUMPER_TYPE)
+        return 0;
+    obj = human ? humanCarObject(BAL_H(car)->player) : aiCarObject(BAL_A(car)->index);
+    for (e = 0; e < TM2_MAX_FLAME_EMITTERS; e++)
+        if (*(short *)&weaponFlameEmitters[e][0] > 0 && *(struct TM2Object **)&weaponFlameEmitters[e][7] == obj)
+            return 1;
+    return 0;
 }
 
 /* ---- request 91 item 3 (bit 27, BALANCE.md 20): computer cars going round a pile ---- */
@@ -11044,6 +11067,14 @@ int PORT_TEXT portBalanceGunHit(int hit, int power)
         *objects = half & 1;
     }
     return half >> 1;
+}
+
+/* request 121 item 4 (bit 9, BALANCE.md 25): bulletSpawn, the new bullet's life (frames of 200 units: retail 12 for a
+ * player, 15 for a computer car); with bit 9 a quarter more, rounded: 15 and 19 (3000 and 3800 units). Every bullet
+ * of every car (the guns, Mega Guns, Minion's rear gun). No rand(). */
+int PORT_TEXT portBalanceGunLife(int life)
+{
+    return BAL(TM2_BAL_GUN_RANGE) ? (life * TM2_BAL_GUN_RANGE_PCT + 50) / 100 : life;
 }
 /* ---- request 67 (BALANCE.md 16, PICKUP_LOOKS.md 4): bit 23, no wasted pickup respawn ---- */
 /* pickupRespawnTick's one rand() r: with bit 23 the slot to bring back among those that are taken and can show, in
@@ -12446,6 +12477,26 @@ int PORT_TEXT portHumanSteerKeep(void *car, int human)
         if ((void *)humanCars[h] == car)
             return portHumanControl[h] & TM2_HUMAN_CTL_STEER_KEEP;
     return 0;
+}
+
+/* ---- request 121 (ANALOG_STEERING.md 6.4): the analog throttle, per human ---- */
+/* carThrottleSteer: the share of the speed caps the human `car` drives at, 1..4096 of 4096: portHumanThrottle[h] as
+ * the port wrote it for this frame; 4096 (retail) for the AI cars, a record that is no human's, the turbo (always
+ * full) and a value of 0 (not written: a digital press), below 0 or above 4096. Reads only, no rand(). */
+int PORT_TEXT portHumanThrottleShare(void *car, int human)
+{
+    int h, a;
+
+    if (!(human & 0xFF))
+        return 4096;
+    for (h = 0; h < TM2_MAX_HUMANS; h++)
+        if ((void *)humanCars[h] == car) {
+            a = portHumanThrottle[h];
+            if (((struct TM2HumanRecord *)car)->input.turbo || a <= 0 || a > 4096)
+                return 4096;
+            return a;
+        }
+    return 4096;
 }
 #endif /* TM2_PORT_HUMANS */
 
@@ -14603,6 +14654,9 @@ unsigned char portWreckFallMark[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
    built at its first use) and per car slot the truck model it stands in for; every variant, match state */
 unsigned int portDtPhase2Tree[27] PORT_BSS = {0};
 void *portDtPhase2Truck[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
+/* request 121 (port_humans.h, ANALOG_STEERING.md 6.4): per human, the analog throttle 0..4096 (0 = not written:
+   retail), written by the port with the input word; read by portHumanThrottleShare; every variant, an input */
+short portHumanThrottle[TM2_MAX_HUMANS] PORT_BSS = {0};
 unsigned int portStackGuard[TM2_PORT_STACK_GUARD / 4] PORT_BSS = {0};
 unsigned int portStack[TM2_PORT_STACK / 4] PORT_BSS __attribute__((aligned(8))) = {0};
 
@@ -14979,5 +15033,107 @@ void PORT_TEXT portWreckFall(void *car, int human)
 }
 #undef WRECK_FALL_Z
 #endif /* TM2_PORT_WRECK_FALL */
+
+#ifdef TM2_PORT_DT_SWOOP
+/* ---- a computer Dark Tooth's swoop at the car he is after (PC port request 121 item 1, port_dt_swoop.h,
+ * docs/PLAYTEST_ANSWERS.md 35) ---- */
+#ifndef TM2_OWN_CAR_ARRAYS
+#define TM2_OWN_CAR_ARRAYS          /* humanCars / aiCars are defined above as plain words */
+#endif
+#include "semantic/cars.h"
+#include "semantic/port_dt_swoop.h"
+#ifndef PORT_TEXT
+#define PORT_TEXT __attribute__((section(".port_text")))
+#endif
+extern int aiCarTargets[];
+extern int aiCarCount(void);
+extern int humanCarNearest(int *pos, int skip);
+extern struct TM2Object *humanCarObject(int index);
+extern struct TM2Object *aiCarObject(int index);
+extern int darkToothSwoopVectors[];
+extern void carApplyDamage(int id, int amount, int *dir, int type, int attacker);
+extern struct TM2FireEffect *fxFlameBurning(void *pos, int arg);
+extern void fxSmokeA12(void *pos, unsigned char flag);
+extern void fxExplosion24(void *pos, unsigned char flag);
+extern int soundPlay(int id, int a, int b, int c);
+
+/* Computer car j as a swoop target: in the match, drawn and alive (as a player Dark Tooth's targets). */
+static int PORT_TEXT portDtSwoopAi(int j)
+{
+    struct TM2Object *obj;
+    struct TM2AIRecord *a;
+
+    if (j < 0 || j >= aiCarCount())
+        return 0;
+    obj = aiCarObject(j);
+    a = aiCarGet(j);
+    return obj != 0 && obj->visible && !a->state.dead && a->stats.hp > 0;
+}
+
+/* The swoop's start: his own target when it is a computer car he can reach (not himself), else retail's nearest
+ * player. No rand(). */
+int PORT_TEXT portDtSwoopPick(void *boss)
+{
+    struct TM2AIRecord *b = (struct TM2AIRecord *)boss;
+    int j = aiCarTargets[b->index];
+
+    if (j != b->index && portDtSwoopAi(j))
+        return TM2_DT_SWOOP_AI + j;
+    return humanCarNearest(b->motion.pos, -1);
+}
+
+/* The target's position: the record's motion.pos (darkToothSwoopTarget). */
+int *PORT_TEXT portDtSwoopPos(int code)
+{
+    if (code >= TM2_DT_SWOOP_AI)
+        return aiCarGet(code - TM2_DT_SWOOP_AI)->motion.pos;
+    return humanCarGet(code)->motion.pos;
+}
+
+/* While swooping: 0 when a computer car target has left the match (vacated, gone or dead); players as retail. */
+int PORT_TEXT portDtSwoopLive(int code)
+{
+    return code < TM2_DT_SWOOP_AI || portDtSwoopAi(code - TM2_DT_SWOOP_AI);
+}
+
+/* The hit (aiDarkToothBossUpdate's): 7 damage from his slot along darkToothSwoopVectors[3..5], then, unless the car
+ * burns already, is shielded, in water or in fire, the car set burning with retail's effects and sound 6. The same
+ * calls in the same order as retail's on a player. */
+void PORT_TEXT portDtSwoopHit(int code, int slot)
+{
+    struct TM2Object *obj;
+    struct TM2CarState *state;
+    struct TM2CarStatsBlock *stats;
+    struct TM2CarWeapons *weapons;
+    int *pos;
+
+    if (code >= TM2_DT_SWOOP_AI) {
+        struct TM2AIRecord *a = aiCarGet(code - TM2_DT_SWOOP_AI);
+
+        obj = aiCarObject(code - TM2_DT_SWOOP_AI);
+        state = &a->state;
+        stats = &a->stats;
+        weapons = &a->weapons;
+        pos = a->motion.pos;
+    } else {
+        struct TM2HumanRecord *h = humanCarGet(code);
+
+        obj = humanCarObject(code);
+        state = &h->state;
+        stats = &h->stats;
+        weapons = &h->weapons;
+        pos = h->motion.pos;
+    }
+    carApplyDamage(obj->id, 7, &darkToothSwoopVectors[3], 0, slot);
+    if (!state->burning && !state->energy_shield && !state->in_water && !state->in_fire) {
+        state->burning = 1;
+        stats->burn_time = 0;
+        weapons->fire_effect = fxFlameBurning(pos, 1);
+        fxSmokeA12(pos, 0);
+        fxExplosion24(pos, 0);
+        soundPlay(6, 0, 0, 99);
+    }
+}
+#endif /* TM2_PORT_DT_SWOOP */
 
 #endif /* TM2_PORT_VARIANT */

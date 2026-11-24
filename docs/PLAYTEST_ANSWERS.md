@@ -1657,3 +1657,62 @@ Asked 2026-11-18 from a single-player playtest. The details are in `RETAIL_BUGS.
 - **Checked:** `check_custom.py` check 30 (the patch on the disc's file, and nothing on other files or patched twice).
   **Not tested in game.**
 
+
+## 35. Request 121: Dark Tooth's swoop and lives, Grasshopper 20, the machine guns' range, Thumper's double flame, the analog throttle
+
+Asked 2026-11-23, after players' reports and the user's picks from the PC version's differences. Items 3-5 are balance
+bits (`BALANCE.md` 25); the analog throttle is `ANALOG_STEERING.md` 6.4.
+
+| Item | Result |
+|---|---|
+| 1. Dark Tooth's swoop only at players | **built**: `TM2_PORT_DT_SWOOP` (35.1) |
+| 2. Dark Tooth gets one life in a Challenge Match | **answer**: the port's own life code gives him none; nothing in his records stops a restart (35.2) |
+| 3. Grasshopper's leap damage 20 | **built**: bit 7's `TM2_BAL_LEAP_DAMAGE` 18 -> 20 (`BALANCE.md` 25.1) |
+| 4. Machine-gun range +25 % | **built**: bit 9 `TM2_BAL_GUN_RANGE` (`BALANCE.md` 25.2) |
+| 5. Thumper's special twice at once | **confirmed and built**: bit 14 `TM2_BAL_THUMPER_LOCK` (`BALANCE.md` 25.3) |
+| Analog throttle | **built**: `portHumanThrottle[h]` with `TM2_PORT_HUMANS` (`ANALOG_STEERING.md` 6.4) |
+
+Bits 9 and 14 were reserved with no effect and already in `TM2_BAL_ALL` (0xFDFFFFFF, unchanged): a port that sets
+`TM2_BAL_ALL` gets both rules. The old names `TM2_BAL_SPIRAL` and `TM2_BAL_LEAP_HOP` are gone.
+
+### 35.1 Dark Tooth's swoop at the car he is after (`TM2_PORT_DT_SWOOP`)
+
+- **Retail (CONFIRMED):** `aiDarkToothBossUpdate` picks the swoop's target with `humanCarNearest` (players only),
+  keeps it as a human index (`aiDarkToothSwoopTarget`) and its position pointer (`darkToothSwoopTarget`), and hits a
+  human record (`humanCarObject` / `humanCarGet`): 7 damage, then the car set burning unless it burns already, is
+  shielded, in water or in fire.
+- **Built:** with `--port-define TM2_PORT_DT_SWOOP` (`port_dt_swoop.h`):
+  - at the swoop's start `portDtSwoopPick(boss)` takes his own target, `aiCarTargets[his index]`: a computer car when
+    it is one, in the match, drawn and alive (and not himself); otherwise, at -1, retail's nearest player. The code is
+    a human index (retail's values) or `0x100` + the computer car's index; `portDtSwoopPos` gives its position;
+  - while swooping, `portDtSwoopLive` ends the swoop when a computer car target leaves the match (its record vacated,
+    gone or dead); players as retail;
+  - the hit, `portDtSwoopHit(code, his slot)`: retail's damage and burn on whichever record, the same calls in the
+    same order.
+- **Retail unchanged:** in the boss fight he is the only computer car, so his target is -1 and every swoop is
+  retail's. Every Dark Tooth runs it (each has his own swoop words through his car key). No `rand()` of its own.
+- **Checked:** `check_custom.py` check 31 (LinkMips: the pick for each target case, the position, the end of a swoop,
+  the hit on a computer car and on a player, retail's order). **Not tested in game.** To test: a Challenge Match with
+  Dark Tooth and computer cars: he swoops at the car he chases, which takes 7 and burns; with only players, as before.
+
+### 35.2 Dark Tooth's single life (an answer: the port's code)
+
+- **The cause is the port's:** `src/vplus/fixes.c:2491` (`ai_lives_start`) gives every computer car of type 0xF0
+  0 spare lives (`... != 0xF0u ? lives - 1 : 0`), so `vp_AiCarDamageUpdate` never schedules his respawn. Its comment
+  ("Dark Tooth has one life (his two-stage fight)") follows `AI_LIVES.md`'s advice, which was for the level-8 boss
+  only.
+- **In a Challenge Match he is an ordinary Dark Tooth** (the port sets `portCarOptions` bit 10 there,
+  `CUSTOM_TOURNAMENT_ANSWERS.md` 1.2): no second phase. His death and wreck are any computer car's
+  (`portCarDarkToothWreck`: the head hidden, the swoop ended, wreck state 4; the 120-frame wreck timer); nothing ends
+  the match when he dies (`aiCarsCountRemaining` counts HP only).
+- **A restart needs nothing new:** `aiCarStart(rec, 0xF0, 1)` (the port's `ai_respawn`) reloads his phase-1 stats
+  (`carStatsDarkTooth`: 300 HP, mass 100, ride height 116) and his collision box; the port shows the car object;
+  `portCarDarkToothParked` puts the head back at its 240 hover over the truck, ends any swoop and shows it once he
+  drives again. His stage flag stays 0 (nothing sets it for an ordinary Dark Tooth).
+- **What the port changes:** at `fixes.c:2491`, give a 0xF0 record lives when its slot holds an ordinary Dark Tooth:
+  `portCarDarkToothOrdinary(slot)` (exported, 1 = an ordinary computer Dark Tooth; the slot is the record's +6), or
+  `portCarOptions & 0x400`. Keep 0 for a boss Dark Tooth (Survival's, a tournament's level 8).
+  Optional, at his respawn: `portCarResetSpecials(slot)` zeroes his shot and swoop timers, `darkToothSwooping` and his
+  stage flag, so he does not swoop the moment he is back if his swoop timer ran on.
+- A boss Dark Tooth brought back would need more (the stage flag to 0, and lives taken only after his second phase,
+  not while he waits for it); not asked.

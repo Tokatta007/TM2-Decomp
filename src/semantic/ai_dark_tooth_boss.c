@@ -32,6 +32,7 @@ extern int ratan2(int, int);
 #else
 #define DT_SWOOP_SOUND(id) soundPlay((id), 0, 0, 99)
 #endif
+#include "semantic/port_dt_swoop.h"   /* request 121 item 1: the swoop at his own target */
 extern void weaponFindTargetAhead(int, s32 **, s32 mode);
 extern void weaponFindTargetBehind(int, s32 **, s32 mode);
 extern struct TM2SceneObject *aiCarObject(int);
@@ -105,8 +106,14 @@ int __attribute__((section(".text_8010FD44"))) aiDarkToothBossUpdate(struct TM2A
     if (aiDarkToothSwoopTimer == darkToothSwoopDelay - 30)
         DT_SWOOP_SOUND(61);
     if (darkToothSwoopDelay < aiDarkToothSwoopTimer++ && !boss->state.frozen) {
+#ifdef TM2_PORT_DT_SWOOP
+        /* request 121 item 1: the car he is after (a computer car), or the nearest player as retail */
+        aiDarkToothSwoopTarget = portDtSwoopPick(boss);
+        darkToothSwoopTarget = (VECTOR *)portDtSwoopPos(aiDarkToothSwoopTarget);
+#else
         aiDarkToothSwoopTarget = humanCarNearest(POS(boss), -1);
         darkToothSwoopTarget = (VECTOR *)humanCarGet(aiDarkToothSwoopTarget)->motion.pos;
+#endif
         if (DISTANCE(POS(boss), darkToothSwoopTarget) < 500) {
             aiDarkToothSwoopTimer = 0;
             value = rand();
@@ -115,6 +122,10 @@ int __attribute__((section(".text_8010FD44"))) aiDarkToothBossUpdate(struct TM2A
             DT_SWOOP_SOUND(66);
         }
     }
+#ifdef TM2_PORT_DT_SWOOP
+    if (darkToothSwooping && !portDtSwoopLive(aiDarkToothSwoopTarget))
+        darkToothSwooping = 0;      /* request 121 item 1: the computer car he swooped at left the match */
+#endif
     if (!darkToothSwooping) {
         offset.vx = 0;
         offset.vy = 0;
@@ -151,6 +162,9 @@ int __attribute__((section(".text_8010FD44"))) aiDarkToothBossUpdate(struct TM2A
             darkToothSwoopVectors[3] = darkToothBossObject->pos[0] - darkToothSwoopVectors[0];
             darkToothSwoopVectors[4] = darkToothBossObject->pos[1] - darkToothSwoopVectors[1];
             darkToothSwoopVectors[5] = 0;
+#ifdef TM2_PORT_DT_SWOOP
+            portDtSwoopHit(aiDarkToothSwoopTarget, boss->slot);     /* request 121 item 1: on a player or a computer car */
+#else
             carApplyDamage(humanCarObject(aiDarkToothSwoopTarget)->id, 7, &darkToothSwoopVectors[3], 0, boss->slot);
             if (!humanCarGet(aiDarkToothSwoopTarget)->state.burning && !humanCarGet(aiDarkToothSwoopTarget)->state.energy_shield
                 && !humanCarGet(aiDarkToothSwoopTarget)->state.in_water && !humanCarGet(aiDarkToothSwoopTarget)->state.in_fire) {
@@ -161,6 +175,7 @@ int __attribute__((section(".text_8010FD44"))) aiDarkToothBossUpdate(struct TM2A
                 fxExplosion24(darkToothSwoopTarget, 0);
                 soundPlay(6, 0, 0, 99);
             }
+#endif
             darkToothSwooping = 0;
         } else if (*hdpQueryPoint(darkToothBossObject->id, -1, OBJ_POS, 0)) {
             fxExplosion48(OBJ_POS, 0);

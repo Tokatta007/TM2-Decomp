@@ -127,6 +127,14 @@ void *car; unsigned char human;   /* old-style: the caller passes an int, the bo
         ctl->fire = 0;
         return;
     }
+    /* request 121 item 5 (bit 14, BALANCE.md 25): a Thumper's special while a flame of his still burns: denied, no
+       cost, as above (two flames on one car hit it twice a frame) */
+    if (kind == 0 && portBalanceFlameLocked(car, human)) {
+        if (human) TM2_HUMAN_DENIED(HUMAN(car)->player);
+        ctl->fire_ready = 0;
+        ctl->fire = 0;
+        return;
+    }
 #endif
     weap->fire_cooldown = interval;
     switch (kind) {

@@ -123,6 +123,13 @@ map (step H1), the inputs (step H2), the sound sides and local feedback (step H3
    flipped by the speed's sign above it), with bit 0 it has the steering's sign at every speed and retail's size, and
    the turn in place is retail's in both; no rand(). Negative control: a link without TM2_PORT_HUMANS (the rollback or
    the define-free one) must show retail's flip with the bit set too (the run sees the difference).
+14. The analog throttle (request 121, ANALOG_STEERING.md 6.4), with build directories built with TM2_PORT_HUMANS:
+   portHumanThrottleShare is a port function called only by carThrottleSteer, calls nothing, is never pointed to;
+   carThrottleSteer runs frame after frame on the MIPS interpreter (as check 13) on human record 0 from rest, the
+   throttle held: with portHumanThrottle[0] = 0 and 4096 the speed traces are the same (retail's) and reach the
+   forward cap; with 2048 and 1024 the speed settles within accel_top of that share of the cap, forward and in
+   reverse (the reverse cap); with the turbo held the trace at 2048 is the full one's; a computer car record
+   (human = 0) gets 4096 from portHumanThrottleShare whatever the human's value; no rand().
 
 Exit status 0 when every check passes."""
 import re
@@ -1084,7 +1091,7 @@ def check_feedback():
 # HUMANS16_PLAN.md 1.1 and the H1/H2 storage: every array with one entry per human record
 PER_HUMAN = ['humanCars', 'humanCarObjects', 'humanCarObjectSlots', 'padConfigs', 'humanCarTypes', 'hudSmoothedSpeeds',
              'carViewHotkeyReleased', 'carResetWeapons', 'sessionPortHumanCars', 'portHumanLocal', 'portHumanPad',
-             'portHumanSteer', 'portHumanLayout', 'portHumanLives', 'portHumanBindings']
+             'portHumanSteer', 'portHumanThrottle', 'portHumanLayout', 'portHumanLives', 'portHumanBindings']
 # what retail's own definitions hold (the variant's #else / below-K branches)
 RETAIL_DIM = {'humanCarObjects': 2, 'carResetWeapons': 2}
 H4_ASSERTS = ['tm2_h4_human_records', 'tm2_h4_human_words', 'tm2_h4_human_map', 'tm2_h4_bind_group',
@@ -1838,7 +1845,7 @@ def check_build_vacant(out):
 
 
 # check 13 (request 66, ANALOG_STEERING.md 2.6): the turn's sign kept in reverse
-STEER_NATIVE = {'carThrottleSteer', 'portHumanSteerKeep', 'mathBlendAngle'}
+STEER_NATIVE = {'carThrottleSteer', 'portHumanSteerKeep', 'portHumanThrottleShare', 'mathBlendAngle'}
 STEER_CALLERS = {'carThrottleSteer', 'carRicochetOffObject'}
 H_STATE, H_INPUT, H_STATS, H_MOTION = 0x9C, 0xD0, 0x14C, 0x6DC
 
@@ -1907,6 +1914,131 @@ def steer_run(out, keep_bits):
             y = m.rd(rec + H_MOTION + 0x14, 2)
             out_rows.append((steer, speed, y - 0x10000 if y & 0x8000 else y))
     return out_rows, calls
+
+
+def throttle_run(out, amount, reverse=False, turbo=False, frames=240):
+    """carThrottleSteer (human = 1) on human record 0 from rest, the throttle held each frame, portHumanThrottle[0]
+    = amount: the speed after each frame (every callee a stub but STEER_NATIVE)."""
+    from check_rollback import Image
+    from check_custom import FarMips
+    img = Image(out)
+    fm = FarMips(img)
+    m = fm.m
+    link = img.link
+    sym = lambda n: link.symbols[n]['address']
+    rec = sym('humanCars')
+    entry = {img.sizes[n][0]: n for n in img.sizes}
+    calls = []
+
+    def run(fn, args, steps=400000):
+        r = m.r
+        for i, v in enumerate(args):
+            r[4 + i] = v & 0xFFFFFFFF
+        r[29], r[31] = 0x801FF000, m.RET
+        r[28] = link.gp_c
+        pc, delay = img.sizes[fn][0], None
+        for _ in range(steps):
+            if pc == m.RET:
+                return r[2]
+            nxt = fm.exec_(m, pc, link.word(pc))
+            if delay is not None:
+                pc, delay = delay, None
+                name = entry.get(pc)
+                if name is not None and name not in STEER_NATIVE:
+                    calls.append(name)
+                    r[2] = 3 if name == 'timerGetFrameTicks' else 0
+                    pc = r[31]
+                continue
+            if nxt is None:
+                pc += 4
+            else:
+                delay, pc = nxt, pc + 4
+        raise RuntimeError('%s: no return' % fn)
+
+    m.fill(rec, bytes(0x814))
+    w = lambda off, n, v: m.wr(rec + off, n, v & ((1 << (8 * n)) - 1))
+    w(H_STATS + 0x4C, 2, 80)        # turn_speed
+    w(H_STATS + 0x64, 2, 300)       # steer_limit
+    w(H_STATS + 0x6E, 2, 2)         # handbrake_lock
+    w(H_STATS + 0xB0, 4, 100)       # accel_top
+    w(H_STATS + 0xB4, 4, 420)       # accel_launch
+    w(H_STATS + 0xB8, 4, 9000)      # speed_cap
+    w(H_STATS + 0xC8, 4, 6000)      # reverse_cap
+    w(H_STATS + 0xCC, 4, 200)       # brake_decel
+    if 'portHumanThrottle' in link.symbols:
+        m.wr(sym('portHumanThrottle'), 2, amount & 0xFFFF)
+    speeds = []
+    for _ in range(frames):
+        w(H_INPUT + 0x12, 1, 1)     # throttle (the pad's, each frame)
+        w(H_INPUT + (0x0E if reverse else 0x11), 1, 1)     # reverse / forward
+        w(H_INPUT + 0x03, 1, 1 if turbo else 0)
+        run('carThrottleSteer', (rec, 1))
+        v = m.rd(rec + H_MOTION + 0x0A, 2)
+        speeds.append(v - 0x10000 if v & 0x8000 else v)
+    share = None
+    if 'portHumanThrottleShare' in img.sizes and 'aiCars' in link.symbols:
+        share = run('portHumanThrottleShare', (sym('aiCars'), 0))
+    return speeds, calls, share
+
+
+def check_build_throttle(out):
+    """Check 14 (build, request 121): the analog throttle in carThrottleSteer (see the doc above)."""
+    import json
+    from check_hazards import load_functions, call_graph
+    from reloc_image import Link
+    out = Path(out)
+    pv = json.loads((out / 'report.json').read_text(encoding='utf-8')).get('port_variant') or {}
+    names = {d.split('=')[0] for d in pv.get('port_defines') or []}
+    link = Link(out)
+    if 'portHumanThrottle' not in link.symbols:
+        print('FAIL 14 %s: portHumanThrottle not in the link' % out.as_posix())
+        return False
+    if 'TM2_PORT_HUMANS' not in names:
+        print('ok   14 %s: no TM2_PORT_HUMANS: the throttle is retail\'s (storage only)' % out.as_posix())
+        return True
+    rows, kinds = load_functions(out)
+    calls, callers, pointed = call_graph(link, rows)
+    bad = []
+    if kinds.get('portHumanThrottleShare') != 'port':
+        bad.append('portHumanThrottleShare not a port function')
+    if callers.get('portHumanThrottleShare', set()) != {'carThrottleSteer'}:
+        bad.append('portHumanThrottleShare called by %s' % sorted(callers.get('portHumanThrottleShare', set())))
+    if calls.get('portHumanThrottleShare'):
+        bad.append('portHumanThrottleShare calls %s' % sorted(calls['portHumanThrottleShare']))
+    if 'portHumanThrottleShare' in pointed:
+        bad.append('portHumanThrottleShare pointed to')
+    called = []
+    full, c, share = throttle_run(out, 4096)
+    called += c
+    unset, c, _ = throttle_run(out, 0)
+    called += c
+    if full != unset:
+        bad.append('amount 0 and 4096 differ (frame %d)' % next(i for i in range(len(full)) if full[i] != unset[i]))
+    if max(full[-20:]) < 9000 - 100 or max(full) > 9000 + 420:
+        bad.append('full throttle settles at %d..%d (want the cap 9000)' % (min(full[-20:]), max(full[-20:])))
+    if share != 4096:
+        bad.append('portHumanThrottleShare on a computer car record = %s (want 4096)' % share)
+    for amount, reverse in ((2048, False), (1024, False), (2048, True)):
+        sp, c, _ = throttle_run(out, amount, reverse)
+        called += c
+        cap = (6000 if reverse else 9000) * amount // 4096
+        tail = [-s for s in sp[-30:]] if reverse else sp[-30:]
+        if min(tail) < cap - 100 or max(tail) > cap + 100:
+            bad.append('amount %d%s: speed settles at %d..%d (want %d +- 100)' % (
+                amount, ' reverse' if reverse else '', min(tail), max(tail), cap))
+    t_full, c, _ = throttle_run(out, 4096, turbo=True, frames=60)
+    called += c
+    t_half, c, _ = throttle_run(out, 2048, turbo=True, frames=60)
+    called += c
+    if t_full != t_half:
+        bad.append('with the turbo held the half throttle differs from the full one')
+    if 'rand' in called:
+        bad.append('carThrottleSteer called rand()')
+    good = not bad
+    print('%s 14 %s: carThrottleSteer from rest: 0 = 4096 (retail, the cap 9000); 2048 / 1024 settle at that share '
+          'of the cap, forward and in reverse; the turbo full%s' % ('ok  ' if good else 'FAIL', out.as_posix(),
+                                                                   '' if good else ': ' + '; '.join(bad[:6])))
+    return good
 
 
 def check_build_steer(out):
@@ -1986,6 +2118,7 @@ def main(argv):
         ok = check_build_compact(out) and ok
         ok = check_build_vacant(out) and ok
         ok = check_build_steer(out) and ok
+        ok = check_build_throttle(out) and ok
     print('HUMANS CHECK %s' % ('OK' if ok else 'FAILED'))
     return 0 if ok else 1
 

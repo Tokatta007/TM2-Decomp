@@ -56,6 +56,7 @@ void __attribute__((section(".text_800DD304"))) carThrottleSteer(void *car, u8 h
     u8 flag;
 #ifdef TM2_PORT_HUMANS
     s32 keep;
+    s32 thr;
 #endif
 
     if (human) {
@@ -229,6 +230,18 @@ void __attribute__((section(".text_800DD304"))) carThrottleSteer(void *car, u8 h
         }
     }
 
+#ifdef TM2_PORT_HUMANS
+    /* request 121 (ANALOG_STEERING.md 6.4): the human's analog throttle, 0..4096 of the speed caps (4096 = retail: the
+     * AI cars, a digital press, the turbo). The throttle aims at that share of the cap: retail's taper toward it,
+     * and over it (a lighter press) the throttle is let go, so retail's coast brings the speed down to it */
+    thr = portHumanThrottleShare(car, human);
+#define THR_CAP(cap) (thr < 4096 ? ((cap) * thr / 4096 > 0 ? (cap) * thr / 4096 : 1) : (cap))
+    if (thr < 4096 && in->throttle
+        && (in->reverse && mot->speed <= 0 ? mot->speed < -THR_CAP(geo->reverse_cap) : mot->speed > THR_CAP(maxsp)))
+        in->throttle = 0;
+#else
+#define THR_CAP(cap) (cap)
+#endif
     if (in->brake) {
         /* brake */
         if (mot->speed != 0 && !fl->all_in_air) {
@@ -262,10 +275,11 @@ void __attribute__((section(".text_800DD304"))) carThrottleSteer(void *car, u8 h
             fl->reversing = 1;
         else
             fl->reversing = 0;
-        if (((fl->reversing && mot->speed > -geo->reverse_cap) || (!fl->reversing && mot->speed < maxsp)) && !fl->f01) {
+        if (((fl->reversing && mot->speed > -THR_CAP(geo->reverse_cap)) || (!fl->reversing && mot->speed < THR_CAP(maxsp)))
+            && !fl->f01) {
             step = accel;
             if ((fl->reversing && mot->speed < 0) || (!fl->reversing && mot->speed > 0))
-                step -= (accel - geo->accel_top) * speed / maxsp;
+                step -= (accel - geo->accel_top) * speed / THR_CAP(maxsp);
             if (fl->reversing)
                 mot->speed -= step;
             else

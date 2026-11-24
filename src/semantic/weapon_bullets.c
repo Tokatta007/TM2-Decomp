@@ -243,6 +243,9 @@ void __attribute__((section(".text_800D7A4C"))) bulletSpawn(s32 owner, s32 kind,
     s->hit = 0;
     s->power = power;
     s->f38 = 0;
+#ifdef TM2_PORT_BALANCE
+    s->life = portBalanceGunLife(s->life);  /* request 121 item 4 (bit 9, BALANCE.md 25): 25 % further */
+#endif
 #ifdef TM2_PORT_VISUAL
     portVisualBulletSpawn(slot);    /* request 46 item 4 (PLAYTEST_ANSWERS.md 11): drawing only */
 #endif

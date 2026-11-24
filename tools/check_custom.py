@@ -5238,6 +5238,117 @@ def check_glacier_fire(out):
     return good
 
 
+def check_dt_swoop(out):
+    """Request 121 item 1 (PLAYTEST_ANSWERS.md 35): portDtSwoopPick / Pos / Live / Hit in LinkMips on made-up records
+    (aiCarCount 4, humanCarNearest 1, the car objects and the effects stubbed). Pick: the boss's aiCarTargets entry,
+    a computer car alive and drawn, gives 0x100 + it; -1, himself, past the count, dead, HP 0 or not drawn give the
+    nearest player. Pos: the record's motion.pos (+0x73C a computer car's, +0x6FC a player's). Live: 1 for a player,
+    a computer car's as Pick's test. Hit: carApplyDamage(its object's id, 7, darkToothSwoopVectors + 3, 0, the
+    boss's slot), then (not burning, shielded, in water or in fire) burning 1, burn_time 0, fire_effect the flame's,
+    fxSmokeA12 and fxExplosion24 at its position and sound 6, in retail's order; burning already: the damage only."""
+    from check_rollback import Image
+    img = Image(out)
+    syms = img.link.symbols
+    need = ('portDtSwoopPick', 'portDtSwoopPos', 'portDtSwoopLive', 'portDtSwoopHit', 'aiCars', 'humanCars',
+            'aiCarTargets', 'darkToothSwoopVectors')
+    miss = [n for n in need if n not in syms]
+    if miss:
+        print('31. request 121 Dark Tooth swoop -> FAIL: %s not in the link' % ', '.join(miss))
+        return False
+    A = lambda n: syms[n]['address']
+    ai, hu, tg = A('aiCars'), A('humanCars'), A('aiCarTargets')
+    OBJ = 0x80A00000
+    log = []
+    stubs = {'aiCarCount': lambda m: 4,
+             'humanCarNearest': lambda m: log.append(('nearest', m.r[4])) or 1,
+             'aiCarObject': lambda m: OBJ + 0x200 * (m.r[4] & 0xFF),
+             'humanCarObject': lambda m: OBJ + 0x2000 + 0x200 * (m.r[4] & 0xFF),
+             'carApplyDamage': lambda m: log.append(('damage', m.r[4], m.r[5], m.r[6], m.r[7], m.rd(m.r[29] + 16, 4))),
+             'fxFlameBurning': lambda m: log.append(('flame', m.r[4], m.r[5])) or 0x80B00000,
+             'fxSmokeA12': lambda m: log.append(('smoke', m.r[4])),
+             'fxExplosion24': lambda m: log.append(('boom', m.r[4])),
+             'soundPlay': lambda m: log.append(('sound', m.r[4])),
+             'rand': lambda m: log.append(('rand',)) or 0}
+    bad, runs = [], 0
+
+    def setup(target, dead=0, hp=50, visible=1):
+        lm = LinkMips(img, stubs)
+        m = lm.m
+        m.fill(ai, bytes(4 * 0x854))
+        m.fill(hu, bytes(2 * 0x814))
+        for j in range(4):
+            m.wr(ai + j * 0x854 + 4, 2, j)
+            m.wr(ai + j * 0x854 + 0x5A0, 4, 50)
+            m.fill(OBJ + 0x200 * j, bytes(0x120))
+            m.wr(OBJ + 0x200 * j + 8, 4, 1)
+            m.wr(OBJ + 0x200 * j + 0x118, 4, 60 + j)
+        for h in range(2):
+            m.fill(OBJ + 0x2000 + 0x200 * h, bytes(0x120))
+            m.wr(OBJ + 0x2000 + 0x200 * h + 0x118, 4, 1 + h)
+        m.wr(ai + 2 * 0x854 + 0x6C, 1, dead)
+        m.wr(ai + 2 * 0x854 + 0x5A0, 4, hp)
+        m.wr(OBJ + 0x200 * 2 + 8, 4, visible)
+        for j in range(4):
+            m.wr(tg + 4 * j, 4, -1 & 0xFFFFFFFF)
+        m.wr(tg, 4, target & 0xFFFFFFFF)
+        return lm
+
+    def s32v(v):
+        return v - (1 << 32) if v & 0x80000000 else v
+
+    for target, kw, want in ((2, {}, 0x102), (-1, {}, 1), (0, {}, 1), (5, {}, 1), (2, {'dead': 1}, 1),
+                             (2, {'hp': 0}, 1), (2, {'visible': 0}, 1), (3, {}, 0x103)):
+        lm = setup(target, **kw)
+        log.clear()
+        got = s32v(lm.run('portDtSwoopPick', (ai,), steps=200000))
+        runs += 1
+        if got != want:
+            bad.append('Pick, target %d %s: %#x (want %#x)' % (target, kw or '', got, want))
+        if want == 1 and ('nearest', ai + 0x73C) not in log:
+            bad.append('Pick, target %d %s: humanCarNearest not asked with his position' % (target, kw or ''))
+        live = s32v(lm.run('portDtSwoopLive', (0x102,), steps=200000))
+        runs += 1
+        if live != (1 if target == 2 and not kw else 0 if target == 2 else live):
+            bad.append('Live(0x102), %s: %d' % (kw or 'alive', live))
+    lm = setup(2)
+    for code, want in ((0x102, ai + 2 * 0x854 + 0x73C), (1, hu + 0x814 + 0x6FC), (0, hu + 0x6FC)):
+        got = lm.run('portDtSwoopPos', (code,), steps=200000)
+        runs += 1
+        if got != want:
+            bad.append('Pos(%#x) = %08X (want %08X)' % (code, got, want))
+    if s32v(lm.run('portDtSwoopLive', (1,), steps=200000)) != 1:
+        bad.append('Live(1) for a player is not 1')
+    vec = A('darkToothSwoopVectors') + 12
+    for code, rec, st, stats, wp, mo, obj_id in ((0x102, ai + 2 * 0x854, 0x6C, 0x4FC, 0x808, 0x71C, 62),
+                                                (1, hu + 0x814, 0x9C, 0x14C, 0x7C8, 0x6DC, 2)):
+        for burning in (0, 1):
+            lm = setup(2)
+            m = lm.m
+            m.wr(rec + st + 0x1A, 1, burning)
+            m.wr(rec + stats + 0x22, 2, 77)
+            log.clear()
+            lm.run('portDtSwoopHit', (code, 7), steps=200000)
+            runs += 1
+            pos = rec + mo + 0x20
+            want = [('damage', obj_id, 7, vec, 0, 7)]
+            if not burning:
+                want += [('flame', pos, 1), ('smoke', pos), ('boom', pos), ('sound', 6)]
+            if log != want:
+                bad.append('Hit(%#x), burning %d: calls %s (want %s)' % (code, burning, log, want))
+            if not burning and (m.rd(rec + st + 0x1A, 1) != 1 or m.rd(rec + stats + 0x22, 2) != 0
+                                or m.rd(rec + wp + 0x44, 4) != 0x80B00000):
+                bad.append('Hit(%#x): burning / burn_time / fire_effect not set' % code)
+            if burning and m.rd(rec + stats + 0x22, 2) != 77:
+                bad.append('Hit(%#x), burning already: burn_time changed' % code)
+    good = not bad
+    print('31. request 121: the Dark Tooth swoop (%d runs): his own target (a computer car alive and drawn) or the '
+          'nearest player; its position; a computer car that left ends it; the hit\'s damage and burn on either '
+          'record, retail\'s order -> %s' % (runs, 'ok' if good else 'FAIL'))
+    for b in bad[:12]:
+        print('     ' + b)
+    return good
+
+
 def check(out, names, e0, defined=True, expect=False, limits=None):
     link = Link(out)
     rows, kinds = load_functions(out)
@@ -5267,6 +5378,7 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
     wreck = 'TM2_PORT_WRECK_FALL' in names or not defined
     dt_player = 'TM2_PORT_DT_PLAYER' in names or not defined
     glacier_fire = 'TM2_PORT_GLACIER_FIRE' in names or not defined
+    dt_swoop = 'TM2_PORT_DT_SWOOP' in names or not defined
 
     def port_fns(label, fns, rand_reach=True, allowed_rand=()):
         missing = sorted(n for n in fns if kinds.get(n) != 'port')
@@ -5862,6 +5974,12 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
         ok = port_fns('30. Antarctica fire missile', ('portGlacierFire',)) and ok
         ok = callers_are('30. callers of portGlacierFire', {'portGlacierFire': {'worldLoadStartObjects'}}) and ok
         ok = check_glacier_fire(out) and ok                 # 30. request 120
+    if dt_swoop:
+        ok = port_fns('31. Dark Tooth swoop', ('portDtSwoopPick', 'portDtSwoopPos', 'portDtSwoopLive',
+                                                 'portDtSwoopHit'), allowed_rand=('portDtSwoopHit',)) and ok
+        ok = callers_are('31. callers of the swoop functions', {n: {'aiDarkToothBossUpdate'} for n in (
+            'portDtSwoopPick', 'portDtSwoopPos', 'portDtSwoopLive', 'portDtSwoopHit')}) and ok
+        ok = check_dt_swoop(out) and ok                     # 31. request 121
 
     bad = []
     for name, size in STORAGE.items():
@@ -5915,7 +6033,8 @@ def main():
     else:
         builds = sorted(p for p in (ROOT / 'work').glob('build-*') if (p / 'source_reloc_e0' / 'report.json').exists())
         e0 = builds[-1] / 'source_reloc_e0' if builds else None
-    relevant = names & (OUR_DEFINES | RENDER_DEFINES | {'TM2_PORT_DARK_TOOTH', 'TM2_PORT_DT_PLAYER'})
+    relevant = names & (OUR_DEFINES | RENDER_DEFINES | {'TM2_PORT_DARK_TOOTH', 'TM2_PORT_DT_PLAYER',
+                                                        'TM2_PORT_DT_SWOOP'})
     if not relevant and not a.negative_control:
         print('requests 42 / 46 / 47: no TM2_PORT_DARK_TOOTH / _DT_PLAYER / _VISUAL / _CAR_NUMBERS / _FAR_LOD / '
               '_FAR_DISTANCE / _RENDER_SLOTS in %s: nothing to check' % a.out)

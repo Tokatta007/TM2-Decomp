@@ -427,6 +427,41 @@ accelerate+reverse at full. Because any brake while moving with a direction
 held turns into a power slide (section 1), use a threshold before the trigger
 sets the brake byte, or a light brake in a corner will slide.
 
+### 6.4 Request 121: the analog throttle (built, `TM2_PORT_HUMANS`)
+
+The cap half of 6.2, without the step scaling: retail's taper already aims the speed at the cap, so aiming it at a
+share of the cap gives the PC version's "speed blends toward an analog target", while a light press still pulls away
+from rest at the full launch (the step scaling of 6.2 would make small amounts feel squared and slow).
+
+- **The amount:** `portHumanThrottle[h]` (`.port_bss`, `short`, one per human, after `portDtPhase2Truck`; tsv row
+  `portHumanThrottle`), 0..4096 of the speed caps, written by the port with the input word each step, as
+  `portHumanSteer`. **0 (not written) and 4096 are retail**, and so is the turbo (always full); a value below 0 or
+  above 4096 counts as 4096. Moved by `portHumanCompact` and cleared for a vacant record with the rest of the human's
+  arrays.
+- **In `carThrottleSteer`**, after the turbo block and before the brake: `thr = portHumanThrottleShare(car, human)`
+  (4096 for the computer cars, a record that is no human's, the turbo, or retail values). With `thr < 4096`:
+  - the caps of the throttle branch become `THR_CAP(maxsp)` forward and `THR_CAP(reverse_cap)` in reverse, the share
+    `cap * thr / 4096` (at least 1), and the taper divides by `THR_CAP(maxsp)`: the step shrinks to `accel_top` as
+    the speed reaches the share;
+  - over the share (the trigger let up), the throttle byte is cleared for this frame: retail's coast brings the speed
+    down to it, forward and in reverse (retail's own "over the cap" path, as `speed > speed_cap` does).
+  - `maxsp` itself is untouched, so the coast's drag and the handbrake's steering limit are retail's.
+  With `thr == 4096` the code is retail's (`THR_CAP(cap)` is `cap`); without the define `THR_CAP` is `cap`.
+- **What the port sends:** the input bits stay as they are (`forward` / `reverse` past the trigger's threshold:
+  `drive`, the brake rules, the slope gate and the power slide read them); `portHumanThrottle[h]` = the trigger's
+  amount for whichever of accelerate / reverse drives, 4096 for a digital press (keyboard, button, D-pad). Keep the
+  lowest amount well above zero (as the steering's 400): the share should stay above `accel_launch`, the "moving at
+  all" threshold of the yaw and the power slide.
+- **Online:** an input like the steering: one more 2-byte kind in the exchanged input (the rollback input has the 2
+  spare bytes), saved with the inputs for re-runs; `.port_bss` is in the snapshot and the hash. No `rand()`.
+- **Not built:** the partial brake (6.3).
+
+**Checked:** `tools/check_humans.py` check 14: `portHumanThrottleShare` is a port function called only by
+`carThrottleSteer`, calls nothing, is never pointed to; `carThrottleSteer` frame after frame on the MIPS interpreter
+from rest with the throttle held: amounts 0 and 4096 give the same (retail) trace up to the cap 9000; 2048 and 1024
+settle within `accel_top` (100) of 4500 and 2250, and 2048 in reverse at 3000 of the reverse cap 6000; with the
+turbo held 2048 runs as 4096; a computer car record gets 4096. Not tested in game.
+
 ## 7. Notes
 
 - `carThrottleSteer` is shared with the AI; every port change above is
