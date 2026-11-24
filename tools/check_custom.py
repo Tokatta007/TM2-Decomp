@@ -5349,6 +5349,185 @@ def check_dt_swoop(out):
     return good
 
 
+def check_team_locks(out):
+    """Request 123 item 3 (PLAYTEST_ANSWERS.md 37.3): Grasshopper's leap (weaponHomingLeapInit) and Outlaw's taser
+    (weaponTaserTarget) in LinkMips on made-up records (2 players, 3 computer cars on one line, the car objects,
+    ratan2, the arc slot, the effects and carSpinOut stubbed), firing from computer car 0 and from player 1, under
+    team tables in portCarTeam: each picks the nearest car in reach that is not itself and not of the firer's team
+    (both teams nonzero and equal), and with every team 0 retail's nearest car; with no foe in reach, no lock (the
+    leap stays inactive, the taser's arc has no target and nobody spins). portTeamMates on its own: equal nonzero
+    teams only, slots out of range 0 (the table's size from the link: 15 or 64 slots). portTeamNearestFoe (the player
+    at aiCarTargets -1) and aiGetTargetCar at -1: the nearest player (|dx| + |dy|) not of the car's team; every
+    player a teammate: retail's humanCarNearest; a target >= 0: its computer car as retail."""
+    from check_rollback import Image
+    img = Image(out)
+    syms = img.link.symbols
+    need = ('portTeamMates', 'portCarTeam', 'weaponHomingLeapInit', 'weaponTaserTarget', 'weaponTaserVictim',
+            'weaponArcs')
+    miss = [n for n in need if n not in syms]
+    if miss:
+        print('32. request 123 team locks -> FAIL: %s not in the link' % ', '.join(miss))
+        return False
+    A = lambda n: syms[n]['address']
+    team, arcs, victim = A('portCarTeam'), A('weaponArcs'), A('weaponTaserVictim')
+    leap = A('homingLeapState') if 'homingLeapState' in syms else 0x80184DD4    # (#pragma tm2_absolute: retail's)
+    HU, AI, OBJ = 0x80A00000, 0x80A10000, 0x80A40000
+    HSZ, ASZ = 0x814, 0x854
+    log = []
+    stubs = {'humanCarCount': lambda m: 2,
+             'aiCarCount': lambda m: 3,
+             'humanCarGet': lambda m: HU + HSZ * s32(m.r[4]),
+             'aiCarGet': lambda m: AI + ASZ * s32(m.r[4]),
+             'humanCarObject': lambda m: OBJ + 0x200 * s32(m.r[4]),
+             'aiCarObject': lambda m: OBJ + 0x1000 + 0x200 * s32(m.r[4]),
+             'ratan2': lambda m: 0,
+             'lightFlickerStart': lambda m: log.append(('flicker', m.r[4])),
+             'weaponArcSlotFind': lambda m: 0,
+             'portSpecialNum': lambda m: m.r[6],
+             'carSpinOut': lambda m: log.append(('spin', m.r[4], m.r[5])),
+             'rand': lambda m: log.append(('rand',)) or 0}
+    # the cars on one line: (kind, index, record, object, slot, x); a record's motion.pos is its object's position
+    def cars(scale):
+        out_ = []
+        for h, x in ((0, 800), (1, 1600)):
+            out_.append(('h', h, HU + HSZ * h, OBJ + 0x200 * h, h, x // scale, 1 + h, 0x6FC))
+        for j, x in ((0, 0), (1, 1200), (2, 2400)):
+            out_.append(('a', j, AI + ASZ * j, OBJ + 0x1000 + 0x200 * j, 10 + j, x // scale, 50 + j, 0x73C))
+        return out_
+
+    def setup(scale, teams):
+        lm = LinkMips(img, stubs)
+        m = lm.m
+        m.fill(team, bytes(64))
+        for kind, i, rec, obj, slot, x, ident, pos in cars(scale):
+            m.fill(rec, bytes(ASZ))
+            m.fill(obj, bytes(0x120))
+            if kind == 'h':
+                m.wr(rec + 0, 2, i)
+                m.wr(rec + 4, 2, slot)
+            else:
+                m.wr(rec + 4, 2, i)
+                m.wr(rec + 6, 2, slot)
+                m.wr(rec + 0x5A0, 4, 50)
+            m.wr(rec + pos, 4, x)
+            m.wr(obj + 0xA8, 4, x)
+            m.wr(obj + 0x118, 4, ident)
+            m.wr(team + slot, 1, teams[slot])
+        return lm
+
+    def want(scale, teams, firer, limit):
+        line = cars(scale)
+        f = next(c for c in line if c[:2] == firer)
+        best, pick = limit, None
+        for c in line:
+            if c is f:
+                continue
+            d = abs(c[5] - f[5]) >> 3
+            if d < best and not (teams[f[4]] and teams[f[4]] == teams[c[4]]):
+                best, pick = d, c
+        return f, pick
+
+    TABLES = ((0, 0, 0, 0, 0), (1, 2, 1, 2, 2), (1, 2, 1, 1, 2), (1, 1, 1, 1, 1), (1, 2, 0, 2, 2),
+              (2, 1, 2, 2, 1), (0, 1, 1, 1, 1), (3, 3, 3, 3, 3))
+    bad, runs = [], 0
+    for tbl in TABLES:
+        teams = dict(zip((0, 1, 10, 11, 12), tbl))
+        # the leap, from computer car 0 (mode 0) and player 1 (mode 1)
+        for firer in (('a', 0), ('h', 1)):
+            lm = setup(1, teams)
+            m = lm.m
+            m.wr(leap, 1, 0)
+            m.wr(leap + 0x34, 4, 0xDEAD0000)
+            f, pick = want(1, teams, firer, 400)
+            log.clear()
+            lm.run('weaponHomingLeapInit', (f[2], 1 if firer[0] == 'h' else 0), steps=400000)
+            runs += 1
+            got = (m.rd(leap, 1), m.rd(leap + 0x34, 4))
+            exp = (1, pick[2] + pick[7]) if pick else (0, 0xDEAD0000)
+            if got != exp or ('rand',) in log:
+                bad.append('leap from %s%d, teams %s: active %d target %08X (want %d %08X)%s' % (
+                    firer[0], firer[1], tbl, got[0], got[1], exp[0], exp[1], ', rand()' if ('rand',) in log else ''))
+        # the taser (reach 80: the line at a tenth), from computer car 0 and player 1
+        for firer in (('a', 0), ('h', 1)):
+            lm = setup(10, teams)
+            m = lm.m
+            m.wr(victim, 4, 0xDEAD0000)
+            m.wr(arcs + 8, 2, 0x7777)
+            f, pick = want(10, teams, firer, 80)
+            log.clear()
+            lm.run('weaponTaserTarget', (f[2], 1 if firer[0] == 'h' else 0, 7), steps=400000)
+            runs += 1
+            spins = [e for e in log if e[0] == 'spin']
+            got = (m.rd(victim, 4), s32(m.rd(arcs + 8, 2) | (0xFFFF0000 if m.rd(arcs + 8, 2) & 0x8000 else 0)),
+                   len(spins))
+            exp = (pick[2], pick[6], 1) if pick else (0xDEAD0000, -1, 0)
+            if got != exp:
+                bad.append('taser from %s%d, teams %s: victim %08X id %d spins %d (want %08X %d %d)' % (
+                    firer[0], firer[1], tbl, got[0], got[1], got[2], exp[0], exp[1], exp[2]))
+    nslots = min(a_ for a_ in (s['address'] for s in syms.values()) if a_ > team) - team   # the table's room
+    nslots = 64 if nslots >= 64 else 15        # TM2_MAX_CAR_SLOTS: 2 x 32 with TM2_PORT_CARS, retail's 15 (+ alignment)
+    lm = setup(1, dict.fromkeys((0, 1, 10, 11, 12), 0))
+    m = lm.m
+    last = nslots - 1
+    for slot, t in ((0, 1), (1, 1), (2, 2), (3, 0), (4, 0), (last, 1)):
+        m.wr(team + slot, 1, t)
+    for a, b, exp in ((0, 1, 1), (1, 0, 1), (0, 2, 0), (3, 4, 0), (0, 0, 1), (3, 3, 0), (0, last, 1), (-1, 0, 0),
+                      (0, -1, 0), (0, nslots, 0), (0, 9999, 0), (9999, 9999, 0)):
+        got = s32(lm.run('portTeamMates', (a, b), steps=10000))
+        runs += 1
+        if got != exp:
+            bad.append('portTeamMates(%d, %d) = %d (want %d)' % (a, b, got, exp))
+    # the player at -1: computer car k (x 0 / 1200 / 2400), players at x 800 and 1600; retail's |dx| + |dy| < 0x7FFF
+    stubs['humanCarNearest'] = lambda m: log.append(('nearest', m.r[4])) or 77
+    tg = A('aiCarTargets') if 'aiCarTargets' in syms else None
+    hcars = A('humanCars') if 'humanCars' in syms else None
+    for tbl in TABLES:
+        teams = dict(zip((0, 1, 10, 11, 12), tbl))
+        for k in range(3):
+            lm = setup(1, teams)
+            m = lm.m
+            line = cars(1)
+            me = line[2 + k]
+            foes = [c for c in line[:2] if not (teams[me[4]] and teams[me[4]] == teams[c[4]])]
+            best, exp = 0x7FFF, (foes[0][1] if foes else None)
+            for c in foes:
+                if abs(c[5] - me[5]) < best:
+                    best, exp = abs(c[5] - me[5]), c[1]
+            log.clear()
+            got = s32(lm.run('portTeamNearestFoe', (k,), steps=400000))
+            runs += 1
+            if exp is None:
+                if got != 77 or log != [('nearest', me[2] + me[7])]:
+                    bad.append('portTeamNearestFoe(%d), teams %s: %d %s (want humanCarNearest: 77)' % (k, tbl, got, log))
+            elif got != exp or log:
+                bad.append('portTeamNearestFoe(%d), teams %s: %d (want %d)%s' % (k, tbl, got, exp, ' %s' % log if log else ''))
+            if tg is None or hcars is None or 'aiGetTargetCar' not in img.sizes:
+                continue
+            for target in (-1, 2 - k if k != 1 else 0):
+                m.wr(tg + 4 * k, 4, target & 0xFFFFFFFF)
+                flag = 0x801FE000
+                m.wr(flag, 1, 0x55)
+                log.clear()
+                got = lm.run('aiGetTargetCar', (k, flag), steps=400000)
+                runs += 1
+                if target == -1:
+                    want_rec = hcars + 0x814 * (exp if exp is not None else 77)
+                    want_flag = 1
+                else:
+                    want_rec = A('aiCars') + ASZ * target
+                    want_flag = 0
+                if got != want_rec or m.rd(flag, 1) != want_flag:
+                    bad.append('aiGetTargetCar(%d) at %d, teams %s: %08X flag %d (want %08X %d)' % (
+                        k, target, tbl, got, m.rd(flag, 1), want_rec, want_flag))
+    good = not bad
+    print('32. request 123: the team locks (%d runs): Grasshopper\'s leap and Outlaw\'s taser pick the nearest car of '
+          'another team in reach (every team 0: retail\'s nearest; no foe: no lock); portTeamMates -> %s' % (
+              runs, 'ok' if good else 'FAIL'))
+    for b in bad[:12]:
+        print('     ' + b)
+    return good
+
+
 def check(out, names, e0, defined=True, expect=False, limits=None):
     link = Link(out)
     rows, kinds = load_functions(out)
@@ -5379,6 +5558,7 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
     dt_player = 'TM2_PORT_DT_PLAYER' in names or not defined
     glacier_fire = 'TM2_PORT_GLACIER_FIRE' in names or not defined
     dt_swoop = 'TM2_PORT_DT_SWOOP' in names or not defined
+    team_locks = 'TM2_PORT_TEAM_LOCKS' in names or not defined
 
     def port_fns(label, fns, rand_reach=True, allowed_rand=()):
         missing = sorted(n for n in fns if kinds.get(n) != 'port')
@@ -5980,6 +6160,12 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
         ok = callers_are('31. callers of the swoop functions', {n: {'aiDarkToothBossUpdate'} for n in (
             'portDtSwoopPick', 'portDtSwoopPos', 'portDtSwoopLive', 'portDtSwoopHit')}) and ok
         ok = check_dt_swoop(out) and ok                     # 31. request 121
+    if team_locks:
+        ok = port_fns('32. team locks', ('portTeamMates', 'portTeamNearestFoe')) and ok
+        ok = callers_are('32. callers of the team functions', {
+            'portTeamMates': {'weaponHomingLeapInit', 'weaponTaserTarget', 'portTeamNearestFoe'},
+            'portTeamNearestFoe': {'aiGetTargetCar'} | ({'portDtSwoopPick'} if dt_swoop else set())}) and ok
+        ok = check_team_locks(out) and ok                   # 32. request 123
 
     bad = []
     for name, size in STORAGE.items():
@@ -6034,7 +6220,7 @@ def main():
         builds = sorted(p for p in (ROOT / 'work').glob('build-*') if (p / 'source_reloc_e0' / 'report.json').exists())
         e0 = builds[-1] / 'source_reloc_e0' if builds else None
     relevant = names & (OUR_DEFINES | RENDER_DEFINES | {'TM2_PORT_DARK_TOOTH', 'TM2_PORT_DT_PLAYER',
-                                                        'TM2_PORT_DT_SWOOP'})
+                                                        'TM2_PORT_DT_SWOOP', 'TM2_PORT_TEAM_LOCKS'})
     if not relevant and not a.negative_control:
         print('requests 42 / 46 / 47: no TM2_PORT_DARK_TOOTH / _DT_PLAYER / _VISUAL / _CAR_NUMBERS / _FAR_LOD / '
               '_FAR_DISTANCE / _RENDER_SLOTS in %s: nothing to check' % a.out)

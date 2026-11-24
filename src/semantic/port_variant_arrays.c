@@ -14657,6 +14657,9 @@ void *portDtPhase2Truck[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
 /* request 121 (port_humans.h, ANALOG_STEERING.md 6.4): per human, the analog throttle 0..4096 (0 = not written:
    retail), written by the port with the input word; read by portHumanThrottleShare; every variant, an input */
 short portHumanThrottle[TM2_MAX_HUMANS] PORT_BSS = {0};
+/* request 123 (port_team_locks.h, PLAYTEST_ANSWERS.md 37.3): per car slot, the car's team as the port sets it, 0 = none
+   (retail); read by portTeamMates; every variant, match state */
+unsigned char portCarTeam[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
 unsigned int portStackGuard[TM2_PORT_STACK_GUARD / 4] PORT_BSS = {0};
 unsigned int portStack[TM2_PORT_STACK / 4] PORT_BSS __attribute__((aligned(8))) = {0};
 
@@ -15042,6 +15045,7 @@ void PORT_TEXT portWreckFall(void *car, int human)
 #endif
 #include "semantic/cars.h"
 #include "semantic/port_dt_swoop.h"
+#include "semantic/port_team_locks.h"   /* request 123: portTeamNearestFoe */
 #ifndef PORT_TEXT
 #define PORT_TEXT __attribute__((section(".port_text")))
 #endif
@@ -15079,7 +15083,11 @@ int PORT_TEXT portDtSwoopPick(void *boss)
 
     if (j != b->index && portDtSwoopAi(j))
         return TM2_DT_SWOOP_AI + j;
+#ifdef TM2_PORT_TEAM_LOCKS
+    return portTeamNearestFoe(b->index);    /* request 123: the nearest player not of his team */
+#else
     return humanCarNearest(b->motion.pos, -1);
+#endif
 }
 
 /* The target's position: the record's motion.pos (darkToothSwoopTarget). */
@@ -15135,5 +15143,55 @@ void PORT_TEXT portDtSwoopHit(int code, int slot)
     }
 }
 #endif /* TM2_PORT_DT_SWOOP */
+
+#ifdef TM2_PORT_TEAM_LOCKS
+/* ---- a team game's own-pick locks pass a teammate (PC port request 123 item 3, port_team_locks.h,
+ * docs/PLAYTEST_ANSWERS.md 37.3) ---- */
+#include "semantic/port_team_locks.h"
+#ifndef PORT_TEXT
+#define PORT_TEXT __attribute__((section(".port_text")))
+#endif
+
+#ifndef TM2_OWN_CAR_ARRAYS
+#define TM2_OWN_CAR_ARRAYS          /* humanCars / aiCars are defined above as plain words */
+#endif
+#include "semantic/cars.h"
+extern int humanCarCount(void);
+extern int humanCarNearest(int *pos, int skip);
+
+/* Car slots a and b on one team: both teams nonzero and equal (weaponHomingLeapInit, weaponTaserTarget). */
+int PORT_TEXT portTeamMates(int a, int b)
+{
+    if (a < 0 || b < 0 || a >= TM2_MAX_CAR_SLOTS || b >= TM2_MAX_CAR_SLOTS)
+        return 0;
+    return portCarTeam[a] != 0 && portCarTeam[a] == portCarTeam[b];
+}
+
+/* Computer car k's player at aiCarTargets -1 (aiGetTargetCar, portDtSwoopPick): humanCarNearest's pick among the
+ * players not of its team (|dx| + |dy| below 0x7FFF, else the first such present player); with none, retail's
+ * humanCarNearest (every player its teammate). No rand(). */
+int PORT_TEXT portTeamNearestFoe(int k)
+{
+    struct TM2AIRecord *a = aiCarGet(k);
+    struct TM2HumanRecord *r;
+    int h, d, n = humanCarCount(), best = 0x7FFF, pick = -1;
+
+    for (h = 0; h < n && h < TM2_MAX_HUMANS; h++) {
+        if (TM2_HUMAN_VACANT(h))
+            continue;
+        r = humanCarGet(h);
+        if (portTeamMates(a->slot, r->slot))
+            continue;
+        if (pick < 0)
+            pick = h;
+        d = __builtin_abs(a->motion.pos[0] - r->motion.pos[0]) + __builtin_abs(a->motion.pos[1] - r->motion.pos[1]);
+        if (d < best) {
+            best = d;
+            pick = h;
+        }
+    }
+    return pick >= 0 ? pick : humanCarNearest(a->motion.pos, -1);
+}
+#endif /* TM2_PORT_TEAM_LOCKS */
 
 #endif /* TM2_PORT_VARIANT */

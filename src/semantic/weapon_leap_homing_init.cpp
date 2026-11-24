@@ -49,6 +49,7 @@ TM2AIRecord *aiCarGet(int);
 int ratan2(int, int);
 #include "semantic/world.h"
 }
+#include "semantic/port_team_locks.h"   /* request 123 item 3: no teammate in a team game */
 
 /* Storage is defined by round_reset.c (weaponTornadoState spans 80184DC0..80184E10). */
 extern TM2HomingState homingLeapState;
@@ -106,7 +107,7 @@ extern "C" void __attribute__((section(".text_8010EF44"))) weaponHomingLeapInit(
         if (dy == 0) dy = 1;
         heading = ratan2(dx, dy);
         if (target->model != source_model && distance < 400 && distance < best_distance
-            && ABS(motion->heading - heading) < 682) {
+            && ABS(motion->heading - heading) < 682 && TM2_TEAM_FOE(homingLeapState.owner_id, humanCarGet(i)->slot)) {
             homingLeapState.active = 1;
             homingLeapState.age = 0;
             best_distance = distance;
@@ -124,7 +125,7 @@ extern "C" void __attribute__((section(".text_8010EF44"))) weaponHomingLeapInit(
         if (dy == 0) dy = 1;
         heading = ratan2(dx, dy);
         if (target->model != source_model && distance < 400 && distance < best_distance
-            && ABS(motion->heading - heading) < 682) {
+            && ABS(motion->heading - heading) < 682 && TM2_TEAM_FOE(homingLeapState.owner_id, aiCarGet(i)->slot)) {
             homingLeapState.active = 1;
             homingLeapState.age = 0;
             best_distance = distance;
