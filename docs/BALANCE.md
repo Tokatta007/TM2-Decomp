@@ -69,14 +69,14 @@ lets the ricochet pass through its owner's car).
 | 4 | 0x0010 | 5 | `TM2_BAL_AXEL` | never mounts (no crush); ram damage dealt x1.1 |
 | 5 | 0x0020 | 6 | `TM2_BAL_MINION` | never mounts (no crush); ram damage dealt x1.1; recharge 360 -> 600 |
 | 6 | 0x0040 | 7a-7c | `TM2_BAL_TWISTER` | no mine / remote-bomb placement while her tornado runs; recharge 360 -> 600; no ram damage taken while it runs |
-| 7 | 0x0080 | 8a-8b | `TM2_BAL_GRASSHOPPER` | leap damage 15 -> 18; no ram damage taken while leaping (8c, the touch, is bit 25 since request 88) |
+| 7 | 0x0080 | 8a-8b, 121-3 | `TM2_BAL_GRASSHOPPER` | leap damage 15 -> 20 (18 until request 121: the PC version's 20, section 25); no ram damage taken while leaping (8c, the touch, is bit 25 since request 88) |
 | 8 | 0x0100 | 9 | `TM2_BAL_RECHARGE` (= `TM2_BAL_OUTLAW2_RECHARGE`) | Outlaw 2's recharge 1100 -> 900 (request 45: Outlaw 2 only; Mr. Grimm's is bit 21, Thumper's bit 22) |
-| 9 | 0x0200 | 10 | `TM2_BAL_SPIRAL` | **reserved, no effect**: Sweet Tooth's spiral is retail (3.11: why it can die right after launch, and why no small fix was built) |
+| 9 | 0x0200 | 121-4 | `TM2_BAL_GUN_RANGE` | every machine-gun bullet flies 25 % further: its life 12 -> 15 frames (a player's), 15 -> 19 (a computer car's), every car (section 25). Until request 121 bit 9 was item 10's, **reserved, no effect** (Sweet Tooth's spiral is retail, 3.11) |
 | 10 | 0x0400 | 11 | `TM2_BAL_SHADOW` | the raised-surface splash fix: Shadow's detonation min(retail, 25) + 3 (28 max), a remote bomb's min(retail, 25) |
 | 11 | 0x0800 | 39 Q1 | `TM2_BAL_HH_BORROW` | a Hammerhead borrowing another special does not mount (needs `TM2_PORT_SPECIAL_AS`; ignored without it) |
 | 12 | 0x1000 | 7d | `TM2_BAL_TWISTER_THROW` | option c: her catching as retail (up to 7 catches, 28); when the tornado ends, every car caught at the end is thrown out (retail's intended throw): humans by their caught flag `state.f16`, computer cars by her catch box (request 41 item 5, 12.9) |
 | 13 | 0x2000 | 8d | `TM2_BAL_LEAP_LANDING` | Grasshopper's clean landing: set down on the ground, the hop after the hit about half as long (first cut, kept as is: **awaits the port's runtime look**) |
-| 14 | 0x4000 | 41-3 | `TM2_BAL_LEAP_HOP` | **reserved, no effect** (round 3, 13.1): request 41's "no hit before the hop" (12.2) is removed; the leap is request 40's (bits 7, 13) |
+| 14 | 0x4000 | 121-5 | `TM2_BAL_THUMPER_LOCK` | a Thumper fires no special while a flame of his own still burns: denied sound, no cost (section 25). Until request 121 bit 14 was **reserved, no effect** (round 3, 13.1: request 41's "no hit before the hop", removed) |
 | 15 | 0x8000 | 41-4, 46-3 | `TM2_BAL_TWISTER_LOCK` | while her tornado runs a Twister fires nothing but her **shield**: every pickup weapon and her special, the machine guns, every energy attack except the shield (103), a remote bomb's detonation; refused with the denied sound, no cost; humans and computer cars (12.3). Request 46 item 3 (15): the shield is let through (request 41 locked it too) |
 | 16 | 0x10000 | 41-6 | `TM2_BAL_TASER` | Outlaw 2's taser: a shot that connected to no one may still connect on a later tick of its 40 (the nearest car in range, retail's test); a late connect lifts the victim as a connect at the shot does (`carSpinOut` kind 6, no damage) and deals **one** hit of 10, retail's last tick (round 3, 13.2; request 41 built 2 x 10) |
 | 17 | 0x20000 | 41-7 | `TM2_BAL_FREEZE_DR` | freeze diminishing returns: an ice freeze of a car frozen, or unfrozen for at most 20 frames, lasts half its previous one (300, 150, 75, 37, 18, 15 ticks: floor 15); the chain resets after 20 frames unfrozen; per car (12.5) |
@@ -138,7 +138,9 @@ None calls `rand()`. Each returns the retail value (or does nothing) when its bi
 | `portBalanceCrushTop(car, human, peer_human, peer_index)` | `carCrushContactUpdate` | the owed +5, once (`carApplyDamage(victim, 5, pair direction, 0, rider)`) |
 | `portBalanceCrushEnd(car, human)` | `carCrushContactUpdate` | the ride ended: nothing owed |
 | `portBalancePeriod(car, human, period)` | `weaponTick` | the recharge period of the car's special (3.10) |
-| `portBalanceLeapDamage(d)` | `weaponHomingLeapUpdate` | bit 7: 18 |
+| `portBalanceLeapDamage(d)` | `weaponHomingLeapUpdate` | bit 7: 20 (18 until request 121) |
+| `portBalanceGunLife(life)` | `bulletSpawn` | bit 9 (request 121): the bullet's life x 1.25, rounded (12 -> 15, 15 -> 19) |
+| `portBalanceFlameLocked(car, human)` | `weaponFireSelected` (his special) | bit 14 (request 121): 1 = refuse, no cost: a Thumper with a flame of his own burning |
 | `portBalanceLeapTouch()` | `weaponHomingLeapUpdate` | bit 25 (bit 7 until request 88): 1 when her contact is a car-to-car record with the leap's target |
 | `portBalanceLeapLand()` | `weaponHomingLeapUpdate` | bit 13: at the hit, set down + the hop cut (3.8) |
 | `portBalanceSplash(d, big)` | `areaDamage` | bit 10: `min(d, 25) + 3` for Shadow (`big == 0`), `min(d, 25)` for a remote bomb (`big == 1`) |
@@ -1800,3 +1802,65 @@ build. Not tested in game. To test: 16 cars, missile hits in a crowd, each with 
 LinkMips run (`carFindById` and `carKnockBack` stubbed): the push goes to the target's record, 300 less its mass%,
 along her flight, flat, 4096 long, for a computer car and a human; nothing with the bit clear or no car with the id.
 Not tested in game. To test: leap into a Mr. Grimm and a Hammerhead; each is thrown about 285 / 195 and still spins.
+
+## 25. Request 121 (2026-11-23): Grasshopper 20, the machine guns' range, Thumper's double flame (bits 7, 9, 14)
+
+The port asked for three Vanilla Plus changes. The word had no free bit (bit 25 is an off option, bits 0..31 named),
+so bits 9 and 14, reserved with no effect since request 40's item 10 and round 3, carry the two new rules. Both were
+already in `TM2_BAL_ALL` (0xFDFFFFFF, unchanged): Vanilla Plus and online now have them. A build of the port that
+set `TM2_BAL_ALL` before gets them with this decomp.
+
+### 25.1 Grasshopper's leap damage 20 (bit 7)
+
+`TM2_BAL_LEAP_DAMAGE` 18 -> 20 (the PC version's). Only the damage: the cone, the homing, the touch (bit 25), the
+landing (bit 13) and the push (bit 31) are as they were. Both 18 and 20 are >= 8: `carApplyDamage`'s spin roll is
+drawn as before.
+
+### 25.2 The machine guns' range (bit 9, `TM2_BAL_GUN_RANGE`)
+
+- **What the range is:** a bullet's life, in frames of 200 units along its main axis (`bulletSpawn`): 12 for a
+  player's (2,400 units), 15 for a computer car's (3,000). `bulletsMove` counts it down; nothing else limits a bullet.
+  The guns, Mega Guns (kind 4, power 3) and Minion's rear gun all go through `bulletSpawn`.
+- **Built:** `portBalanceGunLife(life)` at the end of `bulletSpawn` (before the port's bullet-trail hook):
+  `life x 125 / 100`, rounded: 12 -> 15 (3,000 units, exactly 25 %), 15 -> 19 (3,800, the nearest to 3,750).
+  Every car, players and computer cars alike. Bit clear: the life as retail.
+- **Other readers:** none of the range. The computer cars decide to fire with their own distance test
+  (`aiWeaponFireDecide`: target within 4,000 and about 12 degrees, and the weapons tick only within 4,320): it does
+  not read the bullet life and is unchanged (retail already fires at targets its bullets cannot reach). No HUD or
+  targeting reads it. The port's bullet trails (`portVisualBulletSpawn`) copy the life after the gate.
+- **The bullet pool:** 40 records, unchanged. A longer life keeps a bullet one record-life longer: a player firing
+  keeps 5 (4 before), a computer car 4 (3), Minion's front and rear gun 8 (6). When the pool is full a shot is lost
+  (the flash and sound still play), as in retail; with 16 cars all firing at once retail can already run out.
+- **`rand()`:** none in `bulletSpawn`. Longer bullets hit more often, and each hit draws `bulletsMove`'s own
+  (the smoke; the coin flip unless bit 20): only with the bit, the same on every machine.
+
+### 25.3 Thumper's double flame (bit 14, `TM2_BAL_THUMPER_LOCK`)
+
+- **What happens (CONFIRMED in the C):** Thumper's special (`weaponFireSpecial` case 0x70) starts a flame
+  (`weaponFlameStart`): a new record of the flame pool, its car object as owner, 50 frames. Nothing compares owners:
+  a second press while the first flame burns takes a second record. Both follow his car, so both streams cover the
+  same space and each hits the first car in it, once per frame (`weaponFlameUpdate`: strength 1): two flames, twice
+  the damage. A player's cooldown is 20 frames against the flame's 50, so any second press 1 to 2.5 s after the first
+  doubles it. Retail's pool of 2 shared by every Thumper kept it to two; the port's raised pool (`TM2_PORT_CARS`)
+  lets one Thumper run three. A computer Thumper at close range (`weaponFireSelected`'s melee path) refires every
+  11-12 frames. Burning does not stack (a burning car is not lit again). Other specials guard this themselves
+  (Twister refunds a press while her tornado runs; a second Shadow press detonates); Thumper has nothing.
+- **Built:** `portBalanceFlameLocked(car, human)` in `weaponFireSelected`, for the special only (kind 0), right after
+  bit 15's lock: 1 when the car's special is Thumper's (`TM2_SPECIAL_TYPE`: a borrower of it too) and a flame record
+  whose timer runs has his car object as owner. Refused as bit 15's lock is: the denied sound for a player, no
+  cooldown, no charge spent. His pickups and machine guns as retail. Twins and borrowers are told apart by their car
+  objects. The press is free again the frame his flame ends.
+- **Not chosen:** "a second press waits" would need a pending press per car in the rollback state and a decision on
+  when and where it fires; refusing matches bits 15 and 26 and adds no state.
+- **Left as retail:** a Thumper's press when the pool is full (another Thumper's flames) still spends the special
+  and fires nothing.
+- **`rand()`:** the gate draws none; fewer flames means fewer of `weaponFlameUpdate`'s own draws, only with the bit.
+
+**Checked:** `tools/check_balance.py` G28 (`bulletSpawn` calls `portBalanceGunLife` once; a LinkMips run: 12 -> 15,
+15 -> 19 with bit 9, unchanged without it) and G29 (`weaponFireSelected`: the refused edge of
+`portBalanceFlameLocked` cannot reach `weaponFireSpecial`; a LinkMips run on made-up human and computer records:
+refused only for a Thumper with bit 14 and a running flame of his own). G12 and G15 still prove the spiral and the
+leap are as they were. Not tested in game. To test: (1) bit 9: a player's bullets reach 3,000 units, a computer car's
+3,800 (a target just inside: hit; just outside: not); (2) bit 14: Thumper with 2 specials, two presses 1 s apart:
+the second is denied (sound), the special count stays, the target takes one flame's damage; a press after the first
+flame ends fires; a computer Thumper at close range fires one flame at a time; (3) bit 7: a leap hit takes 20.

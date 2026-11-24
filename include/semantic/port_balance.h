@@ -47,13 +47,16 @@
 #define TM2_BAL_MINION        0x0020  /* bit 5, item 6: never mounts; ram damage dealt x1.1; recharge 600 */
 #define TM2_BAL_TWISTER       0x0040  /* bit 6, items 7a-7c: no mine / remote-bomb placement while her tornado runs;
                                          recharge 600; no ram damage taken while it runs */
-#define TM2_BAL_GRASSHOPPER   0x0080  /* bit 7, items 8a-8b: leap damage 18; no ram damage taken while leaping
+#define TM2_BAL_GRASSHOPPER   0x0080  /* bit 7, items 8a-8b: leap damage 20 (18 until request 121); no ram damage
+                                         taken while leaping
                                          (8c, touching the target counts as the hit, is bit 25 since request 88) */
 #define TM2_BAL_RECHARGE      0x0100  /* bit 8, item 9: Outlaw 2's recharge 900 (request 45 split the bit: Mr. Grimm's
                                          is bit 21, Thumper's bit 22) */
 #define TM2_BAL_OUTLAW2_RECHARGE TM2_BAL_RECHARGE /* bit 8 by its request-45 name */
-#define TM2_BAL_SPIRAL        0x0200  /* bit 9, item 10: RESERVED, no effect (Sweet Tooth's spiral is retail; the
-                                         early-death analysis found no small safe fix: BALANCE.md 3.11) */
+#define TM2_BAL_GUN_RANGE     0x0200  /* bit 9, request 121 item 4 (BALANCE.md 25): every machine-gun bullet flies
+                                         TM2_BAL_GUN_RANGE_PCT % as far (its life: a player's 12 frames -> 15, a
+                                         computer car's 15 -> 19), every car. Until request 121 bit 9 was item 10's,
+                                         reserved with no effect (Sweet Tooth's spiral is retail: BALANCE.md 3.11) */
 #define TM2_BAL_SHADOW        0x0400  /* bit 10, item 11: the raised-surface splash fix: Shadow's detonation
                                          min(retail, 25) + 3, a remote bomb's min(retail, 25) */
 #define TM2_BAL_HH_BORROW     0x0800  /* bit 11, request 39 bit 1: a Hammerhead borrowing another special does not
@@ -63,8 +66,11 @@
 #define TM2_BAL_LEAP_LANDING  0x2000  /* bit 13, item 8d: Grasshopper's clean landing (first cut; awaits the port's
                                          runtime look) */
 /* request 41 (round 2, BALANCE.md 12), one rule per bit */
-#define TM2_BAL_LEAP_HOP      0x4000  /* bit 14: RESERVED, no effect (round 3, BALANCE.md 13: request 41's "no hit
-                                         before the hop" is removed, the leap is retail's again with bits 7, 13) */
+#define TM2_BAL_THUMPER_LOCK  0x4000  /* bit 14, request 121 item 5 (BALANCE.md 25): a Thumper (or a borrower of his
+                                         special) fires no special while a flame of his own still burns: denied
+                                         sound, no cost (two flames on one car hit it twice a frame). Until request
+                                         121 bit 14 was reserved with no effect (round 3, BALANCE.md 13: request 41's
+                                         "no hit before the hop", removed) */
 #define TM2_BAL_TWISTER_LOCK  0x8000  /* bit 15, item 4: while her tornado runs a Twister fires nothing (pickups and
                                          her special, the machine guns, every energy attack but the shield, a remote
                                          bomb's detonation): denied sound, no cost. Request 46 item 3
@@ -140,7 +146,7 @@
                                          more) along her flight (from her to the target, flat), through retail's
                                          carKnockBack after the hit's spin (carApplyDamage type 2, unchanged); her
                                          own movement unchanged; every Grasshopper (human, computer car, twins) */
-#define TM2_BAL_ALL           0xFDFFFFFF /* Vanilla Plus and online (bits 9 and 14 reserved: no effect); bit 25 is not
+#define TM2_BAL_ALL           0xFDFFFFFF /* Vanilla Plus and online (bits 9 and 14 are request 121's since it); bit 25 is not
                                          in it (the user's: off). Bit 31 is set: read the word as unsigned */
 
 /* The numbers (BALANCE.md 3) */
@@ -162,7 +168,8 @@
 #define TM2_BAL_HH_BRAKE        2     /* bit 24: Hammerhead's brakes (retail 1) */
 #define TM2_BAL_HH_SLIDE        60    /* bit 24: and his slide speed (retail 25) */
 #define TM2_BAL_MINES_PER_DRIVER 5
-#define TM2_BAL_LEAP_DAMAGE     18    /* retail 15 */
+#define TM2_BAL_LEAP_DAMAGE     20    /* retail 15; the PC version's 20 (request 121 item 3; 18 until it) */
+#define TM2_BAL_GUN_RANGE_PCT   125   /* bit 9: a bullet's life x 1.25, rounded (12 -> 15, 15 -> 19) */
 #define TM2_BAL_SPLASH_CAP      25    /* bit 10: a car's splash damage capped here (Shadow and remote bombs), then */
 #define TM2_BAL_SPLASH_BONUS    3     /* + 3 for Shadow's detonation only (28 max) */
 #define TM2_BAL_TORNADO_BOX     35    /* bit 12: the catch box, retail's DISTANCE(her, car) < 35 (280 units) */
@@ -261,6 +268,9 @@ extern void portBalanceCrushEnd(void *car, int human); /* carCrushContactUpdate:
 extern int  portBalancePeriod(void *car, int human, int period); /* weaponTick: the recharge period (bits 3, 5,
                                                         6, 8, 21, 22) */
 extern int  portBalanceLeapDamage(int damage);       /* weaponHomingLeapUpdate: the hit's damage (bit 7) */
+extern int  portBalanceGunLife(int life);           /* bulletSpawn: the bullet's life, x 1.25 with bit 9 (request 121) */
+extern int  portBalanceFlameLocked(void *car, int human); /* weaponFireSelected, the special: 1 = refuse, no cost
+                                                     (bit 14: a Thumper whose own flame still burns; request 121) */
 extern int  portBalanceLeapTouch(void);              /* weaponHomingLeapUpdate: 1 = her contact is with the target
                                                         (bit 25; bit 7 until request 88) */
 extern void portBalanceLeapPush(void);               /* weaponHomingLeapUpdate: at the hit, after it (bit 31) */

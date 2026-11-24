@@ -36,6 +36,9 @@
  *                          each frame (before rtMainLoop's padUpdate / worldUpdate), one word per frame as the latch
  *   portHumanSteer[h]      the stick tilt of human h, 0..4096 (4096 = full, or a digital press); the C never reads
  *                          it: the port's analog hook around carThrottleSteer does, for every human
+ *   portHumanThrottle[h]   request 121 (ANALOG_STEERING.md 6.4): the analog throttle of human h, 0..4096 of the
+ *                          speed caps (4096 = full, 0 = not written: both retail); carThrottleSteer aims at that
+ *                          share of the forward or reverse cap (portHumanThrottleShare); the turbo stays full
  *   portHumanLayout[h]     h's control layout 0..3 (padLayoutTable's); the port fills it from the match setup
  *   portHumanBindings[h]   h's action -> button table (128 entries, buttons 1..14 as padButtonHeld's), built
  *                          from the layout by portHumanSetLayout exactly as padSetLayout builds a pad's table
@@ -267,6 +270,7 @@ extern void portHumanVacantReset(void);
 #pragma tm2_absolute portHumanOptions
 #pragma tm2_absolute portHumanPad
 #pragma tm2_absolute portHumanSteer
+#pragma tm2_absolute portHumanThrottle
 #pragma tm2_absolute portHumanLayout
 #pragma tm2_absolute portHumanLives
 #pragma tm2_absolute portHumanBindings
@@ -279,11 +283,13 @@ extern signed char portHumanLocal[TM2_MAX_HUMANS];
 extern int portHumanOptions;
 extern unsigned short portHumanPad[TM2_MAX_HUMANS];
 extern short portHumanSteer[TM2_MAX_HUMANS];
+extern short portHumanThrottle[TM2_MAX_HUMANS];   /* request 121 */
 extern unsigned char portHumanLayout[TM2_MAX_HUMANS];
 extern unsigned char portHumanLives[TM2_MAX_HUMANS];
 extern unsigned char portHumanBindings[TM2_MAX_HUMANS][TM2_HUMAN_BINDINGS];
 extern unsigned int portHumanRadarBlink;   /* bit 4's blink clock (presentation only; worldUpdate) */
 extern unsigned char portHumanControl[TM2_MAX_HUMANS];   /* request 66: TM2_HUMAN_CTL_* per human (match state) */
+extern int portHumanThrottleShare(void *car, int human); /* request 121: the analog throttle, 1..4096 (4096 = retail) */
 extern int portHumanSteerKeep(void *car, int human);    /* request 66: 1 = the record's turn keeps its sign in reverse
                                                             (a human record whose portHumanControl has bit 0) */
 extern int portHumanSlot(int h);

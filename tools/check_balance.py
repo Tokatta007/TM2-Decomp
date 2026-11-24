@@ -60,7 +60,8 @@ directory):
      kind-4 pickup, health): with the bit, for r = 0..39 it returns the (r % n)-th of the n slots that are taken and
      can show, -1 when none is, after the select is switched the one behind it too; with the bit clear r % count
      (retail); it writes nothing but its stack. A link of the source before request 67 fails (no function).
-   - G12 weaponProjectileUpdate (bit 9 reserved, no effect: BALANCE.md 3.11): Sweet Tooth's spiral is retail's: no
+   - G12 weaponProjectileUpdate (BALANCE.md 3.11; bit 9 is request 121's gun range since, G28): Sweet Tooth's
+     spiral is retail's: no
      portBalance* call in weaponProjectileUpdate (the first cut's portBalanceSpiral and the follow-up's
      portBalanceSpiralGround are gone, and no portBalanceSpiral* function is linked), weaponProjectileSteer and
      hdpQueryPoint called once each; with the define alone weaponProjectileUpdate is not changed at all (check 4).
@@ -70,7 +71,8 @@ directory):
      portBalanceTornadoThrow called once, reachable only through the end block (every path to it passes the
      block's fxSmokeB24 call); retail's two carSpinOutById calls (the dead freeze_timer == 1 tests) still there.
    Request 41 (BALANCE.md 12):
-   - G15 the leap body (bit 14 reserved since round 3, no effect): no portBalanceLeapArmed / portBalanceLeapHold
+   - G15 the leap body (round 3 removed request 41's leap hop; bit 14 is request 121's Thumper lock since, G29): no
+     portBalanceLeapArmed / portBalanceLeapHold
      call in the leap body, neither function linked, neither named in weapon_leap_homing_update.c.
    - G16 the Twister lock (bit 15): weaponFireSelected: portBalanceLocked guards every dispatch (weaponFireSpecial,
      weaponLaunchProjectile, weaponRicochetSlotFind, weaponLightningScan, weaponDropItem: dominated, none reachable
@@ -98,6 +100,13 @@ directory):
      function's two rand() calls (the damage coin flip; the other, the smoke's, stays before it) and every
      weaponApplyHit; from the call a path reaches weaponApplyHit without that rand() (the bit's path draws none);
      the source routes the flip and both powers through GUN_FLIP / GUN_POWER.
+   Request 121 (BALANCE.md 25):
+   - G28 the gun range (bit 9): bulletSpawn calls portBalanceGunLife once; run in check_custom's LinkMips: with
+     bit 9 a player's life 12 -> 15 and a computer car's 15 -> 19, unchanged with the bit clear (other bits set).
+   - G29 the Thumper lock (bit 14): weaponFireSelected: portBalanceFlameLocked's refused edge cannot reach
+     weaponFireSpecial, its other edge can; run in LinkMips on made-up human and AI records: 1 for a Thumper (0x70)
+     with bit 14 and a flame emitter whose timer runs and whose car object is his; 0 with the timer out, another
+     car's flame, the bit clear (every other bit set) or another type.
 3. Source: the helpers' block in port_variant_arrays.c has no rand( call (comments stripped); the ten functions that
    size the drop records and mine objects (and the port's PORT_DROPS) use TM2_MAX_DROPS / TM2_MAX_MINE_OBJECTS /
    the live macros, no literal 25 / 23 / 24 left.
@@ -157,6 +166,9 @@ CALLERS = {
     'portBalanceJumpFree': {'weaponFireEnergyAttack'},
     # round 3
     'portBalanceGunHit': {'bulletsMove'},
+    # request 121 (bits 9, 14)
+    'portBalanceGunLife': {'bulletSpawn'},
+    'portBalanceFlameLocked': {'weaponFireSelected'},
     # request 67 (bit 23)
     'portBalancePickupSlot': {'pickupRespawnTick'},
     'portBalancePickupShowable': {'portBalancePickupSlot'},
@@ -187,7 +199,7 @@ STATIC_FUNCS = {'balType', 'balSlot', 'balTornadoRuns', 'balLeaping', 'balMines'
 RAND_VIA = {'portBalanceCrushTop': {'carApplyDamage'}, 'portBalanceTornadoThrow': {'carSpinOutById'},
             'portBalanceTaserRetry': {'carSpinOut'}}
 OPT_IN = {'TM2_BAL_LEAP_TOUCH': 1 << 25}     # request 88: bits of their own, not in TM2_BAL_ALL (the port leaves them off)
-RETIRED = ('portBalanceLeapArmed', 'portBalanceLeapHold')    # bit 14 (round 3): must not be linked or called
+RETIRED = ('portBalanceLeapArmed', 'portBalanceLeapHold')    # round 3's removed leap hop: must not be linked or called
 EXPECTED = {
     'roundStart', 'weaponLaunchProjectile', 'weaponFireEnergyAttack', 'weaponFireSelected', 'weaponDropWrite',
     'weaponDropsUpdate', 'carCarCollision', 'carContactRespond', 'carCrashStart', 'carCrushContactUpdate',
@@ -204,6 +216,8 @@ EXPECTED = {
     'weaponProjectileSteer', 'weaponProjectileUpdate',
     # request 101
     'carNearestRoutePoint', 'aiFollowRouteTarget',
+    # request 121
+    'bulletSpawn',
     # request 102 item 3
     'fxExplosion6', 'fxExplosion12', 'fxExplosion24', 'fxExplosion48', 'fxExplosion96', 'fxExplosion192', 'fxSmokeBurstPink', 'fxSmokeBurstRed',
 }
@@ -631,8 +645,8 @@ def check(out, defined=True):
         bad.append('calls: weaponProjectileSteer %d, hdpQueryPoint %d (want 1 each)' % (len(steer), len(query)))
     bad += ['%s called at %08X' % (c, a) for a, c in sorted(flow.calls.items())
             if c and c.startswith('portBalance') and c != 'portBalanceBoomerangCatch']     # request 95: G25's
-    bad += ['%s linked (bit 9 is reserved)' % f for f in sorted(sizes) if f.startswith('portBalanceSpiral')]
-    report('2. G12 spiral (bit 9 reserved): weaponProjectileUpdate retail, no portBalance call but bit 28\'s catch',
+    bad += ['%s linked (the spiral is retail)' % f for f in sorted(sizes) if f.startswith('portBalanceSpiral')]
+    report('2. G12 spiral (retail): weaponProjectileUpdate retail, no portBalance call but bit 28\'s catch',
            bad)
 
     # G13
@@ -675,13 +689,13 @@ def check(out, defined=True):
     if flow is None:
         bad.append('no %s' % leap)
     else:
-        bad += ['%s called at %08X (bit 14 is reserved)' % (flow.calls[a], a) for a in sites(flow, set(RETIRED))]
+        bad += ['%s called at %08X (the leap hop is gone)' % (flow.calls[a], a) for a in sites(flow, set(RETIRED))]
         if len(sites(flow, {'carApplyDamage'})) != 1:
             bad.append('%d carApplyDamage calls (want the one hit)' % len(sites(flow, {'carApplyDamage'})))
-    bad += ['%s linked (bit 14 is reserved)' % f for f in RETIRED if f in sizes]
+    bad += ['%s linked (the leap hop is gone)' % f for f in RETIRED if f in sizes]
     src = strip_comments((ROOT / 'src/semantic/weapon_leap_homing_update.c').read_text(encoding='utf-8'))
     bad += ['source: weapon_leap_homing_update.c names %s' % f for f in RETIRED if f in src]
-    report('2. G15 leap hop (bit 14 reserved): %s: no portBalanceLeapArmed / LeapHold, neither linked' % leap, bad)
+    report('2. G15 leap hop (removed): %s: no portBalanceLeapArmed / LeapHold, neither linked' % leap, bad)
 
     # G16
     bad = []
@@ -896,6 +910,21 @@ def check(out, defined=True):
         bad.append('carStatsLoad: portBalanceCarStats %d, carStatsSetTopSpeed %d (want 1 before 1)' % (len(g), len(top)))
     bad += car_stats_run(out, link, sizes)
     report('2. G23 Hammerhead (bit 24): carStatsLoad sets his brakes 2 and slide speed 60 before the derived fields '
+           '(MIPS run)', bad)
+
+    # G28 (request 121 item 4)
+    flow = flow_of('bulletSpawn')
+    n = len(gate_calls(flow, 'portBalanceGunLife')) if flow else -1
+    bad = [] if n == 1 else ['bulletSpawn: portBalanceGunLife called %d times (want 1)' % n]
+    bad += gun_life_run(out, link, sizes)
+    report('2. G28 gun range (bit 9): bulletSpawn\'s life through portBalanceGunLife, 12 -> 15 and 15 -> 19 '
+           'with the bit (MIPS run)', bad)
+
+    # G29 (request 121 item 5)
+    flow = flow_of('weaponFireSelected')
+    bad = guard(flow, 'portBalanceFlameLocked', {'weaponFireSpecial'}, dominate=False) if flow else ['no weaponFireSelected']
+    bad += flame_lock_run(out, link, sizes)
+    report('2. G29 Thumper lock (bit 14): weaponFireSelected refuses his special while a flame of his burns '
            '(MIPS run)', bad)
 
     # 3. source
@@ -1320,6 +1349,70 @@ def jam_run(out, link, sizes):
         bad.append('stops with a wall bump counted')
     if any(stop(5, dt=window + 1) for _ in range(stops + 1)):
         bad.append('stops farther apart than the window counted as a jam')
+    return bad
+
+
+def gun_life_run(out, link, sizes):
+    """G28, request 121 item 4: portBalanceGunLife in check_custom's LinkMips."""
+    if 'portBalanceGunLife' not in sizes or 'portBalanceLive' not in link.symbols:
+        return ['portBalanceGunLife or portBalanceLive not in the link']
+    from check_rollback import Image
+    from check_custom import LinkMips
+    img = Image(out)
+    hdr = (ROOT / 'include/semantic/port_balance.h').read_text(encoding='utf-8')
+    bit = int(re.search(r'#define TM2_BAL_GUN_RANGE\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    bad = []
+    for life, live, want in ((12, bit, 15), (15, bit, 19), (12, 0, 12), (15, 0, 15), (12, 0xFFFFFFFF & ~bit, 12),
+                             (15, 0xFFFFFFFF & ~bit, 15), (15, 0xFFFFFFFF, 19)):
+        lm = LinkMips(img, {})
+        lm.m.wr(link.symbols['portBalanceLive']['address'], 4, live)
+        got = lm.run('portBalanceGunLife', (life,))
+        if got != want:
+            bad.append('portBalanceGunLife(%d), bits %X = %d (want %d)' % (life, live, got, want))
+    return bad
+
+
+def flame_lock_run(out, link, sizes):
+    """G29, request 121 item 5: portBalanceFlameLocked in check_custom's LinkMips on made-up records (a human's
+    player +0x00, slot +0x04, type +0x90; a computer car's index +0x04, slot +0x06, type +0x30), the car objects
+    and the special's type (portCarSpecialType) stubbed, two flame emitters (timer +0x00, car object +0x1C)."""
+    need = ('portBalanceFlameLocked', 'portBalanceLive', 'weaponFlameEmitters')
+    if 'portBalanceFlameLocked' not in sizes or any(n not in link.symbols for n in need[1:]):
+        return ['portBalanceFlameLocked, portBalanceLive or weaponFlameEmitters not in the link']
+    from check_rollback import Image
+    from check_custom import LinkMips
+    img = Image(out)
+    hdr = (ROOT / 'include/semantic/port_balance.h').read_text(encoding='utf-8')
+    bit = int(re.search(r'#define TM2_BAL_THUMPER_LOCK\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    car, objs, em = 0x80A40000, 0x80A50000, link.symbols['weaponFlameEmitters']['address']
+    stubs = {'humanCarObject': lambda m: objs + 0x100 * (m.r[4] & 0xFF),
+             'aiCarObject': lambda m: objs + 0x8000 + 0x100 * (m.r[4] & 0xFF),
+             'portCarSpecialType': lambda m: m.r[5]}
+    bad = []
+    for human, typ_at, idx_at, slot_at, idx in ((1, 0x90, 0x00, 0x04, 1), (0, 0x30, 0x04, 0x06, 3)):
+        mine = objs + (0 if human else 0x8000) + 0x100 * idx
+        other = mine + 0x100
+        for typ, live, timer, owner, want in ((0x70, bit, 10, mine, 1), (0x70, bit, 0, mine, 0),
+                                              (0x70, bit, 10, other, 0), (0x70, 0xFFFFFFFF & ~bit, 10, mine, 0),
+                                              (0x60, bit, 10, mine, 0), (0x70, 0xFFFFFFFF, 10, mine, 1)):
+            lm = LinkMips(img, stubs)
+            m = lm.m
+            for k in range(0, 0x900, 4):
+                m.wr(car + k, 4, 0)
+            for k in range(0, 2 * 32, 4):
+                m.wr(em + k, 4, 0)
+            m.wr(car + typ_at, 4, typ)
+            m.wr(car + idx_at, 2, idx)
+            m.wr(car + slot_at, 2, 5)
+            m.wr(em + 32, 2, timer)             # emitter 1: the flame being tested
+            m.wr(em + 32 + 0x1C, 4, owner)
+            m.wr(em + 0x1C, 4, other)           # emitter 0: another car's object, timer 0
+            m.wr(link.symbols['portBalanceLive']['address'], 4, live)
+            got = lm.run('portBalanceFlameLocked', (car, human))
+            if got != want:
+                bad.append('portBalanceFlameLocked(%s, type %02X, bits %X, timer %d, %s flame) = %d (want %d)' % (
+                    'human' if human else 'AI', typ, live, timer, 'his' if owner == mine else 'another\'s', got,
+                    want))
     return bad
 
 
