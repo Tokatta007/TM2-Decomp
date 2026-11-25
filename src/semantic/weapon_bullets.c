@@ -295,6 +295,12 @@ void __attribute__((section(".text_800D7E30"))) bulletsMove(void)
                         S16(obj, 10) = 0;
                         s->hit = 0;
                     }
+#ifdef TM2_PORT_BALANCE
+                    if (portBalancePickupPass(S16(obj, 10))) {  /* request 124 (portBalance2 bit 0): 441..480 too */
+                        S16(obj, 10) = 0;
+                        s->hit = 0;
+                    }
+#endif
                 }
                 if (s->hit > 0) {
                     if (s->hit == 1)

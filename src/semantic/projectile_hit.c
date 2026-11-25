@@ -269,6 +269,10 @@ void __attribute__((section(".text_800DB110"))) weaponProjectileUpdate(TM2Proj *
             if (obj->kind == 3301 || obj->kind == 2 || obj->kind == 667 || obj->kind == 668 ||
                 (obj->kind >= 401 && obj->kind < 441) || (obj->kind >= 3500 && obj->kind < 3510))
                 p->hit = 0;
+#ifdef TM2_PORT_BALANCE
+            if (portBalancePickupPass(obj->kind))       /* request 124 (portBalance2 bit 0): 441..480 too */
+                p->hit = 0;
+#endif
             if (p->type == 49 && (obj->kind < 500 || obj->kind >= 511))
                 p->hit = 0;
             if (p->hit == 8 && p->type == 51 && p->victim->pos[0] == p->target[0])

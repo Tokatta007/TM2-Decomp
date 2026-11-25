@@ -107,6 +107,13 @@ directory):
      weaponFireSpecial, its other edge can; run in LinkMips on made-up human and AI records: 1 for a Thumper (0x70)
      with bit 14 and a flame emitter whose timer runs and whose car object is his; 0 with the timer out, another
      car's flame, the bit clear (every other bit set) or another type.
+   Request 124 (BALANCE.md 26, the second word portBalance2 / portBalanceLive2):
+   - G30 shots pass pickups (portBalance2 bit 0): portBalancePickupPass called twice by weaponRicochetUpdate (each
+     after an hdpCollideObject), once by weaponProjectileUpdate and once by bulletsMove; portBalanceLatch copies the
+     word; run in LinkMips: portBalancePickupPass is 1 for 401..480 with the bit only; weaponRicochetUpdate on a
+     made-up line (a wall at x >= 1000, a pickup box at 960..999 beside it): with the bit clear the bomb is trapped
+     (retail, request 124), with it the bomb bounces once and rolls away; the same for a 441..480 box; a box of
+     another kind (a wall) traps it either way.
 3. Source: the helpers' block in port_variant_arrays.c has no rand( call (comments stripped); the ten functions that
    size the drop records and mine objects (and the port's PORT_DROPS) use TM2_MAX_DROPS / TM2_MAX_MINE_OBJECTS /
    the live macros, no literal 25 / 23 / 24 left.
@@ -169,6 +176,8 @@ CALLERS = {
     # request 121 (bits 9, 14)
     'portBalanceGunLife': {'bulletSpawn'},
     'portBalanceFlameLocked': {'weaponFireSelected'},
+    # request 124 (portBalance2 bit 0)
+    'portBalancePickupPass': {'weaponRicochetUpdate', 'weaponProjectileUpdate', 'bulletsMove'},
     # request 67 (bit 23)
     'portBalancePickupSlot': {'pickupRespawnTick'},
     'portBalancePickupShowable': {'portBalancePickupSlot'},
@@ -644,10 +653,11 @@ def check(out, defined=True):
     if len(steer) != 1 or len(query) != 1:
         bad.append('calls: weaponProjectileSteer %d, hdpQueryPoint %d (want 1 each)' % (len(steer), len(query)))
     bad += ['%s called at %08X' % (c, a) for a, c in sorted(flow.calls.items())
-            if c and c.startswith('portBalance') and c != 'portBalanceBoomerangCatch']     # request 95: G25's
+            if c and c.startswith('portBalance')
+            and c not in ('portBalanceBoomerangCatch', 'portBalancePickupPass')]   # requests 95 (G25), 124 (G30)
     bad += ['%s linked (the spiral is retail)' % f for f in sorted(sizes) if f.startswith('portBalanceSpiral')]
-    report('2. G12 spiral (retail): weaponProjectileUpdate retail, no portBalance call but bit 28\'s catch',
-           bad)
+    report('2. G12 spiral (retail): weaponProjectileUpdate retail, no portBalance call but bit 28\'s catch and the '
+           'second word\'s pickup pass', bad)
 
     # G13
     flow = flow_of('areaDamage')
@@ -926,6 +936,25 @@ def check(out, defined=True):
     bad += flame_lock_run(out, link, sizes)
     report('2. G29 Thumper lock (bit 14): weaponFireSelected refuses his special while a flame of his burns '
            '(MIPS run)', bad)
+
+    # G30 (request 124)
+    bad = []
+    for fn, want in (('weaponRicochetUpdate', 2), ('weaponProjectileUpdate', 1), ('bulletsMove', 1)):
+        flow = flow_of(fn)
+        n = len(gate_calls(flow, 'portBalancePickupPass')) if flow else -1
+        if n != want:
+            bad.append('%s: portBalancePickupPass called %d times (want %d)' % (fn, n, want))
+        if fn == 'weaponRicochetUpdate' and flow:
+            p, hits = gate_calls(flow, 'portBalancePickupPass'), sites(flow, {'hdpCollideObject'})
+            for h in hits:
+                if not any(a > h and a in flow.reach(h + 8, set()) for a in p):
+                    bad.append('no portBalancePickupPass after hdpCollideObject at %08X' % h)
+    latch = strip_comments(c_body(ROOT / 'src/semantic/port_variant_arrays.c', 'portBalanceLatch'))
+    if 'portBalanceLive2 = portBalance2;' not in latch:
+        bad.append('portBalanceLatch does not copy portBalance2')
+    bad += pickup_pass_run(out, link, sizes)
+    report('2. G30 shots pass pickups (portBalance2 bit 0): both ricochet checks, the missiles\' and the bullets\' '
+           'pass 401..480; the trapped bomb gets away (MIPS run)', bad)
 
     # 3. source
     bad = []
@@ -1413,6 +1442,119 @@ def flame_lock_run(out, link, sizes):
                 bad.append('portBalanceFlameLocked(%s, type %02X, bits %X, timer %d, %s flame) = %d (want %d)' % (
                     'human' if human else 'AI', typ, live, timer, 'his' if owner == mine else 'another\'s', got,
                     want))
+    return bad
+
+
+def pickup_pass_run(out, link, sizes):
+    """G30, request 124: portBalancePickupPass, then weaponRicochetUpdate in check_custom's LinkMips on a made-up
+    line along x (shot 0 alive, the others dead; hdpCollideObject, the matrix, the move, the reflection, the ground,
+    the sounds and effects stubbed): a wall at x >= 1000 (normal +x, depth x - 1000) and a box of `kind` at
+    960..999 beside it. The bomb starts at 800 heading +x at 100 a tick."""
+    need = ('portBalancePickupPass', 'portBalanceLive2', 'portBalanceLive', 'weaponRicochetPool',
+            'weaponRicochetUpdate')
+    miss = [n for n in need if n not in sizes and n not in link.symbols]
+    if miss:
+        return ['not in the link: ' + ', '.join(miss)]
+    from check_rollback import Image
+    from check_custom import LinkMips
+    img = Image(out)
+    hdr = (ROOT / 'include/semantic/port_balance.h').read_text(encoding='utf-8')
+    bit = int(re.search(r'#define TM2_BAL2_PICKUP_PASS\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    every = int(re.search(r'#define TM2_BAL_ALL\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    sym = lambda n: link.symbols[n]['address']
+    s32 = lambda v: v - (1 << 32) if v & 0x80000000 else v
+    bad = []
+    for kind in (400, 401, 404, 440, 441, 459, 480, 481, 500, 667, 0, -1):
+        for live2 in (bit, 0, 0xFFFFFFFF & ~bit, 0xFFFFFFFF):
+            lm = LinkMips(img, {})
+            lm.m.wr(sym('portBalanceLive2'), 4, live2)
+            lm.m.wr(sym('portBalanceLive'), 4, 0xFFFFFFFF)
+            got = lm.run('portBalancePickupPass', (kind,))
+            want = 1 if (live2 & bit) and 401 <= kind <= 480 else 0
+            if got != want:
+                bad.append('portBalancePickupPass(%d), word 2 %X = %d (want %d)' % (kind, live2, got, want))
+    report = json.loads((out / 'report.json').read_text(encoding='utf-8'))
+    cars = [d.split('=', 1) for d in (report.get('port_variant') or {}).get('port_defines') or []]
+    cars = [int(d[1]) for d in cars if d[0] == 'TM2_PORT_CARS' and len(d) == 2]
+    n_shots = 2 * cars[0] if cars else 10
+    pool = sym('weaponRicochetPool')
+    shot = pool + 4 * n_shots
+    obj, actors = 0x80A40000, 0x80A50000
+
+    def ricochet(kind, live2, live, ticks=30):
+        xs = []
+
+        def collide(m):
+            x, h = s32(m.rd(obj + 0xA8, 4)), m.r[5]
+            for k in range(0, 0x24, 4):
+                m.wr(h + k, 4, 0)
+            if x >= 1000:
+                m.wr(h + 4, 4, 1)
+                m.wr(h + 8, 4, 4096)
+                m.wr(h + 0x14, 4, x - 1000)
+                m.wr(h + 0x22, 2, 3)            # a wall of the level
+            elif 960 <= x < 1000:
+                m.wr(h + 4, 4, 1)
+                m.wr(h + 8, 4, -4096 & 0xFFFFFFFF)
+                m.wr(h + 0x14, 4, 10)
+                m.wr(h + 0x22, 2, kind & 0xFFFF)
+
+        def move(m):                            # mathMulTransVec(matrix, offset, vel): along the heading
+            rot = m.rd(obj + 0xA4, 2) & 4095
+            m.wr(m.r[6], 4, (100 if rot < 1024 or rot >= 3072 else -100) & 0xFFFFFFFF)
+            m.wr(m.r[6] + 4, 4, 0)
+            m.wr(m.r[6] + 8, 4, 0)
+
+        def reflect(m):                         # mathReflectHeading(vel, normal, &rot[2]): head-on
+            m.wr(m.r[4], 4, (-s32(m.rd(m.r[4], 4))) & 0xFFFFFFFF)
+            m.wr(m.r[6], 2, (m.rd(m.r[6], 2) + 2048) & 4095)
+
+        def copy(m):
+            for k in range(m.r[6]):
+                m.wr(m.r[4] + k, 1, m.rd(m.r[5] + k, 1))
+        stubs = {'hdpCollideObject': collide, 'mathMulTransVec': move, 'mathReflectHeading': reflect,
+                 'memcpy': copy, 'RotMatrixYXZ': lambda m: 0, 'worldGroundHeightAt': lambda m: -16 & 0xFFFFFFFF,
+                 'mathBlendValue': lambda m: m.r[5], 'humanCarCount': lambda m: 0, 'aiCarCount': lambda m: 0,
+                 'targetActorsGet': lambda m: actors, 'lightFlickerStart': lambda m: 0,
+                 'fxExplosion24': lambda m: 0, 'targetDamage': lambda m: 0, 'viewGetSplitMode': lambda m: 0,
+                 'soundLocateForView0': lambda m: 0, 'soundLocateForView': lambda m: 0, 'PadChkMtap': lambda m: 0,
+                 'soundGetListenerPan': lambda m: 0, 'soundPlayVariantEx': lambda m: 0,
+                 'soundIsActive': lambda m: 0, 'soundStop': lambda m: 0}
+        lm = LinkMips(img, stubs)
+        m = lm.m
+        for k in range(0, 52 * n_shots, 4):
+            m.wr(pool + k, 4, 0)
+        for k in range(0, 0x120, 4):
+            m.wr(obj + k, 4, 0)
+        for j in range(6):
+            m.wr(actors + 60 * j + 4, 2, 0xFFFF)
+        m.wr(obj + 8, 4, 1)
+        m.wr(obj + 0x118, 4, 60)
+        m.wr(obj + 0xA8, 4, 800)
+        m.wr(shot + 0x00, 1, 7)
+        m.wr(shot + 0x02, 2, 60)                # a computer car's: no scenery damage
+        m.wr(shot + 0x04, 2, 400)
+        m.wr(shot + 0x0C, 4, 100)
+        m.wr(shot + 0x2C, 4, obj)
+        m.wr(pool, 4, obj)
+        m.wr(sym('portBalanceLive2'), 4, live2)
+        m.wr(sym('portBalanceLive'), 4, live)
+        for _ in range(ticks):
+            lm.run('weaponRicochetUpdate', ())
+            xs.append(s32(m.rd(obj + 0xA8, 4)))
+        return xs, m.rd(shot + 6, 2)
+    for kind, live2, live, escapes in ((404, 0, 0, False), (404, bit, 0, True), (404, 0xFFFFFFFF, every, True),
+                                       (404, 0xFFFFFFFF & ~bit, every, False), (459, 0, 0, False),
+                                       (459, bit, 0, True), (3, bit, 0, False), (3, 0xFFFFFFFF, every, False)):
+        xs, b = ricochet(kind, live2, live)
+        if escapes:                             # one bounce off the wall, then away through the box
+            ok = b == 1 and xs[-1] < 0 and min(xs) == xs[-1]
+        else:                                   # retail's trap (a box that is not a pickup: a wall, so with the
+            ok = b >= 20 and all(x >= 960 for x in xs[2:])      # bit too): at the wall every tick to the end
+        if not ok:
+            bad.append('ricochet, box kind %d, word 2 %X, word 1 %X: %d bounces, x %s (want %s)' % (
+                kind, live2, live, b, xs[:8] + ['..', xs[-1]],
+                'one bounce off the wall, then away' if escapes else 'trapped at the wall'))
     return bad
 
 

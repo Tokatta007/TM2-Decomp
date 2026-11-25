@@ -17,6 +17,8 @@
  *                     by the C
  *   portBalanceGunObjects   the machine guns' half point of every hit that is not a car (bit 20, round 3);
  *                     written by the C
+ *   portBalance2, portBalanceLive2   request 124: the second word of switches (TM2_BAL2_*), set by the port, and
+ *                     its copy for the round, latched with portBalanceLive (portBalance's 32 bits are all used)
  *
  * Word zero: every gate passes and the retail logic runs, with the same rand() calls in the same order (no port
  * function calls rand(); tools/check_balance.py). With bits set the rand() stream differs only where a rule makes
@@ -149,6 +151,15 @@
 #define TM2_BAL_ALL           0xFDFFFFFF /* Vanilla Plus and online (bits 9 and 14 are request 121's since it); bit 25 is not
                                          in it (the user's: off). Bit 31 is set: read the word as unsigned */
 
+/* portBalance2 bits (request 124 on: portBalance's 32 bits are all used). Latched with portBalance
+ * (portBalanceLive2), the same rules: 0 = retail, put the word in the ruleset hash next to portBalance. */
+#define TM2_BAL2_PICKUP_PASS  0x0001  /* bit 0, request 124 (BALANCE.md 26): every shot passes a pickup's hit box,
+                                         ids 401..480 (retail: 401..440, and the ricochet bomb's push-out check
+                                         after a bounce passed none: next to a wall a pickup trapped it). The
+                                         ricochet's two checks, the missiles' and the bullets' one */
+#define TM2_BAL2_ALL          0x0001  /* Vanilla Plus and online */
+#define TM2_BAL2_PICKUP_LAST  480     /* bit 0: the last pickup id (441..480: the +40 "keep" pickups) */
+
 /* The numbers (BALANCE.md 3) */
 #define TM2_BAL_BOOMERANG_CATCH 20      /* bit 28: the catch distance (the source's DISTANCE, 8 position units: 160);
                                          retail's steering removes the boomerang inside it */
@@ -223,6 +234,8 @@ extern struct TM2PortBalanceCar portBalanceCars[]; /* [TM2_MAX_CAR_SLOTS] reques
 extern unsigned int portBalanceGunObjects;      /* bit 20: the half point of the gun hits that are not cars */
 extern struct TM2PortBalanceJam portBalanceJam[]; /* [TM2_MAX_CAR_SLOTS] request 91 item 3 (bit 27) */
 extern int portBalanceBoom[];       /* [4] request 102 (bit 30): the last explosion sound's x, y, z and 1 (0 = none) */
+extern int portBalance2;            /* request 124: the port's second word of switches (TM2_BAL2_*), 0 = retail */
+extern int portBalanceLive2;        /* its copy for this round (portBalanceLatch), written by the C */
 #ifdef __cplusplus
 }
 #endif
@@ -240,12 +253,16 @@ extern int portBalanceBoom[];       /* [4] request 102 (bit 30): the last explos
 #pragma tm2_absolute portBalanceCars
 #pragma tm2_absolute portBalanceGunObjects
 #pragma tm2_absolute portBalanceJam
+#pragma tm2_absolute portBalance2
+#pragma tm2_absolute portBalanceLive2
 #ifdef __cplusplus
 extern "C" {
 #endif
 /* .port_text (port_variant_arrays.c); none of them calls rand(). Each returns the retail value (or does nothing)
  * when its bit is clear. */
 extern void portBalanceLatch(void);                  /* roundStart: the switches of this round */
+extern int  portBalancePickupPass(int kind);         /* request 124: 1 = a shot passes this hit (portBalance2 bit 0
+                                                        and a pickup id 401..480), else 0 (the caller's retail filter) */
 extern int  portBalancePickupSlot(int r);            /* pickupRespawnTick: the slot to bring back from its one rand()
                                                         r (bit 23: among the taken ones that can show, -1 = none;
                                                         clear: r % pickupRegisteredCount, retail) */

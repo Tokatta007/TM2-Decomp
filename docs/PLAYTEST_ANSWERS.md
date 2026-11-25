@@ -1957,3 +1957,23 @@ int portAiAim(int owner, int *out, int mode)
   **Not tested in game.** To test: a team game with a computer Grasshopper and Outlaw on your team. Neither leaps at
   nor tasers you, and both still go for the other team. With an enemy player in, your computer teammates drive at
   him, not at you.
+
+## 38. Request 124: the ricochet bomb trapped between a wall and a pickup (built: `portBalance2` bit 0)
+
+Asked 2026-11-25 (Zen, v1.0.15, a photo mode replay video, Hong Kong). A ricochet bomb rolled through a Power pickup
+near a wall, bounced off the wall, then went back and forth between the wall and the pickup until its life ran out.
+The details are in `BALANCE.md` 26.
+
+| Item | Result |
+|---|---|
+| 1. The reading | **confirmed** (`BALANCE.md` 26.2). The push-out check after a bounce passes only 667-668, so a pickup's box beside the wall turns the bomb back into the wall every tick. Retail's code: the PS1 does the same wherever a pickup sits that close to a wall |
+| 2. The push-out check's filter | **built** under a new second balance word: `portBalance2` bit 0, `TM2_BAL2_PICKUP_PASS` (`portBalance` has no free bit) |
+| 3. 441..480 | **yes, built** under the same bit: both checks pass 401..480. They are the +40 bonus pickups of Los Angeles and Moscow, walls to every shot in retail |
+| 4. Other shots with two checks | **none**. The missiles (`weaponProjectileUpdate`) and the bullets (`bulletsMove`) test a hit once, with the first check's range (401-440). The same bit extends both to 441..480 |
+
+- **Set:** `portBalance2 = TM2_BAL2_ALL` (`0x1`) in Vanilla Plus and online, with `portBalance`, and hash it with the
+  ruleset. Its address is in `symbols.tsv`. It is latched at each round's start, like `portBalance`.
+- **Also seen, not changed:** Dark Tooth's swoop ends at the first thing `hdpQueryPoint` finds, a pickup's box
+  included (`BALANCE.md` 26.2). Ask if it should pass pickups too.
+- **Checked:** `check_balance.py` G30, including a LinkMips run of `weaponRicochetUpdate` that reproduces the trap
+  with the bit clear and shows the bomb getting away with it set. Not tested in game.

@@ -10269,6 +10269,7 @@ void PORT_TEXT portBalanceLatch(void)
     int i;
 
     portBalanceLive = portBalance;
+    portBalanceLive2 = portBalance2;        /* request 124: the second word */
     for (i = 0; i < TM2_MAX_CAR_SLOTS; i++) {
         portBalanceRideTop[i] = 0;
         portBalanceCars[i].frozen_at = 0;
@@ -11027,6 +11028,16 @@ int PORT_TEXT portBalanceRicochetPass(void *shot, void *obj)
     if (*(int *)((unsigned char *)obj + 0x118) != *(short *)(s + 2))     /* the object's id, the shot's owner */
         return 0;
     return carFindByObject(obj, &human, &index) != 0;
+}
+
+/* Request 124 (portBalance2 bit 0, BALANCE.md 26): after a shot's hit test, 1 = drop this hit (the caller clears
+ * it, as for its own filter) when `kind`, the id of the hit volume, is a pickup's, 401..480. The callers: both of
+ * weaponRicochetUpdate's checks (retail's first passes 401..440, its push-out check after a bounce passes none, so a
+ * pickup next to a wall turned the bomb back into the wall until its life ran out), weaponProjectileUpdate's and
+ * bulletsMove's (401..440). Bit clear: 0, retail's filters alone. Reads only; no rand(). */
+int PORT_TEXT portBalancePickupPass(int kind)
+{
+    return (portBalanceLive2 & TM2_BAL2_PICKUP_PASS) && (unsigned int)(kind - 401) <= TM2_BAL2_PICKUP_LAST - 401;
 }
 
 /* weaponFireEnergyAttack 104 (bit 19): 1 when the energy jump costs nothing: a Grasshopper (by car type: her
@@ -14660,6 +14671,10 @@ short portHumanThrottle[TM2_MAX_HUMANS] PORT_BSS = {0};
 /* request 123 (port_team_locks.h, PLAYTEST_ANSWERS.md 37.3): per car slot, the car's team as the port sets it, 0 = none
    (retail); read by portTeamMates; every variant, match state */
 unsigned char portCarTeam[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
+/* request 124 (port_balance.h, BALANCE.md 26): the second word of Vanilla Plus switches (TM2_BAL2_*, set by the
+   port; 0 = retail) and its copy for the round (portBalanceLatch); every variant, used only with TM2_PORT_BALANCE */
+int portBalance2 PORT_BSS = 0;
+int portBalanceLive2 PORT_BSS = 0;
 unsigned int portStackGuard[TM2_PORT_STACK_GUARD / 4] PORT_BSS = {0};
 unsigned int portStack[TM2_PORT_STACK / 4] PORT_BSS __attribute__((aligned(8))) = {0};
 
