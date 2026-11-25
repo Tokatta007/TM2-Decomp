@@ -97,6 +97,9 @@ an option); bit 15 overlaps bit 6's 7a (with bit 15 set, 7a's refusals never tri
 effect). Machine guns: request 41 built no bit (12.7);
 round 3's bit 20 removes the coin flip (13.3). Request 45 split bit 8 into bits 8, 21, 22 (one per car, 14.1).
 
+The word is full. Since request 124 a second word, `portBalance2` (`TM2_BAL2_*`, `TM2_BAL2_ALL` = `0x1`), holds
+the newer rules, latched with this one (section 26.1).
+
 ### 2.2 Storage (`.port_bss`, every variant; `config/US/port_variant_arrays.tsv`, after `portHumanRadarBlink`)
 
 | Name | Type | Written by | Meaning |
@@ -1864,3 +1867,92 @@ leap are as they were. Not tested in game. To test: (1) bit 9: a player's bullet
 3,800 (a target just inside: hit; just outside: not); (2) bit 14: Thumper with 2 specials, two presses 1 s apart:
 the second is denied (sound), the special count stays, the target takes one flame's damage; a press after the first
 flame ends fires; a computer Thumper at close range fires one flame at a time; (3) bit 7: a leap hit takes 20.
+
+## 26. Request 124 (2026-11-25, Zen): the ricochet bomb trapped by a pickup next to a wall (`portBalance2` bit 0)
+
+### 26.1 The second word
+
+`portBalance`'s 32 bits are all named (bit 25 is an off option), so request 124 starts a second word with the same
+rules as the first:
+
+| Name | Written by | Meaning |
+|---|---|---|
+| `portBalance2` | the port | the switches (`TM2_BAL2_*`), 0 = retail; set it with `portBalance` and put it in the ruleset hash next to it |
+| `portBalanceLive2` | `portBalanceLatch` (roundStart) | this round's copy, read by the gates; the port reads it, never writes it |
+
+Both are `.port_bss` in every variant, after `portCarTeam` (`config/US/port_variant_arrays.tsv`). Read their
+addresses from the link's `symbols.tsv`. `TM2_BAL2_ALL` (`0x1`) is the word for Vanilla Plus and online.
+
+| bit | mask | item | name | rule |
+|---|---|---|---|---|
+| 0 | 0x0001 | 124 | `TM2_BAL2_PICKUP_PASS` | every shot passes a pickup's hit box, ids 401..480: both of the ricochet bomb's hit checks, the missiles' and the bullets' (26.3) |
+
+### 26.2 What happens in retail (CONFIRMED in the C; the same on the PS1)
+
+`weaponRicochetUpdate` (8010CC54, `weapon_ricochet.c`) moves each bomb, then asks `hdpCollideObject` for one hit:
+
+1. **The first check** drops a hit of kind 667-668 or 401-440 (the pickups): the bomb rolls through a pickup.
+2. **On a hit** (a wall): the heading is reflected, the bounce counted, and the bomb pushed out of the wall by the
+   hit's depth + 20 along its normal.
+3. **The push-out check** asks `hdpCollideObject` again and drops only 667-668. If something is still hit there, the
+   bomb is moved back by this tick's velocity and turned around (`rot[2] += 2048`).
+
+Step 3 is meant for a corner: pushed out of one wall into another, the bomb goes back the way it came. But a pickup's
+hit box counts there. With a pickup within about 20 units plus the bomb's size of a wall, each bounce pushes the bomb
+into the pickup, step 3 turns it back into the wall, and the next tick bounces it again: back and forth until its
+life (400 ticks, 20 s) runs out. It never gets past the pickup again. It is retail's code, unchanged by the port, so
+the PS1 does the same wherever a pickup sits that close to a wall. The bomb's power only doubles on the first
+bounce, so nothing else grows while it is trapped.
+
+**The other shots** test a hit once, with no push-out (no second check):
+
+| Shot | Function | Passes |
+|---|---|---|
+| ricochet bomb, first check | `weaponRicochetUpdate` | 667-668, 401-440 |
+| ricochet bomb, push-out check | `weaponRicochetUpdate` | 667-668 only |
+| missiles and the other projectiles | `weaponProjectileUpdate` (800DB110, `projectile_hit.c`) | 2, 667-668, 3301, 401-440, 3500-3509 |
+| machine-gun bullets | `bulletsMove` (800D7E30, `weapon_bullets.c`) | the owner, 667-668, 3301, 401-440, 3500-3509 |
+
+So the ricochet bomb's push-out is the only check that differs from its own first check.
+
+**441..480** (`PICKUP_LOOKS.md` 1) are the +40 "keep" pickups, only on Los Angeles (441, 444, 453, 459) and Moscow
+(443, 444, 446, 451, 457, 459): the rotating bonus spots under an id-440 animation node. Every shot stops at 440, so
+in retail these hit boxes are walls to every shot: a bomb bounces off them, and a missile or bullet hitting one ends
+there. On Moscow's first carrier the hit box is beside the 44x node and reads 440, which every first check already
+passes.
+
+**Also seen, not changed:** Dark Tooth's swoop (`aiDarkToothBossUpdate`, 8010FD44, `ai_dark_tooth_boss.c`)
+ends at the first hit of `hdpQueryPoint` with no filter at all, so a pickup's box stops it like a wall does. It is
+not a shot's check, so this bit leaves it as retail; ask if the swoop should pass pickups too.
+
+### 26.3 Built: `portBalancePickupPass(kind)` (bit 0, `TM2_BAL2_PICKUP_PASS`)
+
+- **The gate:** `portBalancePickupPass(kind)` is 1 when bit 0 of `portBalanceLive2` is set and `kind` is 401..480,
+  else 0. Each caller clears its hit when it is 1, the same way as for its own filter. It reads only and calls no
+  `rand()`.
+- **Called:**
+  - `weaponRicochetUpdate`, after **both** checks (after bit 18's `portBalanceRicochetPass`). The push-out check now
+    passes 401..480, so a pickup beside a wall no longer turns the bomb back: it bounces once off the wall and rolls
+    away through the pickup, as it rolled in. The first check also passes 441..480.
+  - `weaponProjectileUpdate`, after its filter: missiles pass 441..480 too.
+  - `bulletsMove`, after its filter (the kind cleared as the filter does): bullets pass 441..480 too.
+- **What stays:** a real corner (a wall next to a wall, or a car's box) still turns the bomb back, as retail; only a
+  pickup's box stops counting.
+- **Bit clear:** retail's filters alone, every shot as before. Online: no new state (the word is latched like
+  `portBalance`), the same on every machine; it changes play, so it belongs with the online rules version.
+- **`rand()`:** the gate draws none. A bomb that gets away may later hit something it never reached in retail, and
+  that hit draws what any hit draws: only with the bit, the same on every machine.
+
+**Checked:** `tools/check_balance.py` G30:
+- `weaponRicochetUpdate` calls `portBalancePickupPass` twice, each after an `hdpCollideObject`;
+  `weaponProjectileUpdate` and `bulletsMove` once each; `portBalanceLatch` copies the word;
+- a LinkMips run of `portBalancePickupPass`: 1 for 401..480 with the bit only (400, 481, 500, 667, 0 and -1 never;
+  every other bit of both words set or clear);
+- a LinkMips run of `weaponRicochetUpdate` itself on a made-up line, `hdpCollideObject` and the movement stubbed: a
+  wall at x >= 1000 and a box at 960..999 beside it, the bomb from 800 at 100 a tick. With the bit clear and a pickup
+  box (404) the bomb is trapped at the wall for 30 ticks (Zen's), with the bit it bounces once and rolls away. A 459
+  box does the same. A box that is not a pickup traps it with the bit too (a corner).
+
+Not tested in game. To test: Hong Kong, a ricochet bomb rolled through the Power pickup by the wall in Zen's video.
+With the bit it bounces off the wall once and comes back through the pickup. On Los Angeles or Moscow, missiles and
+bullets fly through a bonus spot.

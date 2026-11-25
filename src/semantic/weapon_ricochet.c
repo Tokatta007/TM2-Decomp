@@ -121,6 +121,9 @@ void __attribute__((section(".text_8010CC54"))) weaponRicochetUpdate(void)
         /* request 45 bit 18 (BALANCE.md 14.2): the owner's car box is no wall until the shot has left his box */
         if (portBalanceRicochetPass(&SHOT, (void *)hit.f18[0]))
             hit.hit = 0;
+        /* request 124 (portBalance2 bit 0, BALANCE.md 26): every pickup is passed (441..480 too) */
+        if (portBalancePickupPass(hit.kind))
+            hit.hit = 0;
 #endif
         if (hit.hit) {
             if (SHOT.owner < 50 && (u32)(hit.kind - 500) < 21) {
@@ -143,6 +146,10 @@ void __attribute__((section(".text_8010CC54"))) weaponRicochetUpdate(void)
                     hit.hit = 0;
 #ifdef TM2_PORT_BALANCE
                 if (portBalanceRicochetPass(&SHOT, (void *)hit.f18[0]))
+                    hit.hit = 0;
+                /* request 124: retail's push-out check passes no pickup: one next to the wall turned the bomb back
+                   into the wall, bounce after bounce, until its life ran out */
+                if (portBalancePickupPass(hit.kind))
                     hit.hit = 0;
 #endif
                 if (hit.hit) {
