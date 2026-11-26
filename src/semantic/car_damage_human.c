@@ -295,6 +295,7 @@ extern s32 roundOverFlag;
 #ifdef TM2_PORT_HUMANS
 #include "semantic/port_humans.h"   /* HUMANS16_PLAN.md H5: portHumanRules */
 #endif
+#include "semantic/port_human_wreck.h"  /* request 126: portHumanWreckOut */
 
 /* @8011B89C: update human car i's damage look from its hp percentage (>40 ok, >12 damaged,
    >0 critical: switch model damage stage and smoke); at hp <= 0 mark it destroyed once,
@@ -304,6 +305,9 @@ void __attribute__((section(".text_8011B89C"))) humanCarDamageUpdate(s32 i)
     s32 hp = humanCars[i].hp;
     s32 pct = hp * 100 / humanCars[i].max_hp;
 
+#ifdef TM2_PORT_HUMAN_WRECK
+    portHumanWreckTick(i);      /* request 126: the wreck clock (a respawn ends it; at its seconds the break-up) */
+#endif
     if (pct > 40) {
         if (humanCars[i].dmg_state != 0) {
             carSetDamageStage(HUMAN_KEY(i), 0, humanCars[i].smoke_arg);
@@ -331,6 +335,9 @@ void __attribute__((section(".text_8011B89C"))) humanCarDamageUpdate(s32 i)
         humanCars[i].dead = 1;
         carResetWeapons[i] = 1;
         carDestroyed(&humanCars[i], 1);
+#ifdef TM2_PORT_HUMAN_WRECK
+        portHumanWreckStart(i, HUMAN_KEY(i));   /* request 126: a burning wreck (body shown), broken up later */
+#endif
 #ifdef TM2_PORT_HUMANS
         /* H5: with portHumanOptions bit 1 the round goes on; the human stays down (portHumanDown) until the port's
            portHumanRespawn: no round end, no result by human 0 / the others */

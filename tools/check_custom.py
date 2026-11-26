@@ -5349,6 +5349,175 @@ def check_dt_swoop(out):
     return good
 
 
+def check_human_wreck(out):
+    """Request 126 (PLAYTEST_ANSWERS.md 40, port_human_wreck.h): humanCarDamageUpdate calls portHumanWreckTick first and
+    portHumanWreckStart after carDestroyed; carWreckUpdate calls portHumanWreckBreak once and portHumanWreckBurns. In
+    LinkMips (humanCarObject, timerGetFrameTicks 3, rand, the effects, carBodyObjectShow and carApplyDamage stubbed)
+    on a made-up player record (dead, HP 0, wreck timer 120 as carDestroyed leaves it):
+    - Start: a car in play gets carBodyObjectShow(key), its small-blast flag cleared and the mark; a car out (+8 = 0)
+      or without an object neither;
+    - carWreckUpdate each step, marked: the computer cars' flame at the first step, the small blast (f26) at step 361
+      (timer < -960) and the break-up at step 441 (timer < -1200, 22 s at 60): carApplyDamage(its id, 15, 0, 2, 0)
+      once, the flame out, the mark cleared; not marked: neither the blast nor the break-up (retail); marked with HP
+      back above 0 (a respawn) at step 200: no break-up;
+    - Tick: HP above 0 or the car hidden clears the mark and puts the flame out; a marked wreck in play stays marked."""
+    from check_rollback import Image
+    img = Image(out)
+    link = img.link
+    rows, kinds = load_functions(out)
+    sizes = {r[2]: (r[0], r[1]) for r in rows}
+    need = ('portHumanWreckStart', 'portHumanWreckTick', 'portHumanWreckBurns', 'portHumanWreckBreak',
+            'portHumanWreckLive')
+    miss = [n for n in need if n not in link.symbols] + [n for n in ('humanCarDamageUpdate', 'carWreckUpdate')
+                                                         if n not in sizes]
+    if miss:
+        print('33. request 126 human wreck -> FAIL: %s not in the link' % ', '.join(miss))
+        return False
+    bad = []
+    tables = jump_tables(out)
+    names_at = {r[0]: r[2] for r in rows}
+
+    def flow_of(fn):
+        return Flow(link, sizes[fn][0], sizes[fn][1], tables, names_at)
+
+    flow = flow_of('humanCarDamageUpdate')
+    calls = sorted(flow.calls.items())
+    at = lambda fl, name: [a for a, c in sorted(fl.calls.items()) if c == name]
+    tick, start, dest = at(flow, 'portHumanWreckTick'), at(flow, 'portHumanWreckStart'), at(flow, 'carDestroyed')
+    if len(tick) != 1 or len(start) != 1 or len(dest) != 1:
+        bad.append('humanCarDamageUpdate: portHumanWreckTick x%d, portHumanWreckStart x%d, carDestroyed x%d '
+                   '(want 1 each)' % (len(tick), len(start), len(dest)))
+    else:
+        if calls[0][0] != tick[0]:
+            bad.append('humanCarDamageUpdate: portHumanWreckTick is not its first call')
+        if not (start[0] > dest[0] and start[0] in flow.reach(dest[0] + 8, set())):
+            bad.append('portHumanWreckStart not after carDestroyed')
+    wflow = flow_of('carWreckUpdate')
+    if len(at(wflow, 'portHumanWreckBreak')) != 1 or not at(wflow, 'portHumanWreckBurns'):
+        bad.append('carWreckUpdate: portHumanWreckBreak x%d, portHumanWreckBurns x%d (want 1, >= 1)' % (
+            len(at(wflow, 'portHumanWreckBreak')), len(at(wflow, 'portHumanWreckBurns'))))
+
+    live = link.symbols['portHumanWreckLive']['address']
+    OBJ, REC, FIRE, JIT = 0x80A00000, 0x80A10000, 0x80A40000, 0x80A48000
+    obj_of = lambda i: OBJ + 0x200 * i
+    rec_of = lambda i: REC + 0x900 * i
+    log = []
+    state = {'has_obj': True}
+    stubs = {'humanCarObject': lambda m: obj_of(m.r[4] & 0xFF) if state['has_obj'] else 0,
+             'humanCarGet': lambda m: rec_of(m.r[4] & 0xFF),
+             'timerGetFrameTicks': lambda m: 3,
+             'rand': lambda m: 0x7FFF,
+             'mathJitterPos': lambda m: JIT,
+             'carBodyObjectShow': lambda m: log.append(('show', m.r[4])),
+             'carApplyDamage': lambda m: log.append(('damage', m.r[4], m.r[5], m.r[6], m.r[7],
+                                                     m.rd(m.r[29] + 16, 4))),
+             'fxFlame10': lambda m: log.append(('flame', m.r[5])) or FIRE,
+             'fxExplosion24': lambda m: log.append(('blast24',)),
+             'fxExplosion48': lambda m: log.append(('blast48',)),
+             'fxExplosion96': lambda m: log.append(('blast96',)),
+             'fxSmokeA48': lambda m: log.append(('smoke48',)),
+             'fxSmokeA24': lambda m: None,
+             'fxSmokeA12': lambda m: None}
+    runs = 0
+
+    def setup(i, visible=1):
+        lm = LinkMips(img, stubs)
+        m = lm.m
+        o, r = obj_of(i), rec_of(i)
+        m.fill(r, bytes(0x900))
+        m.wr(o + 8, 4, visible)
+        m.wr(o + 0x118, 4, 40 + i)              # its object id
+        m.wr(r, 2, i)                           # player
+        m.wr(r + 0x9C, 1, 1)                    # state.dead
+        m.wr(r + 0xC2, 1, 1)                    # state.f26 (left set by an earlier wreck)
+        m.wr(r + 0x172, 2, 120)                 # stats.wreck_timer, as carDestroyed leaves it
+        m.wr(r + 0x1F0, 4, 0)                   # stats.hp
+        m.wr(FIRE + 0x0C, 2, 0)
+        return lm
+
+    # Start
+    for i in (0, 2):
+        for visible, has in ((1, True), (0, True), (1, False)):
+            state['has_obj'] = has
+            log.clear()
+            lm = setup(i, visible)
+            lm.run('portHumanWreckStart', (i, 0x1230 + i))
+            runs += 1
+            ok_car = visible and has
+            got = (list(log), lm.m.rd(live + 4 * i, 4), lm.m.rd(rec_of(i) + 0xC2, 1))
+            want = ([('show', 0x1230 + i)] if ok_car else [], 1 if ok_car else 0, 0 if ok_car else 1)
+            if got != want:
+                bad.append('Start human %d visible %d object %s: calls, mark, f26 %s (want %s)' % (
+                    i, visible, has, got, want))
+    state['has_obj'] = True
+
+    # carWreckUpdate, the wreck's life
+    def life(i, marked, steps=600, respawn_at=None):
+        log.clear()
+        lm = setup(i)
+        m = lm.m
+        m.wr(rec_of(i) + 0xC2, 1, 0)
+        m.wr(live + 4 * i, 4, 1 if marked else 0)
+        first_flame = blast = broke = None
+        breaks = 0
+        for s in range(1, steps + 1):
+            if respawn_at == s:
+                m.wr(rec_of(i) + 0x1F0, 4, 100)
+            n0 = len(log)
+            lm.run('carWreckUpdate', (rec_of(i), 1))
+            new = log[n0:]
+            if first_flame is None and ('flame', 1) in new:
+                first_flame = s
+            if blast is None and m.rd(rec_of(i) + 0xC2, 1):
+                blast = s
+            d = [c for c in new if c[0] == 'damage']
+            breaks += len(d)
+            if d and broke is None:
+                broke = (s, d[0])
+        return (first_flame, blast, broke, breaks, m.rd(live + 4 * i, 4), m.rd(rec_of(i) + 0xB6, 1),
+                m.rd(FIRE + 0x0C, 2) if m.rd(rec_of(i) + 0x80C, 4) == FIRE else None)
+
+    got = life(1, True)
+    runs += 1
+    want = (1, 361, (441, ('damage', 41, 15, 0, 2, 0)), 1, 0, 0, 0)
+    if got != want:
+        bad.append('marked wreck: first computer-car flame, small blast, break-up, break-ups, mark, burning, fire '
+                   'active %s (want %s)' % (got, want))
+    got = life(1, False)
+    runs += 1
+    if got[0] is not None or got[1] is not None or got[3] != 0:
+        bad.append('unmarked wreck (retail): computer-car flame %s, small blast %s, break-ups %d (want none)' % (
+            got[0], got[1], got[3]))
+    got = life(3, True, respawn_at=200)
+    runs += 1
+    if got[3] != 0:
+        bad.append('marked wreck with HP back at step 200: %d break-ups (want 0)' % got[3])
+
+    # Tick
+    for label, hp, visible, want_mark in (('respawn', 100, 1, 0), ('hidden', 0, 0, 0), ('in play', 0, 1, 1)):
+        lm = setup(2, visible)
+        m = lm.m
+        m.wr(live + 8, 4, 1)
+        m.wr(rec_of(2) + 0x1F0, 4, hp)
+        m.wr(rec_of(2) + 0xB6, 1, 1)
+        m.wr(rec_of(2) + 0x80C, 4, FIRE)
+        m.wr(FIRE + 0x0C, 2, 300)
+        lm.run('portHumanWreckTick', (2,))
+        runs += 1
+        got = (m.rd(live + 8, 4), m.rd(rec_of(2) + 0xB6, 1), m.rd(FIRE + 0x0C, 2))
+        want = (1, 1, 300) if want_mark else (0, 0, 0)
+        if got != want:
+            bad.append('Tick %s: mark, burning, fire active %s (want %s)' % (label, got, want))
+
+    print('33. request 126: a destroyed player\'s wreck lives a computer car\'s wreck\'s life (%d runs): Tick first '
+          'and Start after carDestroyed in humanCarDamageUpdate; carWreckUpdate: the flame, the small blast at step '
+          '361, blown apart at step 441 (22 s), retail unmarked, none after a respawn -> %s' % (
+              runs, 'ok' if not bad else 'FAIL'))
+    for b in bad[:8]:
+        print('     ' + b)
+    return not bad
+
+
 def check_team_locks(out):
     """Request 123 item 3 (PLAYTEST_ANSWERS.md 37.3): Grasshopper's leap (weaponHomingLeapInit) and Outlaw's taser
     (weaponTaserTarget) in LinkMips on made-up records (2 players, 3 computer cars on one line, the car objects,
@@ -5559,6 +5728,7 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
     glacier_fire = 'TM2_PORT_GLACIER_FIRE' in names or not defined
     dt_swoop = 'TM2_PORT_DT_SWOOP' in names or not defined
     team_locks = 'TM2_PORT_TEAM_LOCKS' in names or not defined
+    human_wreck = 'TM2_PORT_HUMAN_WRECK' in names or not defined
 
     def port_fns(label, fns, rand_reach=True, allowed_rand=()):
         missing = sorted(n for n in fns if kinds.get(n) != 'port')
@@ -6166,6 +6336,15 @@ def check(out, names, e0, defined=True, expect=False, limits=None):
             'portTeamMates': {'weaponHomingLeapInit', 'weaponTaserTarget', 'portTeamNearestFoe'},
             'portTeamNearestFoe': {'aiGetTargetCar'} | ({'portDtSwoopPick'} if dt_swoop else set())}) and ok
         ok = check_team_locks(out) and ok                   # 32. request 123
+    if human_wreck:
+        ok = port_fns('33. human wreck', ('portHumanWreckStart', 'portHumanWreckTick', 'portHumanWreckBurns',
+                                          'portHumanWreckBreak'),
+                      allowed_rand=('portHumanWreckBreak',)) and ok     # the break-up's debris and blast: the game's
+        ok = callers_are('33. callers of the wreck functions', {'portHumanWreckStart': {'humanCarDamageUpdate'},
+                                                                'portHumanWreckTick': {'humanCarDamageUpdate'},
+                                                                'portHumanWreckBurns': {'carWreckUpdate'},
+                                                                'portHumanWreckBreak': {'carWreckUpdate'}}) and ok
+        ok = check_human_wreck(out) and ok                  # 33. request 126
 
     bad = []
     for name, size in STORAGE.items():
@@ -6220,7 +6399,8 @@ def main():
         builds = sorted(p for p in (ROOT / 'work').glob('build-*') if (p / 'source_reloc_e0' / 'report.json').exists())
         e0 = builds[-1] / 'source_reloc_e0' if builds else None
     relevant = names & (OUR_DEFINES | RENDER_DEFINES | {'TM2_PORT_DARK_TOOTH', 'TM2_PORT_DT_PLAYER',
-                                                        'TM2_PORT_DT_SWOOP', 'TM2_PORT_TEAM_LOCKS'})
+                                                        'TM2_PORT_DT_SWOOP', 'TM2_PORT_TEAM_LOCKS',
+                                                        'TM2_PORT_HUMAN_WRECK'})
     if not relevant and not a.negative_control:
         print('requests 42 / 46 / 47: no TM2_PORT_DARK_TOOTH / _DT_PLAYER / _VISUAL / _CAR_NUMBERS / _FAR_LOD / '
               '_FAR_DISTANCE / _RENDER_SLOTS in %s: nothing to check' % a.out)

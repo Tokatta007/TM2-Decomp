@@ -115,6 +115,9 @@ void __attribute__((section(".text_80109D58"))) weaponDropsUpdate(void *ctx, s32
 {
     s32 i;
 
+#ifdef TM2_PORT_BALANCE
+    portBalanceMineClock();     /* request 127 (portBalance2 bits 2, 3): a mine whose time is up is removed silently */
+#endif
     for (i = 0; i < TM2_MAX_DROPS; i++) {   /* 25 (request 40: TM2_MAX_DROPS) */
         s16 t = weaponDrops[i].timer;
 

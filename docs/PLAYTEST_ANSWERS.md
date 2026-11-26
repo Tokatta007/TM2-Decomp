@@ -1994,3 +1994,53 @@ Asked 2026-11-25 (the user, after 124's answer). The details are in `BALANCE.md`
 - **Set:** `portBalance2 = TM2_BAL2_ALL`, now `0x3`, in Vanilla Plus and online, hashed with the ruleset.
 - **Also fixed:** a build with `TM2_PORT_BALANCE` as its only port define compiles again. The full run now links it.
 - **Checked:** `check_balance.py` G31 (where the gate is called, and a LinkMips run of the gate). Not tested in game.
+
+## 40. Request 126: invisible but solid corpses of players' cars (built: `TM2_PORT_HUMAN_WRECK`, revised)
+
+Asked 2026-11-25 (many online players' reports). A player died; minutes later another player drove into nothing at
+that spot, died, and the kill feed said the dead player's car rammed them. Follow-ups the same day (the user, before
+the merge): the wreck should never be invisible, nor removed at once. It should live exactly as a computer car's
+wreck does (`AI_LIVES.md` 1.2), by its timer only, and a player out of lives gets the same.
+
+| Item | Result |
+|---|---|
+| 1. Still solid, stops shots, rams | **confirmed, read in the C.** Only a heavy killing hit (type 1 or 2, 6 or more) breaks a car up (`carApplyDamage`: debris, wreck state 4, its object's word +8 = 0). A computer car's wreck is broken up in the end anyway (`carWreckUpdate`), but that part skips players. After any other death a player's wreck stays in play for good. It is solid to every car (the world hit pass reads +8) and stops every shot (`projectileHitTest` skips a car only when +8 is 0 and it is dead). A live car touching it takes ram damage credited to it (`carContactRespond` passes the other car's id) |
+| Also found | your `vp_human_left` destroys a leaving player's car with `carApplyDamage(id, 1000, 0, 0, -1)`. Type 0 is never a heavy hit, so that car was never broken up. It now lives the wreck's life below like any other |
+| "Invisible" | **not explained in the decomp.** `carBodyObjectHide` at the death removes the car's *body object*, which is its shadow blob (node 3, `BALANCE.md` 13.5), not the car. The car itself is switched to its wreck model (`carSetDamageStage(key, 3)`, the same for players and computer cars) and stays drawn. Worth a look on the port's side if wrecks still look empty |
+| The body shown | **built:** at the death `portHumanWreckStart` shows the body object again (the shadow) and marks the wreck |
+| A computer car's wreck life | **built**, in `carWreckUpdate` for a marked player's wreck. The spin of the first 2 s (wreck timer 120) was already every car's. Added the computer cars' flame (`fxFlame10`, 500 of life, so it goes out by itself; `burn_time` held at 0), the small blast at timer < -960 (18 s) and the break-up at timer < -1200, 22 s after the death. The break-up is `carApplyDamage(id, 15, 0, 2, 0)`: debris, wreck state 4, +8 = 0. Then the blast and smoke, and the flame out. By the wreck timer only: the computer cars' early break-up when the target is 4320 away does not apply (`ok` is 1 for a player) |
+| A respawn first | HP above 0, or the car hidden by anything else: the mark is cleared and the flame put out (`portHumanWreckTick`); no small blast, no break-up |
+| Out of lives | the same whole life. `carWreckUpdate` runs while the record is dead; nothing reads the player's view |
+| The define | `TM2_PORT_HUMAN_WRECK`, always on with the define, no run-time word. A heavy killing hit, a sunk car and a fallen one stay as retail (not marked) |
+
+- **At the respawn: nothing new.** Your `respawn_human` already calls `csSetDrawEnable(object, 1)` (80149604, word
+  +8). Once its HP is full, `humanCarDamageUpdate` resets the look (damage stage 0, the body shown, wreck state 0), as
+  retail does after a heavy-hit death.
+- **State:** `portHumanWreckLive` (per human, `.port_bss`: snapshot and hash). The timer is the record's own. The flame,
+  debris and blasts draw on the game's `rand()`, as a computer car's do: the same on every machine.
+- **Checked:** `check_custom.py` check 33:
+  - `humanCarDamageUpdate` calls `portHumanWreckTick` first and `portHumanWreckStart` after `carDestroyed`;
+    `carWreckUpdate` calls `portHumanWreckBreak` once.
+  - A LinkMips run of `carWreckUpdate` itself on a made-up player's wreck at 3 ticks a step: the computer cars' flame
+    at the first step, the small blast at step 361 and the break-up once at step 441 (22 s), the flame out and the
+    mark cleared. Unmarked, neither (retail). With HP back above 0 at step 200, no break-up.
+  - LinkMips runs of Start and Tick.
+  - Not tested in game.
+
+## 41. Request 127: mines don't stay forever (built: `portBalance2` bits 2, 3)
+
+Asked 2026-11-25 (Ryupichu, Tegu and SuperflyKev; the user). The details are in `BALANCE.md` 27.
+
+| Item | Result |
+|---|---|
+| Why they stay | the port's own rule: bit 2 of `portBalance` (request 40) stops a mine's countdown. In retail a mine goes after 300 calls of `weaponDropsUpdate` |
+| Mode A | **built:** `portBalance2` bit 2 `TM2_BAL2_MINE_AGE`, every mine removed `portBalanceMineSeconds` after it was laid |
+| Mode B (default) | **built:** bit 3 `TM2_BAL2_MINE_ORPHAN`, a mine removed `portBalanceMineSeconds` after its owner's car was destroyed (a player's or a computer car's), whatever its age; a respawn does not stop it. In `TM2_BAL2_ALL` (now `0xB`) |
+| "Fizzles out" | removed silently: no explosion, no damage, no sound (the user: no puff needed) |
+| Every kind of mine | only one path lays mines: the energy attack 101, for players and computer cars. No special lays one |
+| The seconds | `portBalanceMineSeconds`, 0 = 15, latched at the round's start. Counted with each step's ticks (60ths of a second), so it does not depend on the frame rate |
+| Always one of the two | the user's (2026-11-25): no "stay" setting, the Original preset included: set bit 2 or 3 in every preset. With `portBalance` bit 2 clear (the Original preset) retail's own 300 calls also remove a mine, whichever comes first |
+
+- **Set:** `portBalance2 = TM2_BAL2_ALL` (`0xB`, mode B) in Vanilla Plus and online; mode A is bit 2 in place of
+  bit 3. Put `portBalanceMineSeconds` (address in `symbols.tsv`) in the ruleset hash with `portBalance2`.
+- **Checked:** `check_balance.py` G32 (a LinkMips run of the clocks over 600 steps per case). Not tested in game.

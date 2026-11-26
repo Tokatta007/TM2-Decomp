@@ -97,7 +97,7 @@ an option); bit 15 overlaps bit 6's 7a (with bit 15 set, 7a's refusals never tri
 effect). Machine guns: request 41 built no bit (12.7);
 round 3's bit 20 removes the coin flip (13.3). Request 45 split bit 8 into bits 8, 21, 22 (one per car, 14.1).
 
-The word is full. Since request 124 a second word, `portBalance2` (`TM2_BAL2_*`, `TM2_BAL2_ALL` = `0x3`), holds
+The word is full. Since request 124 a second word, `portBalance2` (`TM2_BAL2_*`, `TM2_BAL2_ALL` = `0xB`), holds
 the newer rules, latched with this one (section 26.1).
 
 ### 2.2 Storage (`.port_bss`, every variant; `config/US/port_variant_arrays.tsv`, after `portHumanRadarBlink`)
@@ -189,6 +189,8 @@ and `portBalanceLeapHold` (bit 14).
 - **`rand()`:** none.
 
 ### 3.3 Mines: permanent, 5 per driver (bit 2, item 3)
+
+Since request 127 the second word's bits 2 and 3 can remove them after a time (27).
 
 **Retail (CONFIRMED):** energy attack 101 (120 energy; the AI only when its `f001 == 2`) -> `weaponDropItem` ->
 `weaponDropWrite(101, id, ...)`: a record from `weaponDropSlotFind` (25, shared with remote bombs), an object from
@@ -1881,13 +1883,15 @@ rules as the first:
 | `portBalanceLive2` | `portBalanceLatch` (roundStart) | this round's copy, read by the gates; the port reads it, never writes it |
 
 Both are `.port_bss` in every variant, after `portCarTeam` (`config/US/port_variant_arrays.tsv`). Read their
-addresses from the link's `symbols.tsv`. `TM2_BAL2_ALL` (`0x3` since request 125) is the word for Vanilla Plus
+addresses from the link's `symbols.tsv`. `TM2_BAL2_ALL` (`0xB` since request 127) is the word for Vanilla Plus
 and online.
 
 | bit | mask | item | name | rule |
 |---|---|---|---|---|
 | 0 | 0x0001 | 124 | `TM2_BAL2_PICKUP_PASS` | every shot passes a pickup's hit box, ids 401..480: both of the ricochet bomb's hit checks, the missiles' and the bullets' (26.3) |
 | 1 | 0x0002 | 125 | `TM2_BAL2_SWOOP_PASS` | Dark Tooth's swoop passes a pickup's hit box, ids 401..480: the boss's and a player's Dark Tooth's (26.4) |
+| 2 | 0x0004 | 127 | `TM2_BAL2_MINE_AGE` | mode A: a mine is removed (silently) `portBalanceMineSeconds` after it was laid (27); not in `TM2_BAL2_ALL` |
+| 3 | 0x0008 | 127 | `TM2_BAL2_MINE_ORPHAN` | mode B, the default: a mine is removed `portBalanceMineSeconds` after its owner's car was destroyed (27) |
 
 ### 26.2 What happens in retail (CONFIRMED in the C; the same on the PS1)
 
@@ -2006,3 +2010,61 @@ port define can show. It is in the list now.
 
 Not tested in game. To test: the Dark Tooth fight on a map with a pickup between him and the car (or a player's
 Dark Tooth swooping at a car across a pickup). With the bit the head goes through the pickup and reaches the car.
+
+## 27. Request 127 (2026-11-25, Ryupichu, Tegu, SuperflyKev): mines don't stay forever (`portBalance2` bits 2, 3)
+
+### 27.1 Why they stay
+
+**Retail (CONFIRMED, 3.3):** a mine is not permanent. `weaponDropsUpdate` counts its `status` down from 300 and frees
+it at 0. That is 300 calls, one per view each step: 300 steps on one screen, 150 split. What keeps mines all match is
+the port's own rule, bit 2 of `portBalance` (request 40, 3.3): a mine's count stops at 1, so it never expires, with 5
+per driver. With the Original preset (bit 2 clear) mines already go after retail's 300.
+
+The user (2026-11-25): no "stay" setting, so every preset, the Original included, sets one of bits 2 and 3
+below. With `portBalance` bit 2 clear, retail's 300 calls also remove a mine, whichever comes first.
+
+### 27.2 Built: the mines' clocks (bits 2 and 3)
+
+| bit | mode | a mine is removed |
+|---|---|---|
+| 2 `TM2_BAL2_MINE_AGE` | A | `portBalanceMineSeconds` after it was laid |
+| 3 `TM2_BAL2_MINE_ORPHAN` | B, the default (in `TM2_BAL2_ALL`) | `portBalanceMineSeconds` after its owner's car was first seen destroyed, whatever its age. Once started its clock keeps running: the owner coming back does not save the mine |
+| both | | whichever comes first |
+
+- **"Removed":** silently, as bit 2's sixth mine and the drop-in's leaving car already remove one. The record and
+  its object are freed: status, kind and held 0, the object's word +8 0 and the pointer cleared. No explosion, no
+  damage, no sound. The user's call: no puff needed.
+- **The seconds:** `portBalanceMineSeconds` (`.port_bss`, set by the port, 0 = 15, above 3600 counts as 3600). It
+  is latched at `roundStart` (`portBalanceLatch`) into `portBalanceMineTicks`, the limit in 60ths of a second.
+- **Counted in game steps:** each step adds the step's ticks (`timerGetFrameTicks`, 60ths of a second, 3 to 5; with
+  `FIXED_TICKS` the port's fixed value). So the time does not depend on the frame rate, and every machine counts the
+  same. `portBalanceMineClock` runs at the top of `weaponDropsUpdate`, at most once per step (`timerFrameCount`
+  noted in `portBalanceMineStep`). In retail `weaponDropsUpdate` runs once per view, so a split screen would
+  otherwise count twice.
+- **Every mine:** only one path lays a mine, the energy attack 101 (`weaponFireEnergyAttack` -> `weaponDropItem` ->
+  `weaponDropWrite`), for players and computer cars alike. No special and no port code lays one. Each record a mine
+  is written to starts its clocks at 0 (`portBalanceMineSlot`, with bit 2 of `portBalance` set or clear). Remote
+  bombs (kind 19) are never touched.
+- **The owner:** the mine's +4, the dropper's object id. `portBalanceCarDown(id)` is 1 when that car is dead or at
+  HP 0, or when no car has the id any more (it left the match).
+- **State:** `portBalanceMineAge` and `portBalanceMineOrphan` (per drop record, `TM2_MAX_DROPS`), plus
+  `portBalanceMineStep` and `portBalanceMineTicks`. All are `.port_bss`, so they are in the snapshot and the hash.
+  No `rand()`.
+- **Online:** the same on every machine; it changes play (`BALANCE_CHANGES.md`). Put `portBalanceMineSeconds` in the
+  ruleset hash next to `portBalance2`.
+
+**Checked:** `tools/check_balance.py` G32:
+- `weaponDropsUpdate` calls `portBalanceMineClock` once, before its loop, and both of `portBalanceMineSlot`'s paths
+  start the clocks.
+- A LinkMips run of `portBalanceLatch` gives 15 s for 0 or less, the seconds set, and 3600 s at most.
+- A LinkMips run of `portBalanceMineClock` on two made-up mines and a remote bomb, at 3 ticks a step:
+  - bit 2 removes both mines at the 300th step, not before;
+  - bit 3 removes the mine of an owner destroyed at step 50 at step 349, even with the owner back at step 100, and
+    never the mine of a live owner;
+  - a second call in the same step counts nothing;
+  - with neither bit, nothing is removed;
+  - a removed record and its object are freed, and the bomb is never touched.
+
+Not tested in game. To test: a battle with mines (Vanilla Plus): a computer car lays mines and is destroyed, and 15
+seconds later its mines are gone; a live driver's mines stay. With mode A every mine goes 15 seconds after it was
+laid.

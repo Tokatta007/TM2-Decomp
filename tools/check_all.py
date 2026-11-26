@@ -75,7 +75,8 @@ CUSTOM_DEFINES = {'TM2_PORT_DARK_TOOTH', 'TM2_PORT_DT_PLAYER', 'TM2_PORT_VISUAL'
                   'TM2_PORT_WRECK_FALL',                          # request 117: check 28 (a falling wreck)
                   'TM2_PORT_GLACIER_FIRE',                        # request 120: check 30 (the fire missile)
                   'TM2_PORT_DT_SWOOP',                            # request 121: check 31 (the swoop)
-                  'TM2_PORT_TEAM_LOCKS'}                          # request 123: check 32 (the team locks)
+                  'TM2_PORT_TEAM_LOCKS',                          # request 123: check 32 (the team locks)
+                  'TM2_PORT_HUMAN_WRECK'}                         # request 126: check 33 (a player's wreck)
 # full build: image -> BUILD_MANIFEST.json key
 RETAIL_IMAGES = [('psx/TM2_MAXIMAL_HYBRID.EXE', 'expected_image_sha256', 'hybrid'),
                  ('source/TM2_SOURCE.EXE', 'expected_source_only_sha256', 'source-only'),

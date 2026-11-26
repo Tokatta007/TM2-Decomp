@@ -1633,6 +1633,7 @@ int portHumanOptions PORT_BSS = 0;
 unsigned short portHumanPad[TM2_MAX_HUMANS] PORT_BSS = {0};
 short portHumanSteer[TM2_MAX_HUMANS] PORT_BSS = {0};
 extern short portHumanThrottle[TM2_MAX_HUMANS];    /* request 121: defined after portDtPhase2Truck (nothing moves) */
+extern int portHumanWreckLive[TM2_MAX_HUMANS];     /* request 126: defined with the other port storage below */
 unsigned char portHumanLayout[TM2_MAX_HUMANS] PORT_BSS = {0};
 unsigned char portHumanLives[TM2_MAX_HUMANS] PORT_BSS = {0};
 unsigned char portHumanBindings[TM2_MAX_HUMANS][128] PORT_BSS = {{0}};
@@ -6942,6 +6943,9 @@ void PORT_TEXT portHumanCompact(int from, int to)
     /* request 66: its control options (match state) */
     portHumanControl[to] = portHumanControl[from];
     portHumanControl[from] = 0;
+    /* request 126: its wreck's mark (match state) */
+    portHumanWreckLive[to] = portHumanWreckLive[from];
+    portHumanWreckLive[from] = 0;
     /* H6: its car selection too (TM2_SETTINGS_HUMAN_CAR of sessionSettings: the record's human_car[0..1], then
        sessionPortHumanCars), so a later load of the match (sessionLoadArenaAndCars) finds its car at the new index */
     {
@@ -9649,6 +9653,7 @@ static void PORT_TEXT portHumanVacateRecord(int h)
     portHumanPad[h] = 0;
     portHumanSteer[h] = 0;
     portHumanThrottle[h] = 0;                             /* request 121 */
+    portHumanWreckLive[h] = 0;                            /* request 126 */
     portCarBindSet(0, h, 0);
     HO.mask |= 1u << h;
     HO.ai[h] = 0;
@@ -10174,6 +10179,7 @@ extern int weaponArcs[TM2_MAX_ARCS][20 / 4];
 #define BA_FROM(a) (*(int **)&weaponArcs[a][3])         /* +0x0C &the shooter's motion.pos */
 #define BA_TO(a) (*(int **)&weaponArcs[a][4])           /* +0x10 &the victim's motion.pos */
 extern unsigned int GsGetWorkBase_0(void);              /* 80155370: timerFrameCount */
+extern int timerGetFrameTicks(void);                     /* 8015531C: the step's ticks (60ths of a second) */
 
 static int PORT_TEXT balType(void *car, int human)
 {
@@ -10280,6 +10286,10 @@ void PORT_TEXT portBalanceLatch(void)
 
     portBalanceLive = portBalance;
     portBalanceLive2 = portBalance2;        /* request 124: the second word */
+    /* request 127: the mines' limit for this round, in 60ths of a second */
+    portBalanceMineTicks = (portBalanceMineSeconds <= 0 ? TM2_BAL2_MINE_SECONDS
+                            : portBalanceMineSeconds > TM2_BAL2_MINE_MAX_SECONDS ? TM2_BAL2_MINE_MAX_SECONDS
+                            : portBalanceMineSeconds) * 60;
     for (i = 0; i < TM2_MAX_CAR_SLOTS; i++) {
         portBalanceRideTop[i] = 0;
         portBalanceCars[i].frozen_at = 0;
@@ -10363,26 +10373,87 @@ int PORT_TEXT portBalanceBombRefused(void *car, int human)
  * (silently, as the drop-in removes a leaving car's: record and object freed), then the first free record of the
  * mine range, only when a mine object is free too (so no record is opened without one: RETAIL_BUGS.md 22); its
  * placement order is noted. Else retail's weaponDropSlotFind. */
+/* A mine removed silently (bit 2's oldest, request 127's clocks): record and object freed, as the drop-in removes a
+ * leaving car's. No effect, no damage, no sound. */
+static void PORT_TEXT balMineRemove(int i)
+{
+    BD_STATUS(i) = 0;
+    BD_KIND(i) = 0;
+    BD_HELD(i) = 0;
+    if (BD_OBJ(i) != 0) {
+        *(int *)(BD_OBJ(i) + 8) = 0;    /* hidden: free for weaponMineObjectFind */
+        BD_OBJ(i) = 0;
+    }
+}
+
+/* Request 127: every record a mine is written to starts with its clocks at 0. */
+static int PORT_TEXT balMineClocksStart(int i)
+{
+    if ((unsigned int)i < TM2_MAX_DROPS) {
+        portBalanceMineAge[i] = 0;
+        portBalanceMineOrphan[i] = 0;
+    }
+    return i;
+}
+
 int PORT_TEXT portBalanceMineSlot(int id)
 {
     int i, oldest;
 
     if (!BAL(TM2_BAL_MINES))
-        return weaponDropSlotFind();
-    if (balMines(id, &oldest) >= TM2_BAL_MINES_PER_DRIVER && oldest >= 0) {
-        BD_STATUS(oldest) = 0;
-        BD_KIND(oldest) = 0;
-        BD_HELD(oldest) = 0;
-        if (BD_OBJ(oldest) != 0) {
-            *(int *)(BD_OBJ(oldest) + 8) = 0;   /* hidden: free for weaponMineObjectFind */
-            BD_OBJ(oldest) = 0;
-        }
-    }
+        return balMineClocksStart(weaponDropSlotFind());
+    if (balMines(id, &oldest) >= TM2_BAL_MINES_PER_DRIVER && oldest >= 0)
+        balMineRemove(oldest);
     i = balMineRecord();
     if (i < 0 || weaponMineObjectFind() < 0)
         return -1;
     portBalanceDropSeq[i] = ++portBalanceDropSeqNext;
-    return i;
+    return balMineClocksStart(i);
+}
+
+/* Request 127 (portBalance2 bits 2, 3; BALANCE.md 27): 1 when the car of object id `id` (a mine's +4: a human's id,
+ * an AI's index + 50) is destroyed (dead, or HP <= 0), or when no car has the id (it left the match). Reads only. */
+int PORT_TEXT portBalanceCarDown(int id)
+{
+    unsigned char human;
+    int index;
+
+    if (!(carFindById(id, &human, &index) & 255))
+        return 1;
+    if (human) {
+        if ((unsigned int)index >= TM2_MAX_HUMANS || index >= humanCarTotal)
+            return 1;
+        return humanCarGet(index)->state.dead || humanCarGet(index)->stats.hp <= 0;
+    }
+    if ((unsigned int)index >= TM2_MAX_AI_CARS || index >= aiCarTotal)
+        return 1;
+    return aiCarGet(index)->state.dead || aiCarGet(index)->stats.hp <= 0;
+}
+
+/* Request 127: weaponDropsUpdate, before its loop. Once a step (timerFrameCount: weaponDropsUpdate runs once per view
+ * in retail), each live mine's clocks run by the step's ticks (60ths of a second: frame-rate free, the same on every
+ * machine): bit 2 its age; bit 3 the time since its owner's car was first seen destroyed (once started it keeps
+ * running, a respawn does not stop it). A clock at the round's limit (portBalanceMineTicks) removes the mine
+ * silently. Neither bit: nothing. No rand(). */
+void PORT_TEXT portBalanceMineClock(void)
+{
+    unsigned int step = GsGetWorkBase_0();
+    int i, ticks;
+
+    if (!(portBalanceLive2 & (TM2_BAL2_MINE_AGE | TM2_BAL2_MINE_ORPHAN)) || step == portBalanceMineStep)
+        return;
+    portBalanceMineStep = step;
+    ticks = timerGetFrameTicks();
+    for (i = 0; i < TM2_MAX_DROPS; i++) {
+        if (BD_KIND(i) != 20 || BD_STATUS(i) <= 0)
+            continue;
+        if (portBalanceLive2 & TM2_BAL2_MINE_AGE)
+            portBalanceMineAge[i] += ticks;
+        if ((portBalanceLive2 & TM2_BAL2_MINE_ORPHAN) && (portBalanceMineOrphan[i] > 0 || portBalanceCarDown(BD_ID(i))))
+            portBalanceMineOrphan[i] += ticks;
+        if (portBalanceMineAge[i] >= portBalanceMineTicks || portBalanceMineOrphan[i] >= portBalanceMineTicks)
+            balMineRemove(i);
+    }
 }
 
 /* weaponDropWrite 3 (placing a remote bomb): bit 2, the bombs' own records first, then any free one. */
@@ -14699,6 +14770,15 @@ unsigned char portCarTeam[TM2_MAX_CAR_SLOTS] PORT_BSS = {0};
    port; 0 = retail) and its copy for the round (portBalanceLatch); every variant, used only with TM2_PORT_BALANCE */
 int portBalance2 PORT_BSS = 0;
 int portBalanceLive2 PORT_BSS = 0;
+/* request 127 (port_balance.h, BALANCE.md 27): the mines' clocks (portBalance2 bits 2, 3); every variant, match state */
+int portBalanceMineSeconds PORT_BSS = 0;
+int portBalanceMineTicks PORT_BSS = 0;
+unsigned int portBalanceMineStep PORT_BSS = 0;
+/* request 126 (port_human_wreck.h): a player's wreck marked to live a computer car's wreck's life; every variant,
+   match state */
+int portHumanWreckLive[TM2_MAX_HUMANS] PORT_BSS = {0};
+int portBalanceMineAge[TM2_MAX_DROPS] PORT_BSS = {0};
+int portBalanceMineOrphan[TM2_MAX_DROPS] PORT_BSS = {0};
 unsigned int portStackGuard[TM2_PORT_STACK_GUARD / 4] PORT_BSS = {0};
 unsigned int portStack[TM2_PORT_STACK / 4] PORT_BSS __attribute__((aligned(8))) = {0};
 
@@ -15232,5 +15312,99 @@ int PORT_TEXT portTeamNearestFoe(int k)
     return pick >= 0 ? pick : humanCarNearest(a->motion.pos, -1);
 }
 #endif /* TM2_PORT_TEAM_LOCKS */
+
+#ifdef TM2_PORT_HUMAN_WRECK
+/* ---- a destroyed player's wreck lives a computer car's wreck's life (PC port request 126, port_human_wreck.h,
+ * PLAYTEST_ANSWERS.md 40) ---- */
+#include "semantic/port_human_wreck.h"
+#ifndef TM2_OWN_CAR_ARRAYS
+#define TM2_OWN_CAR_ARRAYS          /* humanCars / aiCars are defined above as plain words */
+#endif
+#include "semantic/cars.h"      /* the records, humanCarGet (the define alone includes no other block) */
+extern struct TM2Object *humanCarObject(int index);
+extern void carBodyObjectShow(int key);
+extern void carApplyDamage(int id, int amount, int *dir, int type, int attacker);
+extern void fxExplosion48(void *pos, unsigned char flag);
+extern void fxSmokeA48(void *pos, int flag);
+
+/* humanCarDamageUpdate, at human i's death (after carDestroyed): a car still in play (object drawn-enabled; not
+ * broken up, sunk or fallen) gets its body object back (carBodyObjectHide removed it at the death), its small-blast
+ * flag cleared (a computer car's is cleared at its start) and its wreck marked. */
+void PORT_TEXT portHumanWreckStart(int i, int key)
+{
+    struct TM2Object *obj;
+
+    if ((unsigned int)i >= TM2_MAX_HUMANS)
+        return;
+    portHumanWreckLive[i] = 0;
+    obj = humanCarObject(i);
+    if (obj == 0 || obj->visible == 0)
+        return;
+    carBodyObjectShow(key);
+    humanCarGet(i)->state.f26 = 0;
+    portHumanWreckLive[i] = 1;
+}
+
+/* The flame carWreckUpdate's computer-car branch put on a player's wreck, out (as carCarControl puts a fire out). */
+static void PORT_TEXT portHumanWreckFireOut(struct TM2HumanRecord *h)
+{
+    if (h->state.burning) {
+        h->state.burning = 0;
+        if (h->weapons.fire_effect)
+            h->weapons.fire_effect->active = 0;
+    }
+}
+
+/* humanCarDamageUpdate, each step, before its own tests: a marked wreck whose car has HP above 0 (a respawn) or is
+ * hidden by anything else (+8 = 0) is unmarked and its flame put out. */
+void PORT_TEXT portHumanWreckTick(int i)
+{
+    struct TM2HumanRecord *h;
+    struct TM2Object *obj;
+
+    if ((unsigned int)i >= TM2_MAX_HUMANS || portHumanWreckLive[i] == 0)
+        return;
+    h = humanCarGet(i);
+    obj = humanCarObject(i);
+    if (h->stats.hp > 0 || obj == 0 || obj->visible == 0) {
+        portHumanWreckLive[i] = 0;
+        portHumanWreckFireOut(h);
+    }
+}
+
+/* carWreckUpdate: 1 while this player's wreck is marked (and its HP is still 0 or less). */
+int PORT_TEXT portHumanWreckBurns(void *car)
+{
+    struct TM2HumanRecord *h = (struct TM2HumanRecord *)car;
+    int p = h->player;
+
+    return (unsigned int)p < TM2_MAX_HUMANS && portHumanWreckLive[p] != 0 && h->stats.hp <= 0;
+}
+
+/* carWreckUpdate, wreck timer < -1200 (22 s after the death): the computer cars' break-up for a marked player's
+ * wreck: carApplyDamage(its object's id, 15, 0, 2, 0) (debris, wreck state 4, +8 = 0), the blast 120 above it and the
+ * smoke, the flame out; then unmarked (once). */
+void PORT_TEXT portHumanWreckBreak(void *car)
+{
+    struct TM2HumanRecord *h = (struct TM2HumanRecord *)car;
+    struct TM2Object *obj;
+    int v[3];
+
+    if ((unsigned int)h->player >= TM2_MAX_HUMANS)
+        return;
+    portHumanWreckLive[h->player] = 0;
+    obj = humanCarObject(h->player);
+    if (obj == 0)
+        return;
+    carApplyDamage(obj->id, 15, 0, 2, 0);
+    v[0] = h->motion.pos[0];
+    v[1] = h->motion.pos[1];
+    v[2] = h->motion.pos[2] + 120;
+    fxExplosion48(v, 0);
+    v[2] += h->stats.ride_height;
+    fxSmokeA48(v, 0);
+    portHumanWreckFireOut(h);
+}
+#endif /* TM2_PORT_HUMAN_WRECK */
 
 #endif /* TM2_PORT_VARIANT */
