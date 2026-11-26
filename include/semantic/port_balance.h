@@ -157,8 +157,11 @@
                                          ids 401..480 (retail: 401..440, and the ricochet bomb's push-out check
                                          after a bounce passed none: next to a wall a pickup trapped it). The
                                          ricochet's two checks, the missiles' and the bullets' one */
-#define TM2_BAL2_ALL          0x0001  /* Vanilla Plus and online */
-#define TM2_BAL2_PICKUP_LAST  480     /* bit 0: the last pickup id (441..480: the +40 "keep" pickups) */
+#define TM2_BAL2_SWOOP_PASS   0x0002  /* bit 1, request 125 (BALANCE.md 26.4): Dark Tooth's swoop (his head) passes a
+                                         pickup's hit box, 401..480, as the shots do (retail: it ends at the first
+                                         box it touches). The boss's and a player's Dark Tooth's */
+#define TM2_BAL2_ALL          0x0003  /* Vanilla Plus and online */
+#define TM2_BAL2_PICKUP_LAST  480     /* bits 0, 1: the last pickup id (441..480: the +40 "keep" pickups) */
 
 /* The numbers (BALANCE.md 3) */
 #define TM2_BAL_BOOMERANG_CATCH 20      /* bit 28: the catch distance (the source's DISTANCE, 8 position units: 160);
@@ -263,6 +266,9 @@ extern "C" {
 extern void portBalanceLatch(void);                  /* roundStart: the switches of this round */
 extern int  portBalancePickupPass(int kind);         /* request 124: 1 = a shot passes this hit (portBalance2 bit 0
                                                         and a pickup id 401..480), else 0 (the caller's retail filter) */
+extern int  portBalanceSwoopHit(int *res);          /* request 125: hdpQueryPoint's result for Dark Tooth's swoop:
+                                                        its hit word (retail), 0 for a pickup's box with portBalance2
+                                                        bit 1 */
 extern int  portBalancePickupSlot(int r);            /* pickupRespawnTick: the slot to bring back from its one rand()
                                                         r (bit 23: among the taken ones that can show, -1 = none;
                                                         clear: r % pickupRegisteredCount, retail) */

@@ -114,6 +114,11 @@ directory):
      made-up line (a wall at x >= 1000, a pickup box at 960..999 beside it): with the bit clear the bomb is trapped
      (retail, request 124), with it the bomb bounces once and rolls away; the same for a 441..480 box; a box of
      another kind (a wall) traps it either way.
+   Request 125 (BALANCE.md 26.4):
+   - G31 the swoop passes pickups (portBalance2 bit 1): aiDarkToothBossUpdate calls hdpQueryPoint once and
+     portBalanceSwoopHit once, after it (a player's Dark Tooth's swoop, TM2_PORT_DT_PLAYER, the same in its own
+     function); run in LinkMips on a made-up hdpQueryPoint result: the hit word for every kind with the bit clear,
+     0 for 401..480 with the bit (the hit word for 400, 481, 500, 667, 3 and -1).
 3. Source: the helpers' block in port_variant_arrays.c has no rand( call (comments stripped); the ten functions that
    size the drop records and mine objects (and the port's PORT_DROPS) use TM2_MAX_DROPS / TM2_MAX_MINE_OBJECTS /
    the live macros, no literal 25 / 23 / 24 left.
@@ -178,6 +183,8 @@ CALLERS = {
     'portBalanceFlameLocked': {'weaponFireSelected'},
     # request 124 (portBalance2 bit 0)
     'portBalancePickupPass': {'weaponRicochetUpdate', 'weaponProjectileUpdate', 'bulletsMove'},
+    # request 125 (portBalance2 bit 1); with TM2_PORT_DT_PLAYER the player's swoop too (check())
+    'portBalanceSwoopHit': {'aiDarkToothBossUpdate'},
     # request 67 (bit 23)
     'portBalancePickupSlot': {'pickupRespawnTick'},
     'portBalancePickupShowable': {'portBalancePickupSlot'},
@@ -219,6 +226,8 @@ EXPECTED = {
     'bulletsMove',
     # request 67
     'pickupRespawnTick',
+    # request 77 (bit 24)
+    'carStatsLoad',
     # request 91 item 3
     'aiUpdateStop', 'aiPickLinkNode', 'aiShouldChaseDirect',
     # request 95
@@ -227,6 +236,8 @@ EXPECTED = {
     'carNearestRoutePoint', 'aiFollowRouteTarget',
     # request 121
     'bulletSpawn',
+    # request 125
+    'aiDarkToothBossUpdate',
     # request 102 item 3
     'fxExplosion6', 'fxExplosion12', 'fxExplosion24', 'fxExplosion48', 'fxExplosion96', 'fxExplosion192', 'fxSmokeBurstPink', 'fxSmokeBurstRed',
 }
@@ -377,6 +388,11 @@ def check(out, defined=True):
     callers_want = {f: {bodies.get(w, w) for w in want} for f, want in CALLERS.items()}
     if 'portSpecialBomb' in sizes:     # request 73 stage 2: the remote bomb as a mod car's special asks it too
         callers_want['portBalanceBombRefused'] = callers_want['portBalanceBombRefused'] | {'portSpecialBomb'}
+    if 'portCarDtPlayerHead' in sizes:     # request 125: a player's Dark Tooth's swoop (TM2_PORT_DT_PLAYER)
+        dt_swoop = 'portCarDtPlayerSwoopStep' if 'portCarDtPlayerSwoopStep' in sizes else 'portCarDtPlayerHead'
+        callers_want['portBalanceSwoopHit'] = callers_want['portBalanceSwoopHit'] | {dt_swoop}
+    else:
+        dt_swoop = None
     results = []
 
     def flow_of(fn):
@@ -956,6 +972,28 @@ def check(out, defined=True):
     report('2. G30 shots pass pickups (portBalance2 bit 0): both ricochet checks, the missiles\' and the bullets\' '
            'pass 401..480; the trapped bomb gets away (MIPS run)', bad)
 
+    # G31 (request 125)
+    bad = []
+    for fn in ('aiDarkToothBossUpdate',) + ((dt_swoop,) if dt_swoop else ()):
+        flow = flow_of(fn)
+        if not flow:
+            bad.append('no %s' % fn)
+            continue
+        bad += list(flow.problems)
+        q, g = sites(flow, {'hdpQueryPoint'}), gate_calls(flow, 'portBalanceSwoopHit')
+        if fn == dt_swoop and fn == 'portCarDtPlayerHead':
+            ok = len(g) == len(q) >= 1      # the step inlined into the head's update
+        else:
+            ok = len(q) == 1 and len(g) == 1
+        if not ok:
+            bad.append('%s: hdpQueryPoint x%d, portBalanceSwoopHit x%d (want one each)' % (fn, len(q), len(g)))
+        for h in q:
+            if not any(a > h and a in flow.reach(h + 8, set()) for a in g):
+                bad.append('%s: no portBalanceSwoopHit after hdpQueryPoint at %08X' % (fn, h))
+    bad += swoop_hit_run(out, link, sizes)
+    report('2. G31 swoop passes pickups (portBalance2 bit 1): the boss\'s (and a player Dark Tooth\'s) world test '
+           'drops 401..480 (MIPS run)', bad)
+
     # 3. source
     bad = []
     pva = (ROOT / 'src/semantic/port_variant_arrays.c').read_text(encoding='utf-8')
@@ -1442,6 +1480,41 @@ def flame_lock_run(out, link, sizes):
                 bad.append('portBalanceFlameLocked(%s, type %02X, bits %X, timer %d, %s flame) = %d (want %d)' % (
                     'human' if human else 'AI', typ, live, timer, 'his' if owner == mine else 'another\'s', got,
                     want))
+    return bad
+
+
+def swoop_hit_run(out, link, sizes):
+    """G31, request 125: portBalanceSwoopHit in check_custom's LinkMips on a made-up hdpQueryPoint result (+0 the
+    hit word, +0x0A the volume's id)."""
+    need = ('portBalanceSwoopHit', 'portBalanceLive2', 'portBalanceLive')
+    miss = [n for n in need if n not in sizes and n not in link.symbols]
+    if miss:
+        return ['not in the link: ' + ', '.join(miss)]
+    from check_rollback import Image
+    from check_custom import LinkMips
+    img = Image(out)
+    hdr = (ROOT / 'include/semantic/port_balance.h').read_text(encoding='utf-8')
+    bit = int(re.search(r'#define TM2_BAL2_SWOOP_PASS\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    every = int(re.search(r'#define TM2_BAL2_ALL\s+(0x[0-9A-Fa-f]+)', hdr).group(1), 16)
+    if not every & bit:
+        return ['TM2_BAL2_ALL lacks TM2_BAL2_SWOOP_PASS']
+    sym = lambda n: link.symbols[n]['address']
+    res = 0x80A60000
+    bad = []
+    for kind in (400, 401, 404, 440, 441, 459, 480, 481, 500, 667, 3, -1):
+        for word in (1, 0):
+            for live2 in (bit, 0, 0xFFFFFFFF & ~bit, 0xFFFFFFFF):
+                lm = LinkMips(img, {})
+                lm.m.wr(sym('portBalanceLive2'), 4, live2)
+                lm.m.wr(sym('portBalanceLive'), 4, 0xFFFFFFFF)
+                lm.m.wr(res, 4, word)
+                lm.m.wr(res + 8, 2, 0xFFFF)
+                lm.m.wr(res + 0xA, 2, kind & 0xFFFF)
+                got = lm.run('portBalanceSwoopHit', (res,))
+                want = 0 if (live2 & bit) and 401 <= kind <= 480 else word
+                if got != want:
+                    bad.append('portBalanceSwoopHit(hit %d, kind %d), word 2 %X = %d (want %d)' % (
+                        word, kind, live2, got, want))
     return bad
 
 

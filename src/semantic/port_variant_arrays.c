@@ -3257,6 +3257,11 @@ static int PORT_TEXT portCarDtPlayerPlace(struct TM2HumanRecord *h, struct TM2Ob
  * damage from him (carApplyDamage: x2 as all his damage, retail), the car set burning (the boss's test), sound 6;
  * the world stops it too. It ends (back to the hover) after 40 updates, when the car is 4000 away from the truck,
  * or when the car is gone. */
+#ifdef TM2_PORT_BALANCE
+#define DT_SWOOP_WORLD(r) portBalanceSwoopHit(r)  /* request 125 (portBalance2 bit 1): pickups' boxes passed */
+#else
+#define DT_SWOOP_WORLD(r) (*(r))
+#endif
 static void PORT_TEXT portCarDtPlayerSwoopStep(struct TM2HumanRecord *h, struct TM2Object *head)
 {
     struct PortDtTarget t;
@@ -3297,7 +3302,7 @@ static void PORT_TEXT portCarDtPlayerSwoopStep(struct TM2HumanRecord *h, struct 
             soundPlay(6, 0, 0, 99);
         }
         darkToothSwooping = 2;
-    } else if (*hdpQueryPoint(head->id, -1, head->pos, 0)) {
+    } else if (DT_SWOOP_WORLD(hdpQueryPoint(head->id, -1, head->pos, 0))) {
         fxExplosion48(head->pos, 0);
         darkToothSwooping = 2;
     }
@@ -10152,6 +10157,11 @@ extern void *weaponMineObjects[TM2_MAX_MINE_OBJECTS];    /* asset_pools.c / abov
 /* the mines' records [0, end), the remote bombs' [end, TM2_DROPS_LIVE): retail sizes 23 + 2, 16 cars 80 + 16 */
 #define BAL_MINE_END (TM2_DROPS_LIVE - TM2_POOL_LIVE(REMOTE_BOMBS))
 #define BAL_LEAP_TARGET (*(int **)((unsigned char *)&homingLeapState + 0x34))   /* 80184E08: the target's pos */
+/* the block's own names for homingLeapState's fields (the drop-in's LEAP_* are not defined without it) and the
+   Thumper flames (declared again: only TM2_PORT_CAR_SOUND or TM2_PORT_CARS declares them otherwise) */
+#define BAL_LEAP_TARGET_ID (*(unsigned short *)((unsigned char *)&homingLeapState + 0x10))  /* the target's id */
+#define BAL_LEAP_POS (*(unsigned char **)((unsigned char *)&homingLeapState + 0x2C))        /* the leaper's pos */
+extern int weaponFlameEmitters[TM2_MAX_FLAME_EMITTERS][32 / 4];
 /* the taser / lightning arcs (weapon_slot_target.c, weapon_arcs_draw.c: 20 bytes) */
 #if TM2_MAX_ARCS <= TM2_RETAIL_ARCS
 extern int weaponArcs[TM2_MAX_ARCS][20 / 4];
@@ -10606,13 +10616,13 @@ void PORT_TEXT portBalanceLeapPush(void)
     int *me, *to;
     void *car;
 
-    if (!BAL(TM2_BAL_LEAP_PUSH_BIT) || !(carFindById(LEAP_TARGET_ID, &h, &index) & 255))
+    if (!BAL(TM2_BAL_LEAP_PUSH_BIT) || !(carFindById(BAL_LEAP_TARGET_ID, &h, &index) & 255))
         return;
     if (h ? (unsigned int)index >= TM2_MAX_HUMANS || index >= humanCarTotal
           : (unsigned int)index >= TM2_MAX_AI_CARS || index >= aiCarTotal)
         return;
     car = h ? (void *)humanCars[index] : (void *)aiCars[index];
-    me = (int *)LEAP_W(LEAP_POSITION);
+    me = (int *)BAL_LEAP_POS;
     to = h ? BAL_H(car)->motion.pos : BAL_A(car)->motion.pos;
     if (me == 0)
         return;
@@ -11038,6 +11048,20 @@ int PORT_TEXT portBalanceRicochetPass(void *shot, void *obj)
 int PORT_TEXT portBalancePickupPass(int kind)
 {
     return (portBalanceLive2 & TM2_BAL2_PICKUP_PASS) && (unsigned int)(kind - 401) <= TM2_BAL2_PICKUP_LAST - 401;
+}
+
+/* Request 125 (portBalance2 bit 1, BALANCE.md 26.4): Dark Tooth's swoop asks the world whether his head is in a box
+ * (hdpQueryPoint, no filter: retail ends the swoop at the first box, a pickup's too). `res` is that result: +0 the
+ * hit word, +0x0A the id of the hit volume. Returns the hit word as retail reads it (0 = nothing hit), or 0 when bit 1
+ * is set and the volume is a pickup's, 401..480. Walls, cars and every other box end the swoop as before. The
+ * callers: aiDarkToothBossUpdate (the boss) and portCarDtPlayerSwoopStep (a player's Dark Tooth, request 36).
+ * Reads only; no rand(). */
+int PORT_TEXT portBalanceSwoopHit(int *res)
+{
+    if ((portBalanceLive2 & TM2_BAL2_SWOOP_PASS)
+        && (unsigned int)(((short *)res)[5] - 401) <= TM2_BAL2_PICKUP_LAST - 401)
+        return 0;
+    return res[0];
 }
 
 /* weaponFireEnergyAttack 104 (bit 19): 1 when the energy jump costs nothing: a Grasshopper (by car type: her
