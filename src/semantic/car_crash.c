@@ -258,6 +258,13 @@ extern s32 mathBlendAngle(s32 angle, s32 target, s32 pct);
  * must be variables also used in other blocks (k1 = the other branch's turn,
  * w = the wreck timer's new value).  Block-local temps there let local-alloc
  * tie k1 to the /1024 quotient (v0) instead of the base turn's a0. */
+#ifdef TM2_PORT_HUMAN_WRECK
+#include "semantic/port_human_wreck.h"
+/* request 126: a player's marked wreck takes the computer cars' flame, small blast and break-up */
+#define WRECK_BURNS(car, human) (!(human) || portHumanWreckBurns(car))
+#else
+#define WRECK_BURNS(car, human) (!(human))
+#endif
 void __attribute__((section(".text_800E75F4"))) carWreckUpdate(car, human)
 void *car;              /* human record when human is set, else AI */
 u8 human;
@@ -309,7 +316,7 @@ u8 human;
             c->active = 0;
         ok = c->active;
     }
-    if (!human) {
+    if (WRECK_BURNS(car, human)) {
         if (!f->burning && !f->wheel_in_air && !f->in_water) {
             f->burning = 1;
             v[0] = m->pos[0];
@@ -404,6 +411,10 @@ u8 human;
             }
         }
     } else if (!ok || a->wreck_timer < -1200) {
+#ifdef TM2_PORT_HUMAN_WRECK
+        if (human && portHumanWreckBurns(car))
+            portHumanWreckBreak(car);       /* request 126: by the timer (ok is 1 for a player) */
+#endif
         if (!human) {
             AI(car)->active = 1;
 #ifdef TM2_PORT_CAR_GROUPS
@@ -422,7 +433,7 @@ u8 human;
             f->burning = 0;
         }
     } else if (a->wreck_timer < -960) {
-        if (!human && !f->f26) {
+        if (WRECK_BURNS(car, human) && !f->f26) {
             v[0] = m->pos[0];
             v[1] = m->pos[1];
             v[2] = m->pos[2] + 24;

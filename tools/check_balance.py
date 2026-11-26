@@ -119,6 +119,14 @@ directory):
      portBalanceSwoopHit once, after it (a player's Dark Tooth's swoop, TM2_PORT_DT_PLAYER, the same in its own
      function); run in LinkMips on a made-up hdpQueryPoint result: the hit word for every kind with the bit clear,
      0 for 401..480 with the bit (the hit word for 400, 481, 500, 667, 3 and -1).
+   Request 127 (BALANCE.md 27):
+   - G32 the mines' clocks (portBalance2 bits 2, 3): weaponDropsUpdate calls portBalanceMineClock once, before its
+     loop; portBalanceMineSlot starts a record's clocks at 0; portBalanceLatch's limit (0 -> 15 s, 20 -> 20 s, past
+     3600 -> 3600, in 60ths); run in LinkMips (GsGetWorkBase_0, timerGetFrameTicks 3 and portBalanceCarDown stubbed)
+     on two made-up mines: bit 2 removes both at the 300th step (900 ticks) and not before; bit 3 removes the mine of
+     an owner destroyed at step 50 at step 349, even with the owner back at step 100, and never the live owner's; a
+     second call in the same step counts nothing; neither bit removes nothing; a removed mine's record and object
+     are freed (status, kind, held, the object's +8 and the pointer 0); a remote bomb is never touched.
 3. Source: the helpers' block in port_variant_arrays.c has no rand( call (comments stripped); the ten functions that
    size the drop records and mine objects (and the port's PORT_DROPS) use TM2_MAX_DROPS / TM2_MAX_MINE_OBJECTS /
    the live macros, no literal 25 / 23 / 24 left.
@@ -185,6 +193,9 @@ CALLERS = {
     'portBalancePickupPass': {'weaponRicochetUpdate', 'weaponProjectileUpdate', 'bulletsMove'},
     # request 125 (portBalance2 bit 1); with TM2_PORT_DT_PLAYER the player's swoop too (check())
     'portBalanceSwoopHit': {'aiDarkToothBossUpdate'},
+    # request 127 (portBalance2 bits 2, 3)
+    'portBalanceMineClock': {'weaponDropsUpdate'},
+    'portBalanceCarDown': {'portBalanceMineClock'},
     # request 67 (bit 23)
     'portBalancePickupSlot': {'pickupRespawnTick'},
     'portBalancePickupShowable': {'portBalancePickupSlot'},
@@ -210,7 +221,7 @@ CALLERS = {
 }
 PORT_FUNCS = {f for f in CALLERS if f.startswith('portBalance')}
 STATIC_FUNCS = {'balType', 'balSlot', 'balTornadoRuns', 'balLeaping', 'balMines', 'balMineRecord', 'balCar',
-                'balLeapTouchesTarget'}
+                'balLeapTouchesTarget', 'balMineRemove', 'balMineClocksStart'}
 # a port function's edges to retail functions that reach rand(), allowed by design (doc above)
 RAND_VIA = {'portBalanceCrushTop': {'carApplyDamage'}, 'portBalanceTornadoThrow': {'carSpinOutById'},
             'portBalanceTaserRetry': {'carSpinOut'}}
@@ -994,6 +1005,23 @@ def check(out, defined=True):
     report('2. G31 swoop passes pickups (portBalance2 bit 1): the boss\'s (and a player Dark Tooth\'s) world test '
            'drops 401..480 (MIPS run)', bad)
 
+    # G32 (request 127)
+    bad = []
+    flow = flow_of('weaponDropsUpdate')
+    if not flow:
+        bad.append('no weaponDropsUpdate')
+    else:
+        g = gate_calls(flow, 'portBalanceMineClock')
+        hit = sites(flow, {'weaponDropCheckHit'})
+        if len(g) != 1 or (hit and not g[0] < min(hit)):
+            bad.append('weaponDropsUpdate: portBalanceMineClock x%d (want once, before the loop)' % len(g))
+    slot = strip_comments(c_body(ROOT / 'src/semantic/port_variant_arrays.c', 'portBalanceMineSlot'))
+    if slot.count('balMineClocksStart(') != 2:
+        bad.append('portBalanceMineSlot: balMineClocksStart on %d paths (want 2)' % slot.count('balMineClocksStart('))
+    bad += mine_clock_run(out, link, sizes)
+    report('2. G32 mines\' clocks (portBalance2 bits 2, 3): a mine removed silently its seconds after it was laid / '
+           'after its owner was destroyed, once a step (MIPS run)', bad)
+
     # 3. source
     bad = []
     pva = (ROOT / 'src/semantic/port_variant_arrays.c').read_text(encoding='utf-8')
@@ -1480,6 +1508,89 @@ def flame_lock_run(out, link, sizes):
                 bad.append('portBalanceFlameLocked(%s, type %02X, bits %X, timer %d, %s flame) = %d (want %d)' % (
                     'human' if human else 'AI', typ, live, timer, 'his' if owner == mine else 'another\'s', got,
                     want))
+    return bad
+
+
+def mine_clock_run(out, link, sizes):
+    """G32, request 127: portBalanceLatch's limit, then portBalanceMineClock in check_custom's LinkMips on two made-up
+    mines in records 0 and 1 (owners 1 and 2) and a remote bomb in record 2 (owner 1); GsGetWorkBase_0 gives the step,
+    timerGetFrameTicks 3, portBalanceCarDown the owner's state."""
+    need = ('portBalanceMineClock', 'portBalanceLatch', 'portBalanceLive2', 'portBalance2', 'portBalanceMineSeconds',
+            'portBalanceMineTicks', 'portBalanceMineStep', 'portBalanceMineAge', 'portBalanceMineOrphan', 'weaponDrops')
+    miss = [n for n in need if n not in sizes and n not in link.symbols]
+    if miss:
+        return ['not in the link: ' + ', '.join(miss)]
+    from check_rollback import Image
+    from check_custom import LinkMips
+    img = Image(out)
+    hdr = (ROOT / 'include/semantic/port_balance.h').read_text(encoding='utf-8')
+    num = lambda n: int(re.search(r'#define %s\s+(0x[0-9A-Fa-f]+|\d+)' % n, hdr).group(1), 0)
+    age, orphan, every = num('TM2_BAL2_MINE_AGE'), num('TM2_BAL2_MINE_ORPHAN'), num('TM2_BAL2_ALL')
+    sym = lambda n: link.symbols[n]['address']
+    bad = []
+    if not every & orphan or every & age:
+        bad.append('TM2_BAL2_ALL %X: want bit 3 (mode B) and not bit 2' % every)
+    for secs, want in ((0, 900), (15, 900), (20, 1200), (-5, 900), (3600, 216000), (99999, 216000)):
+        lm = LinkMips(img, {})
+        lm.m.wr(sym('portBalanceMineSeconds'), 4, secs & 0xFFFFFFFF)
+        lm.run('portBalanceLatch')
+        got = lm.m.rd(sym('portBalanceMineTicks'), 4)
+        if got != want:
+            bad.append('portBalanceLatch: %d s -> %d ticks (want %d)' % (secs, got, want))
+    drops, OBJ = sym('weaponDrops'), 0x80A70000
+
+    def run(live2, steps, down, twice=False):
+        """down(step, id) -> 1 when owner id is destroyed at that step; returns {record: removal step}"""
+        state = {'step': 0}
+        stubs = {'GsGetWorkBase_0': lambda m: state['step'],
+                 'timerGetFrameTicks': lambda m: 3,
+                 'portBalanceCarDown': lambda m: down(state['step'], m.r[4])}
+        lm = LinkMips(img, stubs)
+        m = lm.m
+        m.wr(sym('portBalanceLive2'), 4, live2)
+        m.wr(sym('portBalanceMineTicks'), 4, 900)
+        m.wr(sym('portBalanceMineStep'), 4, 0xFFFFFFFF)
+        for r, (kind, owner) in enumerate(((20, 1), (20, 2), (19, 1))):
+            b = drops + 28 * r
+            m.wr(b, 1, kind)
+            m.wr(b + 1, 1, 1 if kind == 19 else 0)
+            m.wr(b + 4, 2, owner)
+            m.wr(b + 8, 2, 1 if kind == 20 else 0x7FFF)
+            m.wr(b + 0x18, 4, OBJ + 0x100 * r)
+            m.wr(OBJ + 0x100 * r + 8, 4, 1)
+            m.wr(sym('portBalanceMineAge') + 4 * r, 4, 0)
+            m.wr(sym('portBalanceMineOrphan') + 4 * r, 4, 0)
+        gone = {}
+        for s in range(1, steps + 1):
+            state['step'] = s
+            lm.run('portBalanceMineClock')
+            if twice:
+                lm.run('portBalanceMineClock')
+            for r in range(3):
+                b = drops + 28 * r
+                if r not in gone and m.rd(b + 8, 2) == 0:
+                    gone[r] = s
+                    freed = (m.rd(b, 1), m.rd(b + 1, 1), m.rd(b + 0x18, 4), m.rd(OBJ + 0x100 * r + 8, 4))
+                    if freed != (0, 0, 0, 0):
+                        bad.append('record %d removed at step %d not freed: kind, held, object, +8 = %s' % (
+                            r, s, freed))
+        return gone
+
+    alive = lambda s, i: 0
+    cases = [
+        ('bit 2', age, alive, False, {0: 300, 1: 300}),
+        ('bit 2, two calls a step', age, alive, True, {0: 300, 1: 300}),
+        ('bit 3, owner 1 down from 50', orphan, lambda s, i: int(i == 1 and s >= 50), False, {0: 349}),
+        ('bit 3, owner 1 down 50..99 then back', orphan, lambda s, i: int(i == 1 and 50 <= s < 100), False, {0: 349}),
+        ('bit 3, owners alive', orphan, alive, False, {}),
+        ('bits 2 and 3, owner 1 down from 10', age | orphan, lambda s, i: int(i == 1 and s >= 10), False,
+         {0: 300, 1: 300}),
+        ('neither bit, owner 1 down', 0xFFFFFFFF & ~(age | orphan), lambda s, i: int(i == 1), False, {}),
+    ]
+    for label, live2, down, twice, want in cases:
+        got = run(live2, 600, down, twice)
+        if got != want:
+            bad.append('%s: removed %s (want %s)' % (label, got, want))
     return bad
 
 

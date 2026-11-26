@@ -160,8 +160,15 @@
 #define TM2_BAL2_SWOOP_PASS   0x0002  /* bit 1, request 125 (BALANCE.md 26.4): Dark Tooth's swoop (his head) passes a
                                          pickup's hit box, 401..480, as the shots do (retail: it ends at the first
                                          box it touches). The boss's and a player's Dark Tooth's */
-#define TM2_BAL2_ALL          0x0003  /* Vanilla Plus and online */
+#define TM2_BAL2_MINE_AGE     0x0004  /* bit 2, request 127 mode A (BALANCE.md 27): every mine is removed (silently: no
+                                         explosion, no damage) portBalanceMineSeconds after it was laid */
+#define TM2_BAL2_MINE_ORPHAN  0x0008  /* bit 3, request 127 mode B, the default (BALANCE.md 27): a mine is removed
+                                         portBalanceMineSeconds after its owner's car was destroyed, whatever its age;
+                                         the owner coming back does not stop it. With bit 2 too: whichever comes first */
+#define TM2_BAL2_ALL          0x000B  /* Vanilla Plus and online (bits 0, 1, 3: mode B; mode A is bit 2 in place of 3) */
 #define TM2_BAL2_PICKUP_LAST  480     /* bits 0, 1: the last pickup id (441..480: the +40 "keep" pickups) */
+#define TM2_BAL2_MINE_SECONDS 15      /* bits 2, 3: the seconds when portBalanceMineSeconds is 0 */
+#define TM2_BAL2_MINE_MAX_SECONDS 3600 /* bits 2, 3: portBalanceMineSeconds above this counts as this */
 
 /* The numbers (BALANCE.md 3) */
 #define TM2_BAL_BOOMERANG_CATCH 20      /* bit 28: the catch distance (the source's DISTANCE, 8 position units: 160);
@@ -239,6 +246,11 @@ extern struct TM2PortBalanceJam portBalanceJam[]; /* [TM2_MAX_CAR_SLOTS] request
 extern int portBalanceBoom[];       /* [4] request 102 (bit 30): the last explosion sound's x, y, z and 1 (0 = none) */
 extern int portBalance2;            /* request 124: the port's second word of switches (TM2_BAL2_*), 0 = retail */
 extern int portBalanceLive2;        /* its copy for this round (portBalanceLatch), written by the C */
+extern int portBalanceMineSeconds;  /* request 127: the port's seconds for portBalance2 bits 2, 3 (0 = 15) */
+extern int portBalanceMineTicks;    /* this round's limit in 60ths of a second (portBalanceLatch), written by the C */
+extern unsigned int portBalanceMineStep;    /* the last step (timerFrameCount) the mines' clocks ran */
+extern int portBalanceMineAge[];    /* [TM2_MAX_DROPS] bit 2: a mine's 60ths of a second since it was laid */
+extern int portBalanceMineOrphan[]; /* [TM2_MAX_DROPS] bit 3: since its owner was first seen destroyed (0 = not yet) */
 #ifdef __cplusplus
 }
 #endif
@@ -258,6 +270,11 @@ extern int portBalanceLive2;        /* its copy for this round (portBalanceLatch
 #pragma tm2_absolute portBalanceJam
 #pragma tm2_absolute portBalance2
 #pragma tm2_absolute portBalanceLive2
+#pragma tm2_absolute portBalanceMineSeconds
+#pragma tm2_absolute portBalanceMineTicks
+#pragma tm2_absolute portBalanceMineStep
+#pragma tm2_absolute portBalanceMineAge
+#pragma tm2_absolute portBalanceMineOrphan
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -266,6 +283,10 @@ extern "C" {
 extern void portBalanceLatch(void);                  /* roundStart: the switches of this round */
 extern int  portBalancePickupPass(int kind);         /* request 124: 1 = a shot passes this hit (portBalance2 bit 0
                                                         and a pickup id 401..480), else 0 (the caller's retail filter) */
+extern void portBalanceMineClock(void);              /* request 127: weaponDropsUpdate, once a step: bits 2, 3
+                                                        remove a mine whose time is up (silently) */
+extern int  portBalanceCarDown(int id);             /* request 127: 1 = the car of object id `id` is destroyed (dead
+                                                        or HP <= 0) or no car has the id */
 extern int  portBalanceSwoopHit(int *res);          /* request 125: hdpQueryPoint's result for Dark Tooth's swoop:
                                                         its hit word (retail), 0 for a pickup's box with portBalance2
                                                         bit 1 */
