@@ -1790,6 +1790,10 @@ Bits 9 and 14 were reserved with no effect and already in `TM2_BAL_ALL` (0xFDFFF
 
 ### 36.4 For the next playtest: the write watch (asked step 3)
 
+**Since then (2026-11-25):** the port applied a fix in its frame interpolation in v1.0.16: the interpolation state is
+reset when the game's main loop returns, and the restore writes only the pool's objects and the current table's
+bodies. Parked: a write watch is run only if a player reports the crash again.
+
 - **What to watch:** let G = the boss's BB.DMD base, the load address of the last BB.DMD group (`portDmdImages.base[n]`
   or the area offset as in 36.2).
   - **The word:** G + 0xEB2C, 4 bytes (frame 5's +0x0C). It should always read G + 0xEB4C.
@@ -1971,9 +1975,22 @@ The details are in `BALANCE.md` 26.
 | 3. 441..480 | **yes, built** under the same bit: both checks pass 401..480. They are the +40 bonus pickups of Los Angeles and Moscow, walls to every shot in retail |
 | 4. Other shots with two checks | **none**. The missiles (`weaponProjectileUpdate`) and the bullets (`bulletsMove`) test a hit once, with the first check's range (401-440). The same bit extends both to 441..480 |
 
-- **Set:** `portBalance2 = TM2_BAL2_ALL` (`0x1`) in Vanilla Plus and online, with `portBalance`, and hash it with the
+- **Set:** `portBalance2 = TM2_BAL2_ALL` (`0x1`; `0x3` since request 125, 39) in Vanilla Plus and online, with `portBalance`, and hash it with the
   ruleset. Its address is in `symbols.tsv`. It is latched at each round's start, like `portBalance`.
 - **Also seen, not changed:** Dark Tooth's swoop ends at the first thing `hdpQueryPoint` finds, a pickup's box
   included (`BALANCE.md` 26.2). Ask if it should pass pickups too.
 - **Checked:** `check_balance.py` G30, including a LinkMips run of `weaponRicochetUpdate` that reproduces the trap
   with the bit clear and shows the bomb getting away with it set. Not tested in game.
+
+## 39. Request 125: Dark Tooth's swoop passes pickups (built: `portBalance2` bit 1)
+
+Asked 2026-11-25 (the user, after 124's answer). The details are in `BALANCE.md` 26.4.
+
+| Item | Result |
+|---|---|
+| 1. The swoop | **built**: `portBalance2` bit 1, `TM2_BAL2_SWOOP_PASS`. The boss's swoop and a player's Dark Tooth's pass pickups 401..480; walls, cars and everything else end it as before |
+| 2. Other attacks that stop at a pickup | **none left**. Only the ricochet, the missiles, the bullets and the swoop test the world's hit volumes; the first three pass pickups with bit 0. Every other attack tests cars and targets only |
+
+- **Set:** `portBalance2 = TM2_BAL2_ALL`, now `0x3`, in Vanilla Plus and online, hashed with the ruleset.
+- **Also fixed:** a build with `TM2_PORT_BALANCE` as its only port define compiles again. The full run now links it.
+- **Checked:** `check_balance.py` G31 (where the gate is called, and a LinkMips run of the gate). Not tested in game.

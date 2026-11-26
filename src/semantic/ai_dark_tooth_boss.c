@@ -54,6 +54,13 @@ extern int *hdpQueryPoint(int, int, VECTOR *, int);
 #define DISTANCE(l, r) (MAX(ABS((l)->vx - (r)->vx), MAX(ABS((l)->vy - (r)->vy), ABS((l)->vz - (r)->vz))) >> 3)
 #define POS(p) ((VECTOR *)(p)->motion.pos)
 #define OBJ_POS ((VECTOR *)darkToothBossObject->pos)
+#ifdef TM2_PORT_BALANCE
+#include "semantic/port_balance.h"
+/* request 125 (portBalance2 bit 1, BALANCE.md 26.4): the swoop's world test passes pickups' boxes */
+#define SWOOP_WORLD(r) portBalanceSwoopHit(r)
+#else
+#define SWOOP_WORLD(r) (*(r))
+#endif
 
 /* @8010FD44: the boss controller. It fires from alternating sides on a random
  * interval; every so often it swoops at the nearest car and shoves it, and
@@ -177,7 +184,7 @@ int __attribute__((section(".text_8010FD44"))) aiDarkToothBossUpdate(struct TM2A
             }
 #endif
             darkToothSwooping = 0;
-        } else if (*hdpQueryPoint(darkToothBossObject->id, -1, OBJ_POS, 0)) {
+        } else if (SWOOP_WORLD(hdpQueryPoint(darkToothBossObject->id, -1, OBJ_POS, 0))) {
             fxExplosion48(OBJ_POS, 0);
             darkToothSwooping = 0;
         }

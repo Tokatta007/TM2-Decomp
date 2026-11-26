@@ -97,7 +97,7 @@ an option); bit 15 overlaps bit 6's 7a (with bit 15 set, 7a's refusals never tri
 effect). Machine guns: request 41 built no bit (12.7);
 round 3's bit 20 removes the coin flip (13.3). Request 45 split bit 8 into bits 8, 21, 22 (one per car, 14.1).
 
-The word is full. Since request 124 a second word, `portBalance2` (`TM2_BAL2_*`, `TM2_BAL2_ALL` = `0x1`), holds
+The word is full. Since request 124 a second word, `portBalance2` (`TM2_BAL2_*`, `TM2_BAL2_ALL` = `0x3`), holds
 the newer rules, latched with this one (section 26.1).
 
 ### 2.2 Storage (`.port_bss`, every variant; `config/US/port_variant_arrays.tsv`, after `portHumanRadarBlink`)
@@ -1881,11 +1881,13 @@ rules as the first:
 | `portBalanceLive2` | `portBalanceLatch` (roundStart) | this round's copy, read by the gates; the port reads it, never writes it |
 
 Both are `.port_bss` in every variant, after `portCarTeam` (`config/US/port_variant_arrays.tsv`). Read their
-addresses from the link's `symbols.tsv`. `TM2_BAL2_ALL` (`0x1`) is the word for Vanilla Plus and online.
+addresses from the link's `symbols.tsv`. `TM2_BAL2_ALL` (`0x3` since request 125) is the word for Vanilla Plus
+and online.
 
 | bit | mask | item | name | rule |
 |---|---|---|---|---|
 | 0 | 0x0001 | 124 | `TM2_BAL2_PICKUP_PASS` | every shot passes a pickup's hit box, ids 401..480: both of the ricochet bomb's hit checks, the missiles' and the bullets' (26.3) |
+| 1 | 0x0002 | 125 | `TM2_BAL2_SWOOP_PASS` | Dark Tooth's swoop passes a pickup's hit box, ids 401..480: the boss's and a player's Dark Tooth's (26.4) |
 
 ### 26.2 What happens in retail (CONFIRMED in the C; the same on the PS1)
 
@@ -1923,7 +1925,7 @@ passes.
 
 **Also seen, not changed:** Dark Tooth's swoop (`aiDarkToothBossUpdate`, 8010FD44, `ai_dark_tooth_boss.c`)
 ends at the first hit of `hdpQueryPoint` with no filter at all, so a pickup's box stops it like a wall does. It is
-not a shot's check, so this bit leaves it as retail; ask if the swoop should pass pickups too.
+not a shot's check, so this bit leaves it as retail. Request 125 passes pickups there too, with bit 1 (26.4).
 
 ### 26.3 Built: `portBalancePickupPass(kind)` (bit 0, `TM2_BAL2_PICKUP_PASS`)
 
@@ -1956,3 +1958,51 @@ not a shot's check, so this bit leaves it as retail; ask if the swoop should pas
 Not tested in game. To test: Hong Kong, a ricochet bomb rolled through the Power pickup by the wall in Zen's video.
 With the bit it bounces off the wall once and comes back through the pickup. On Los Angeles or Moscow, missiles and
 bullets fly through a bonus spot.
+
+### 26.4 Request 125: Dark Tooth's swoop passes pickups (bit 1, `TM2_BAL2_SWOOP_PASS`)
+
+**Asked:** the swoop (his head) should pass pickups as every shot does since 26.3. Walls, cars and everything else
+still end it. Also asked: any other attack or special that stops at a pickup's box, treated the same way.
+
+**What stops at a pickup (read in the C):** the game tests a point or an object against the world's hit volumes
+through two functions only: `hdpCollideObject` and `hdpQueryPoint`. Their callers:
+
+| caller | what | pickups |
+|---|---|---|
+| `weaponRicochetUpdate` | the ricochet bomb, two checks | passed with bit 0 (26.3) |
+| `weaponProjectileUpdate` | missiles, Minion's volley, the specials' shots | passed with bit 0 |
+| `bulletsMove` | the guns | passed with bit 0 |
+| `aiDarkToothBossUpdate` | the boss's swoop | **no filter: stopped. Passed with bit 1** |
+| `portCarDtPlayerSwoopStep` | a player's Dark Tooth's swoop (request 36, `TM2_PORT_DT_PLAYER`) | **the same as the boss: passed with bit 1** |
+| `carsPhysicsUpdate` (`car_physics.c`) | the cars' ground and walls | not an attack; a car drives through a pickup to take it |
+
+Every other attack (the flame, the freeze, the strike, the mines' and bombs' contact) uses
+`projectileHitTest`, which looks only at cars, breakables and spinners and never at pickups. So the swoop was the
+last attack that stopped at a pickup.
+
+**Built:** `portBalanceSwoopHit(res)`, `res` being `hdpQueryPoint`'s result (+0 the hit word, +0x0A the id of the
+hit volume). It returns the hit word as retail reads it, or 0 when bit 1 of `portBalanceLive2` is set and the id is
+401..480. Both swoops call it in place of retail's `*hdpQueryPoint(...)` (`SWOOP_WORLD` / `DT_SWOOP_WORLD`, the
+retail form without `TM2_PORT_BALANCE`). It reads only and calls no `rand()`. A swoop that now goes on can still end
+at the car, at 40 updates or out of range, as before.
+
+- **Bit clear:** retail, the swoop ends at a pickup's box. Online: no new state, the same on every machine; it
+  changes play (the online rules, `BALANCE_CHANGES.md`).
+- **One limit, as for the shots:** `hdpQueryPoint` reports one volume. If the head is inside a pickup's box and a
+  wall's at the same update and the pickup's is the one reported, the wall ends the swoop one update later.
+
+**Checked:** `tools/check_balance.py` G31: `aiDarkToothBossUpdate` calls `hdpQueryPoint` once and
+`portBalanceSwoopHit` once, after it, and a player's Dark Tooth's swoop the same when it is linked; a LinkMips run
+of `portBalanceSwoopHit` on a made-up result: the hit word for every kind with the bit clear, 0 for 401..480 with
+it, and the hit word for 400, 481, 500, 667, 3 and -1. `aiDarkToothBossUpdate` joins the functions
+`TM2_PORT_BALANCE` changes (check 4).
+
+**Also fixed:** a link with `TM2_PORT_BALANCE` and no other port define did not compile. Two helpers used names
+that only other defines declared: `portBalanceLeapPush` used the drop-in's `LEAP_*` names and `portBalanceFlameLocked`
+used `weaponFlameEmitters`. The balance block now has its own names for both (the same code with every define).
+The full run links this build too (`bal`). That link showed one more gap: check 4's list of the functions
+`TM2_PORT_BALANCE` changes lacked `carStatsLoad` (request 77's bit 24, 17), which only a build with no other
+port define can show. It is in the list now.
+
+Not tested in game. To test: the Dark Tooth fight on a map with a pickup between him and the car (or a player's
+Dark Tooth swooping at a car across a pickup). With the bit the head goes through the pickup and reaches the car.
