@@ -328,9 +328,28 @@ static void PE_TEXT portPreciseSprite(Mesh *mesh, u8 *prim, DrawEntry *e, s16 *r
 extern int portVisual[];
 #define PORT_PRECISE_CULL (portVisual[0] & PORT_PRECISE_CULL_BIT)
 
-/* Halve v[0..2] together until each is within +-most (a positive scale: the signs below are unchanged). */
+/* Halve v[0..2] together until each is within +-most (a positive scale: the signs below are unchanged); most is
+ * 2^k - 1. Request 128: the halvings are counted first on u = the three magnitudes ORed (|v| for v >= 0, |v| - 1 for
+ * v < 0), in five steps: (u >> n) <= most exactly when every element's magnitude >> n is, so n is never more than the
+ * halvings needed, and one shift by n is the same as n shifts by one; the loop then does the one halving more that a
+ * negative element needs when its v >> n is exactly -(most + 1). The same results as halving one at a time, in a fraction of
+ * the steps (camera coordinates in 1/256 unit took up to 16 rounds of six tests). */
 static void PE_TEXT portPreciseFit(s32 *v, s32 most)
 {
+    u32 u = (u32)(v[0] ^ (v[0] >> 31)) | (u32)(v[1] ^ (v[1] >> 31)) | (u32)(v[2] ^ (v[2] >> 31));
+    s32 n = 0;
+
+    if (u > (u32)most) {
+        if ((u >> 16) > (u32)most) n = 16;
+        if ((u >> (n + 8)) > (u32)most) n += 8;
+        if ((u >> (n + 4)) > (u32)most) n += 4;
+        if ((u >> (n + 2)) > (u32)most) n += 2;
+        if ((u >> (n + 1)) > (u32)most) n += 1;
+        n += 1;
+        v[0] >>= n;
+        v[1] >>= n;
+        v[2] >>= n;
+    }
     while (v[0] > most || v[0] < -most || v[1] > most || v[1] < -most || v[2] > most || v[2] < -most) {
         v[0] >>= 1;
         v[1] >>= 1;
@@ -360,18 +379,100 @@ static void PE_TEXT portPreciseEdge(s16 *r, u8 *p, u8 *q, s32 *out)
  * the entry's translation tr (1/256 unit, portPreciseTr) + R p0, the edges R (p1 - p0) and R (p2 - p0) exact; each
  * vector is halved to fit 32 bits (the sign kept). Returns 1 when it faces the eye in the sense the emitter keeps
  * (cull flip 0: a determinant >= 0, as NCLIP >= 0), 0 when not or when the test cannot be made (tr not valid, a corner
- * within a unit of the eye or behind it): then the GTE's choice stands. */
-static int PE_TEXT portPreciseFacing(s16 *r, s32 *tr, u8 *p0, u8 *p1, u8 *p2, s32 flip)
+ * within a unit of the eye or behind it): then the GTE's choice stands.
+ *
+ * Request 128 (the rear-view mirror): the GTE's translation is R t, the slot's rotation times the key's translation
+ * t, so c = R (p + t) and det(c0, c1, c2) = det(R) det(p0 + t, p1 + t, p2 + t) = det(R) (p0 + t) . ((p1 - p0) x (p2 -
+ * p0)): the same sign from the mesh's own integer coordinates, with no rotation per polygon (about a sixth of the
+ * steps of the camera-space test, with the scalar code below).
+ * key = the key's t, its slot and the sign of that slot's det(R) (portPreciseKey): the mirror's view matrix has its x
+ * axis negated, so det(R) < 0 there and the sign follows NCLIP's as the cull flip expects. When the entry's slot is
+ * not the key's (a key shared across slots: the GTE keeps the first slot's R t) or det(R) is about 0 (a flattened
+ * matrix), the camera-space test above. */
+static s32 PE_TEXT portPreciseDetSign(s16 *r)
+{
+    s32 x = (r[4] * r[8] - r[5] * r[7]) >> 12;
+    s32 y = (r[5] * r[6] - r[3] * r[8]) >> 12;
+    s32 w = (r[3] * r[7] - r[4] * r[6]) >> 12;
+    s32 d = r[0] * x + r[1] * y + r[2] * w;
+
+    return d > 256 ? 1 : d < -256 ? -1 : 0;
+}
+
+/* At a key change: its translation, its slot and the slot's det(R) sign, for portPreciseFacing. */
+static void PE_TEXT portPreciseKey(s16 *r, DrawEntry *e, s32 *key)
+{
+    key[0] = e->x;
+    key[1] = e->y;
+    key[2] = e->z;
+    key[3] = e->rot;
+    key[4] = portPreciseDetSign(r);
+}
+
+/* The halvings that bring u (magnitudes ORed, v ^ (v >> 31): |v|, or |v| - 1 for v < 0) within most = 2^k - 1, for
+ * u > most: then every v >> n is within -(most + 1) .. most. (Scalars: the unit is built with -fvolatile, where every
+ * array element read or written is a memory access.) */
+#define PMAG(v) ((u32)((v) ^ ((v) >> 31)))
+static s32 PE_TEXT portPreciseShift(u32 u, u32 most)
+{
+    s32 n = 0;
+
+    if ((u >> 16) > most) n = 16;
+    if ((u >> (n + 8)) > most) n += 8;
+    if ((u >> (n + 4)) > most) n += 4;
+    if ((u >> (n + 2)) > most) n += 2;
+    if ((u >> (n + 1)) > most) n += 1;
+    return n + 1;
+}
+
+static int PE_TEXT portPreciseFacing(s16 *r, s32 *tr, s32 *key, s32 slot, u8 *p0, u8 *p1, u8 *p2, s32 flip)
 {
     s32 c[3], a[3], b[3], n[3], i, z;
+    s32 x0, y0, z0, x1, y1, z1, x2, y2, z2, r6, r7, r8, t2, sg, k;
+    s32 ax, ay, az, bx, by, bz, nx, ny, nw, cx, cy, cz;
+    u32 u;
 
     if (!tr[3])
         return 0;
-    for (i = 0; i < 3; i++) {
-        u8 *p = i == 0 ? p0 : i == 1 ? p1 : p2;
-        z = tr[2] + ((r[6] * S16(p, 0) + r[7] * S16(p, 2) + r[8] * S16(p, 4) + 8) >> 4);
-        if (z < 256)
-            return 0;
+    x0 = S16(p0, 0); y0 = S16(p0, 2); z0 = S16(p0, 4);
+    x1 = S16(p1, 0); y1 = S16(p1, 2); z1 = S16(p1, 4);
+    x2 = S16(p2, 0); y2 = S16(p2, 2); z2 = S16(p2, 4);
+    r6 = r[6]; r7 = r[7]; r8 = r[8];
+    t2 = tr[2];
+    if (t2 + ((r6 * x0 + r7 * y0 + r8 * z0 + 8) >> 4) < 256 ||
+        t2 + ((r6 * x1 + r7 * y1 + r8 * z1 + 8) >> 4) < 256 ||
+        t2 + ((r6 * x2 + r7 * y2 + r8 * z2 + 8) >> 4) < 256)
+        return 0;
+    sg = key[4];
+    if (slot == key[3] && sg != 0) {
+        ax = x1 - x0; ay = y1 - y0; az = z1 - z0;
+        bx = x2 - x0; by = y2 - y0; bz = z2 - z0;
+        u = PMAG(ax) | PMAG(ay) | PMAG(az) | PMAG(bx) | PMAG(by) | PMAG(bz);
+        if (u > 0x3FFF) {
+            k = portPreciseShift(u, 0x3FFF);
+            ax >>= k; ay >>= k; az >>= k;
+            bx >>= k; by >>= k; bz >>= k;
+        }
+        nx = ay * bz - az * by;     /* (each product within 2^28) */
+        ny = az * bx - ax * bz;
+        nw = ax * by - ay * bx;
+        u = PMAG(nx) | PMAG(ny) | PMAG(nw);
+        if (u > 0x3FFF) {
+            k = portPreciseShift(u, 0x3FFF);
+            nx >>= k; ny >>= k; nw >>= k;
+        }
+        cx = x0 + key[0];
+        cy = y0 + key[1];
+        cz = z0 + key[2];
+        u = PMAG(cx) | PMAG(cy) | PMAG(cz);
+        if (u > 0x7FFF) {
+            k = portPreciseShift(u, 0x7FFF);
+            cx >>= k; cy >>= k; cz >>= k;
+        }
+        z = cx * nx + cy * ny + cz * nw;  /* (within 3 x 2^14 x 2^15) */
+        if (sg < 0)
+            z = -z;
+        return (z >= 0) == (flip == 0);
     }
     for (i = 0; i < 3; i++)
         c[i] = tr[i] + ((r[3 * i] * S16(p0, 0) + r[3 * i + 1] * S16(p0, 2) + r[3 * i + 2] * S16(p0, 4) + 8) >> 4);
@@ -409,11 +510,14 @@ void __attribute__((section(".text_800CDC54"))) sub_800CDC54(DrawCtx *ctx, DrawE
     u8 *pxy = 0;    /* the beam's or sprite's packet corners, its vertex */
     u8 *pv = 0;
     s32 nz[4];      /* request 82: the primitive's corner depths (SZ), for the near pass's split vertices */
+    s32 pkey[5];    /* request 128: the key's translation, slot and det(R) sign (portPreciseKey) */
 #endif
 
     S = SCR;
 #ifdef TM2_PORT_C_EMITTER
     ptr[0] = ptr[1] = ptr[2] = ptr[3] = 0;
+    pkey[0] = pkey[1] = pkey[2] = pkey[4] = 0;
+    pkey[3] = -1;
 #endif
     S->trans_id = -1;
     S->near_count = 0;
@@ -474,6 +578,8 @@ void __attribute__((section(".text_800CDC54"))) sub_800CDC54(DrawCtx *ctx, DrawE
 #ifdef TM2_PORT_C_EMITTER
             if (PORT_PRECISE_EMIT || PORT_PRECISE_CULL)
                 portPreciseTr((s16 *)(rotmats + e->rot * 32), e, ptr);
+            if (PORT_PRECISE_CULL)
+                portPreciseKey((s16 *)(rotmats + e->rot * 32), e, pkey);
 #endif
         }
         lr = (s32 *)e->light[1];
@@ -525,7 +631,8 @@ void __attribute__((section(".text_800CDC54"))) sub_800CDC54(DrawCtx *ctx, DrawE
 #ifdef TM2_PORT_C_EMITTER
                         /* request 116 (portVisual bit 11): kept when it faces the eye on the exact projection */
                         if (!PORT_PRECISE_CULL ||
-                            !portPreciseFacing((s16 *)(rotmats + e->rot * 32), ptr, p0, p1, p2, S->cull_flip))
+                            !portPreciseFacing((s16 *)(rotmats + e->rot * 32), ptr, pkey, e->rot, p0, p1, p2,
+                                               S->cull_flip))
 #endif
                         goto next;
                     }
