@@ -2044,3 +2044,26 @@ Asked 2026-11-25 (Ryupichu, Tegu and SuperflyKev; the user). The details are in 
 - **Set:** `portBalance2 = TM2_BAL2_ALL` (`0xB`, mode B) in Vanilla Plus and online; mode A is bit 2 in place of
   bit 3. Put `portBalanceMineSeconds` (address in `symbols.tsv`) in the ruleset hash with `portBalance2`.
 - **Checked:** `check_balance.py` G32 (a LinkMips run of the clocks over 600 steps per case). Not tested in game.
+
+## 42. Request 128: the rear-view mirror slow with the exact facing test (built: the same results, a sixth of the steps)
+
+Asked 2026-11-27 (a player's report: 40 FPS with the mirror). Measured by the port in Amazonia: the mirror's `renderScene` 6 ms
+against the main view's 3 ms, 59% of it in `portPreciseFacing`; the mirror's packets 267,192 bytes with `portVisual`
+bit 11 (request 116), 40,712 without.
+
+| Item | Result |
+|---|---|
+| "Every back face kept" | **not so, read in the C and run.** The mirror's x flip is in the view matrix (`viewProc`: the axis matrix with x -4096 for view mode 4), so it is in every matrix slot the emitter loads: the GTE's camera corners and the test's are both R (p + t), and the determinant's sign is NCLIP's in the mirror too. The proposed flip (`cull_flip ^ 1`) would keep every back face. Emitter runs on mirror views (each slot's x row negated, flip 1): bit 11 adds a few dozen polygons a view, each facing the eye on the exact projection |
+| What the mirror tests more | retail's NCLIP keeps a polygon of 0 (its three corners in a line on the GTE's whole pixels) with flip 0 and culls it with flip 1. In the 101 x 30 picture most distant polygons are 0, so in the mirror they all go to the exact test, and those facing the eye are drawn: the packets added, as the main view draws every one of them in retail. On made-up views: 415 polygons of 0 tested in the mirror views, none in the normal ones |
+| The cost | **built** in `reference/model_emitter_800CDC54.c`: the same sign as det(R) (p0 + t) . ((p1 - p0) x (p2 - p0)), from the mesh's own integer coordinates and the key's translation, det(R)'s sign once per key (`portPreciseKey`); the camera-space test stays for a key shared across slots. Scalar code (the unit is built with `-fvolatile`, where every array element is a memory access) and the halvings counted at once (`portPreciseFit`, `portPreciseShift`) |
+| Measured | the link's emitter on 24 made-up views (12 normal, 12 mirror): bit 11's extra steps 8.34 M to 1.89 M (mirror) and 6.95 M to 1.56 M (normal), the same bytes as the old test in every view; bit 11 off: 5 steps more per emitter call |
+| The packets | unchanged (267 KB stays): they are the mirror's polygons that face the eye, which close its cracks |
+
+- **Nothing to change on the port's side**; keep bit 11 on for the mirror. The split-screen mirrors (view mode row 13 made
+  from row 4) are the same case: the reflection is in their matrices.
+- **Checked:** `check_custom.py` check 27 now also runs 6 mirror views and 2 views with keys shared across slots (the
+  camera-space path, request 116's precision: edge-on within 0.5 px^2 there), the same rules: no polygon lost, each
+  one more culled by NCLIP and facing the eye exactly. Its matching of a packet to its primitive now clamps the exact
+  corners as the GTE does (-1024..1023), skips a polygon with a corner clamped off the screen, and takes any primitive
+  the rounded corners fit (a small mesh's faces seen edge-on round to the same pixels). 14 views (7 mirror), 463
+  polygons more with the bit, all of them facing the eye or edge-on. Not measured in game.

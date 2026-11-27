@@ -44,7 +44,12 @@
  * to pixels), and the polygon is kept when it faces the eye there. The GTE's whole-pixel corners turn polygons less
  * than a pixel thin over (a road's crosswalk strips seen from far along the road: Hong Kong at the port's near scale
  * 2), so retail culls some that face the eye; never culls one that retail keeps. Needs the C emitter (the asm reads no
- * bit). Drawing only (packets, the OT, the near list), no rand(). */
+ * bit). Drawing only (packets, the OT, the near list), no rand().
+ * Request 128 (the rear-view mirror, PLAYTEST_ANSWERS.md 42): the same results in about a sixth of the steps, the
+ * determinant's sign taken from the mesh's own coordinates (det(R) (p0 + t) . (e1 x e2)). The mirror's view matrix has
+ * its x axis negated (det(R) < 0), so the test follows its cull flip as it is. The mirror tests far more polygons than
+ * a normal view: retail's NCLIP keeps one of 0 (corners in a line) with flip 0 and culls it with flip 1, and most of a
+ * 101 x 30 picture's distant polygons are 0; bit 11 keeps those that face the eye, as the main view keeps every one. */
 #define PORT_PRECISE_CULL_BIT 0x800
 
 #ifdef TM2_PORT_C_EMITTER

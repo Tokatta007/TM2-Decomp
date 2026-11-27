@@ -4797,6 +4797,24 @@ def cull_exact(scene, m):
     return out
 
 
+def cull_reflect(scene):
+    """Request 128: an emitter scene as the rear-view mirror draws it: every rotation slot's row 0 negated (viewProc's
+    axis matrix with x -4096 for view mode 4), so det(R) < 0 and NCLIP's sign is reversed (run it with cull flip 1)."""
+    mem, ctrl, args, stack, meta = scene
+    rot, out = args[3], []
+    for a, b in mem:
+        if rot <= a < rot + 32 * 64 and (a - rot) % 32 == 0 and len(b) == 32:
+            v = [_s16(int.from_bytes(b[2 * i:2 * i + 2], 'little')) for i in range(9)]
+            b = b''.join(_u16(-x if i < 3 else x) for i, x in enumerate(v)) + b[18:]
+        out.append((a, b))
+    return out, ctrl, args, stack, meta
+
+
+def cull_clamp(v):
+    """A corner coordinate (float pixels, offset added) clamped as the GTE clamps SX / SY (-1024..1023)."""
+    return min(max(v, -1024.0), 1023.0)
+
+
 def check_precise_cull(out):
     """Check 27 (request 116; portVisual bit 11, TM2_VIS_PRECISE_CULL, with TM2_PORT_C_EMITTER): the
     link's emitter runs on made-up views (emit_scene: PARIS and FREEWAY meshes, crosswalk strips as quads and as
@@ -4805,10 +4823,15 @@ def check_precise_cull(out):
     near-list sort z) and more, and each one more is a triangle or quad whose packet corners NCLIP culls (in the
     scene's cull sense) and that faces the eye on the exact projection (float camera space; a projected area within
     CULL_EPS px^2 of 0 is either). At least CULL_MIN more polygons in all (the test sees the case). The bit's value is
-    the same in port_c_emitter.h and port_visual.h."""
+    the same in port_c_emitter.h and port_visual.h. Request 128: also mirror views (cull_reflect, cull flip 1: no
+    back face drawn, the same rules) and views whose keys are shared across slots (the GTE keeps the first slot's
+    translation: the test's camera-space path, its corners and edges halved to 15 and 14 bits: edge-on within
+    CULL_EPS_SHARED px^2 there; the game keeps a key to one slot, as the GTE would draw it elsewhere otherwise). The
+    exact corners are matched clamped to the GTE's -1024..1023."""
     import random
     from check_rollback import Image
     CULL_EPS, CULL_MIN = 0.02, 50
+    CULL_EPS_SHARED = 0.5     # the camera-space path (keys shared across slots): request 116's precision
     bad = []
     hdr_c = (ROOT / 'include' / 'semantic' / 'port_c_emitter.h').read_text(encoding='utf-8')
     hdr_v = (ROOT / 'include' / 'semantic' / 'port_visual.h').read_text(encoding='utf-8')
@@ -4829,11 +4852,15 @@ def check_precise_cull(out):
     disc = emit_disc_meshes(['PARIS', 'FREEWAY'])
     strips, smem = cull_strip_meshes()
     levels = sorted(disc)
-    stats = dict(scenes=0, drawn=0, more=0, sure=0, edge=0)
-    for si, cull in enumerate((0, 1, 0, 1, 0, 1)):
-        lv = {levels[si % len(levels)]: disc[levels[si % len(levels)]]} if levels and si < 4 else {}
+    stats = dict(scenes=0, mirror=0, drawn=0, more=0, sure=0, edge=0, clamped=0)
+    views = [(c, False, 0.0) for c in (0, 1, 0, 1, 0, 1)] + [(1, True, 0.0)] * 6 + [(0, False, 0.5), (1, True, 0.5)]
+    for si, (cull, mirror, change) in enumerate(views):
+        lv = {levels[si % len(levels)]: disc[levels[si % len(levels)]]} if levels and si % 6 < 4 else {}
         loaded = [(v[0], v[1]) for v in lv.values()]
-        scene = emit_scene(rng, lv, strips, 80, 0.1, 0, 0, cull_flip=cull)
+        scene = emit_scene(rng, lv, strips, 80, 0.1, 0, 0, cull_flip=cull, slot_change=change)
+        if mirror:
+            scene = cull_reflect(scene)
+            stats['mirror'] += 1
         runs = {}
         for word in (0, 0xFFFFFFFF & ~bit, bit):
             runs[word] = emit_run(img, scene, loaded, list(smem) + [(pv, word.to_bytes(4, 'little'))])
@@ -4856,21 +4883,31 @@ def check_precise_cull(out):
                 continue                                # a draw-mode packet around a flagged polygon
             stats['more'] += cnt
             (x0, y0), (x1, y1), (x2, y2) = cs
+            if any(v in (-1024, 1023) for c in cs for v in c):
+                stats['clamped'] += cnt         # a corner the GTE clamped (its divide saturated near the eye): the
+                continue                        # packet's corners are not the projection's, nothing to match
             mac0 = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
             if (mac0 >= 0) == (cull == 0):
                 bad.append('scene %d: a polygon more with the bit that NCLIP keeps (%s, NCLIP %d)' % (si, cs, mac0))
                 continue
-            best = min(exact, key=lambda c: max(max(abs(c[2][k][0] - cs[k][0] - 0.5), abs(c[2][k][1] - cs[k][1] - 0.5))
-                                               for k in range(3)))
-            err = max(max(abs(best[2][k][0] - cs[k][0] - 0.5), abs(best[2][k][1] - cs[k][1] - 0.5)) for k in range(3))
+            gap = lambda c: max(max(abs(cull_clamp(c[2][k][0]) - cs[k][0] - 0.5),
+                                    abs(cull_clamp(c[2][k][1]) - cs[k][1] - 0.5)) for k in range(3))
+            best = min(exact, key=gap)      # (the GTE clamps a corner off the screen to -1024..1023)
+            err = gap(best)
             if err > 1.6:
                 bad.append('scene %d: a polygon more with the bit (%s) matches no primitive (nearest %.2f px off)' % (
                     si, cs, err))
                 continue
-            front = (best[3] >= 0) == (cull == 0)
-            if abs(best[4]) <= CULL_EPS:
+            # every primitive the packet's corners could be (request 128: a small mesh's faces seen edge-on round to
+            # the same pixels): the best one that faces the eye or is edge-on
+            eps = CULL_EPS_SHARED if change else CULL_EPS
+            cands = [c for c in exact if gap(c) <= 1.6]
+            ok_c = [c for c in cands if abs(c[4]) <= eps or (c[3] >= 0) == (cull == 0)]
+            if ok_c:
+                best = min(ok_c, key=gap)
+            if abs(best[4]) <= eps:
                 stats['edge'] += cnt
-            elif front:
+            elif ok_c:
                 stats['sure'] += cnt
             else:
                 bad.append('scene %d: a polygon more with the bit faces away on the exact projection (entry %d prim %d, '
@@ -4879,11 +4916,12 @@ def check_precise_cull(out):
         bad.append('only %d polygons more with the bit (want at least %d: the test sees nothing)' % (
             stats['more'], CULL_MIN))
     good = not bad
-    print('27. request 116 precise backface test (portVisual bit %X): %d views, %d polygons drawn without it; with it '
-          'all of them and %d more, each culled by NCLIP on its packet corners and facing the eye on the exact '
-          'projection (%d clearly, %d within %.2f px^2 of edge-on); the other bits change nothing -> %s' % (
-              bit, stats['scenes'], stats['drawn'], stats['more'], stats['sure'], stats['edge'], CULL_EPS,
-              'ok' if good else 'FAIL'))
+    print('27. request 116 precise backface test (portVisual bit %X): %d views (%d mirror), %d polygons drawn without '
+          'it; with it all of them and %d more, each culled by NCLIP on its packet corners and facing the eye on the '
+          'exact projection (%d clearly, %d within %.2f px^2 of edge-on, %d with a corner clamped off the screen); the '
+          'other bits change nothing -> %s' % (
+              bit, stats['scenes'], stats['mirror'], stats['drawn'], stats['more'], stats['sure'], stats['edge'],
+              CULL_EPS, stats['clamped'], 'ok' if good else 'FAIL'))
     for b in bad[:12]:
         print('     ' + b)
     return good
