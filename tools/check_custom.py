@@ -331,7 +331,7 @@ NUMBER_CALLERS = {
     'portAiSelCount': {'screenAiSelect'},
     'portCarEnding': {'screenEnding'},
     'portCarNumberOfGroup': set(),          # the port's API
-    'portCarSelSetChild': {'portCarSelLoad'},   # the port's API; request 71's helper
+    'portCarSelSetChild': {'portCarSelInstall'},    # the port's API; request 71's helper
 }
 NUMBER_CALLERS_CARS = {'portCarNumberGet': {'sessionLoadArenaAndCars'}}
 EXPECTED_NUMBERS = {
@@ -2050,10 +2050,13 @@ def check_camera_wall(out, link, sizes, kinds, callers, calls, pointed, relocs, 
 
 
 # ---- checks 10 and 11 (requests 71 and 70, docs/CAR_PROFILES.md) ----
-CARSEL_LOAD_PORT = {'portCarSelLoad', 'portCarSelUnload', 'portCarSelTextures', 'portCarSelPlace', 'portCarSelUpload'}
+CARSEL_LOAD_PORT = {'portCarSelLoad', 'portCarSelLoadInPlace', 'portCarSelInstall', 'portCarSelUnload',
+                    'portCarSelTextures', 'portCarSelPlace', 'portCarSelUpload'}
 CARSEL_LOAD_CALLERS = {'portCarSelLoad': set(),            # the port's API
-                       'portCarSelUnload': {'portCarSelLoad'},     # and the port's API
-                       'portCarSelTextures': {'portCarSelLoad'},
+                       'portCarSelLoadInPlace': set(),     # the port's API (request 130)
+                       'portCarSelInstall': {'portCarSelLoad', 'portCarSelLoadInPlace'},
+                       'portCarSelUnload': {'portCarSelInstall'},  # and the port's API
+                       'portCarSelTextures': {'portCarSelInstall'},
                        'portCarSelPlace': {'portCarSelTextures'},
                        'portCarSelUpload': {'portCarSelTextures'}}
 CARSEL_LOAD_BYTES = 0x203C0         # struct TM2PortCarSelLoad
@@ -2115,13 +2118,16 @@ SPECIAL_BYTES = 0x48                # struct TM2PortSpecialProfile
 HIDDEN_PORT = {'portHiddenAreasBegin', 'portHiddenAreasEnd', 'portHiddenChurch', 'portHiddenPatch',
                'portHiddenRoofBuild', 'portHiddenRoofMesh', 'portHiddenRoofMove', 'portHiddenAreasDrawn',
                'portHiddenTemple', 'portHiddenZoneIs', 'portHiddenBurb',   # requests 97, 119
+               'portHiddenSwamp',                                          # request 129
                'portHiddenSubway', 'portHiddenKidIs', 'portHiddenRecIs', 'portHiddenOpen',     # request 104
                'portTwoSidedBegin', 'portTwoSidedEnd'}                                         # request 113
 HIDDEN_CALLERS = {'portHiddenAreasBegin': {'renderScene'}, 'portHiddenAreasEnd': {'renderScene'},
                   'portHiddenChurch': {'portHiddenAreasBegin'},
-                  'portHiddenPatch': {'portHiddenChurch', 'portHiddenTemple', 'portHiddenSubway', 'portHiddenOpen', 'portHiddenBurb'},
+                  'portHiddenPatch': {'portHiddenChurch', 'portHiddenTemple', 'portHiddenSubway', 'portHiddenOpen',
+                                      'portHiddenBurb', 'portHiddenSwamp'},
                   'portHiddenTemple': {'portHiddenAreasBegin'}, 'portHiddenBurb': {'portHiddenAreasBegin'},
-                  'portHiddenZoneIs': {'portHiddenTemple', 'portHiddenSubway', 'portHiddenBurb'},
+                  'portHiddenSwamp': {'portHiddenAreasBegin'},
+                  'portHiddenZoneIs': {'portHiddenTemple', 'portHiddenSubway', 'portHiddenBurb', 'portHiddenSwamp'},
                   'portHiddenSubway': {'portHiddenAreasBegin'}, 'portHiddenKidIs': {'portHiddenSubway'},
                   'portHiddenRecIs': {'portHiddenSubway'}, 'portHiddenOpen': {'portHiddenSubway'},
                   'portHiddenRoofBuild': {'portHiddenChurch'}, 'portHiddenRoofMesh': {'portHiddenRoofBuild'},
@@ -2564,6 +2570,7 @@ def check_carsel_load(out, banks):
             [(0, 0x20, 'SP'), (0, 0x21, 'RK')]
     textured = 0
     dt_heads = 0
+    in_place = 0
     files = {}
     for k, flagged, car in cases:
         phase2, index = flagged & CARSEL_DT_PHASE2, flagged & ~CARSEL_DT_PHASE2    # request 118
@@ -2708,13 +2715,43 @@ def check_carsel_load(out, banks):
         rv = s32(lm.run('portCarSelLoad', (0, 0x20, CARSEL_DMD_AT, len(dmd), CARSEL_TMS_AT, 15)))
         if rv != -4 or child(0x20) != blank:
             bad.append('a cut TMS: returned %d, child 0x20 %08X' % (rv, child(0x20)))
+        # request 130: Dark Tooth's files padded past the slot's copy: copied, TM2_CARSEL_LOAD_LARGE (-6); in place,
+        # relocated where they are, the head node at the slot's start; a misaligned buffer -3
+        dmd, tms = files['BB']
+        big = dmd + bytes(CARSEL_LOAD_BYTES - 0x3C0 + 0x10000 - len(dmd))
+        m.fill(CARSEL_DMD_AT, big)
+        m.fill(CARSEL_TMS_AT, tms)
+        before = child(0x21)            # slot 3's model (set above): a failed load in slot 1 leaves it
+        rv = s32(lm.run('portCarSelLoad', (1, 0x21, CARSEL_DMD_AT, len(big), CARSEL_TMS_AT, len(tms))))
+        if rv != -6 or child(0x21) != before or slot_index(1) != -1:
+            bad.append('a DMD past the slot, copied: returned %d (want -6), child 0x21 %08X (was %08X)' % (
+                rv, child(0x21), before))
+        rv = s32(lm.run('portCarSelLoadInPlace', (1, 0x21, CARSEL_DMD_AT + 2, len(big), CARSEL_TMS_AT, len(tms))))
+        if rv != -3:
+            bad.append('a misaligned in-place DMD: returned %d (want -3)' % rv)
+        rv = s32(lm.run('portCarSelLoadInPlace', (1, 0x21, CARSEL_DMD_AT, len(big), CARSEL_TMS_AT, len(tms))))
+        L = loads_at + CARSEL_LOAD_BYTES
+        nroot = struct.unpack_from('<I', dmd, 0x18)[0]
+        roots = [struct.unpack_from('<I', dmd, 0x1C + 4 * i)[0] - 0x80019C40 for i in range(nroot)]
+        cars = [o for o in roots if struct.unpack_from('<H', dmd, o + 2)[0] == 0xF0]
+        heads = [o for o in roots if struct.unpack_from('<H', dmd, o + 2)[0] == CARSEL_HEAD_ID]
+        off = L + 0x3C0
+        got = (rv, child(0x21), m.rd(L + 0x390 + 24, 4), m.rd(L + 0x390 + 28, 4), m.rd(off, 1), m.rd(off + 40, 4),
+               s32(m.rd(off + 32, 4)))
+        want = (1, L + 0x390, CARSEL_DMD_AT + cars[0], off, 5, CARSEL_DMD_AT + heads[0], CARSEL_HEAD_Z)
+        meshes = list(carsel_meshes(m, [CARSEL_DMD_AT + o for o in roots]))
+        if got != want or not meshes or any(m.rd(n + 1, 1) != 0xB1 for n in meshes):
+            bad.append('Dark Tooth in place, %d bytes: %s (want %s), %d meshes' % (len(big), got, want, len(meshes)))
+        else:
+            in_place = len(big)
     if textured < 100:
         bad.append('only %d textured primitives checked' % textured)
     if dt_heads != sum(1 for c in cases if c[2] == 'BB'):
         bad.append("Dark Tooth's head placed in %d of the BB loads" % dt_heads)
     print('10. car select models (requests 71, 74): %d loads (%s), %d textured primitives remapped through the slot '
-          "tables, Dark Tooth's head on his truck %d -> %s" % (len(cases), 'banked' if banks else 'free block',
-                                                                textured, dt_heads, 'ok' if not bad else 'FAIL'))
+          "tables, Dark Tooth's head on his truck %d%s -> %s" % (
+              len(cases), 'banked' if banks else 'free block', textured, dt_heads,
+              '; request 130: %d bytes in place, -6 copied' % in_place if in_place else '', 'ok' if not bad else 'FAIL'))
     for b in bad[:12]:
         print('     ' + b)
     return bad
@@ -3072,6 +3109,56 @@ def hidden_burb(lm, m, ha, level):
     return bad
 
 
+# request 129 (HIDDEN_AREAS.md 18): SWAMP's five show zones (zone, its cell) and the hide zone (zone, the edge skirt)
+SWAMP_CELLS = ((0x8002F23C, 0x8002F104), (0x8003B2EC, 0x8003B280), (0x80042568, 0x800424FC),
+               (0x80045974, 0x800458C8), (0x8005D854, 0x8005D7EC))
+SWAMP_SKIRT = (0x8002AD54, 0x8002ACD8)
+SWAMP_ROOT = 0x800670A4
+
+
+def hidden_swamp(lm, m, ha, level):
+    """Check 12's Suicide Swamp part (request 129, HIDDEN_AREAS.md 18): retail's walk of the level root reaches no
+    cell with the eye out of every zone (nor the skirt, which lies in cell 8002F104), and every cell but not the skirt
+    with it in all of them; with bit 6 Begin
+    returns 6 and names the place, and the walk with the eye in or out, near and far, reaches every cell and the
+    skirt; End gives the file back; with a zone changed nothing is patched."""
+    cells = {c for z, c in SWAMP_CELLS}
+    bad = []
+    for eye_in in (False, True):
+        seen = set()
+        hidden_walk(m, [SWAMP_ROOT], 300 * 300, eye_in, seen)
+        if (cells <= seen) != eye_in or (not eye_in and cells & seen) or SWAMP_SKIRT[1] in seen:
+            bad.append('SWAMP: the retail walk (eye %s) is not what HIDDEN_AREAS.md 18 says' % ('in' if eye_in else
+                                                                                              'out'))
+    before = level()
+    rv = s32(lm.run('portHiddenAreasBegin', (3,)))
+    if rv != 6 or m.rd(ha, 4) != 5 or m.rd(ha + 8 + 12, 4) != 6:
+        bad.append('SWAMP: Begin returned %d, place %d, drawn[3] %d (want 6, 5, 6)' % (rv, m.rd(ha, 4),
+                                                                                     m.rd(ha + 20, 4)))
+    skirt = 0
+    for d in (50, 300, 2000, 20000):
+        for eye_in in (False, True):
+            seen = set()
+            meshes = hidden_walk(m, [SWAMP_ROOT], d * d, eye_in, seen)
+            skirt += len(meshes & {0x8002A940, 0x8002AB1C})
+            if not cells <= seen or SWAMP_SKIRT[1] not in seen:
+                bad.append('SWAMP at %d (eye %s the zones): cells %d of 5, skirt %s' % (
+                    d, 'in' if eye_in else 'out', len(cells & seen), SWAMP_SKIRT[1] in seen))
+    if skirt != 6:                      # 8002AB1C at 50 and 300, 8002A940 at 300 (its band 200..500), both eyes
+        bad.append("SWAMP: the skirt's meshes walked %d times (want 6)" % skirt)
+    lm.run('portHiddenAreasEnd')
+    if level() != before or m.rd(ha + 4, 4) != 0:
+        bad.append('SWAMP: the level differs from the file after End')
+    for z in (SWAMP_CELLS[2][0], SWAMP_SKIRT[0]):
+        m.wr(z, 1, 2)
+        rv = s32(lm.run('portHiddenAreasBegin', (3,)))
+        lm.run('portHiddenAreasEnd')
+        m.wr(z, 1, 11)
+        if rv != 0 or level() != before:
+            bad.append('SWAMP: with zone %08X changed Begin returned %d (want 0)' % (z, rv))
+    return bad
+
+
 def check_hidden_areas(out):
     """Check 12 (request 72): portHiddenAreasBegin / End in LinkMips on the disc's two Paris files and ISLANDS."""
     from check_rollback import Image
@@ -3115,7 +3202,7 @@ def check_hidden_areas(out):
                 quads.append(vs)
                 prim += m.rd(prim + 2, 1) * 4
         return quads
-    for name in ('PARIS', 'PARIS2', 'ISLANDS', 'HKONG', 'BURB'):
+    for name in ('PARIS', 'PARIS2', 'ISLANDS', 'HKONG', 'BURB', 'SWAMP'):
         dmd = Dmd(name, disc.get('/DMD/%s.DMD' % name))
         lm = LinkMips(img, {})
         m = lm.m
@@ -3136,6 +3223,9 @@ def check_hidden_areas(out):
             continue
         if name == 'BURB':              # request 119: the suburb and the ring
             bad += hidden_burb(lm, m, ha, level)
+            continue
+        if name == 'SWAMP':             # request 129: the cells and the edge skirt
+            bad += hidden_swamp(lm, m, ha, level)
             continue
         c = HIDDEN_CHURCH.get(name)
         if c is None:                   # another level: nothing listed
@@ -3260,7 +3350,8 @@ def check_hidden_areas(out):
     print('12. hidden areas (request 72): Paris\'s church in PARIS and PARIS2 drawn from anywhere (inside, doorway, '
           'door) and put back; the bit clear and ISLANDS untouched; request 75: the roof behind the towers; '
           'request 78: the nave\'s top at the roof with the eye above it; requests 97 / 104: Hong Kong\'s temple and '
-          'subway; request 119: Cyburbia\'s suburb and ring both drawn -> %s' % ('ok' if not bad else 'FAIL'))
+          'subway; request 119: Cyburbia\'s suburb and ring both drawn; request 129: Suicide Swamp\'s five cells and '
+          'its edge skirt -> %s' % ('ok' if not bad else 'FAIL'))
     for b in bad[:12]:
         print('     ' + b)
     return bad

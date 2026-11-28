@@ -147,7 +147,7 @@ eye above the roof instead; section 9):
 | ROOF / ROOF2 (New York) | 33 / 32 hide, 3 show, 13 / 10 swaps | building blocks as **a one-mesh shell outside / the real block inside its region** (`80030DF8` 45 vs 139 polygons, `8003B130` 104 vs 595, `8004FA88` 94 vs 1,807, `80069508` 71 vs 2,183, `800765BC` 43 vs 1,003, `8006F7C0`, `80071FF8`, `800754F0`, `80076484`, ...); facades / walls hidden while the eye is in a box beside them (the 33 hides, 6-184 polygons each); and **a rooftop interior** at x 4,000..9,080, y -4,000..1,080, z 6,200..7,400: swap `8004FA10` (outside 452 polygons, inside 1,355), shows `80047998` (387), `8004F94C` (859), `8004FC8C` (4), and hide `8007C014` (the street plane, 128 polygons, gone while inside) | **the rooftop interior: yes** (GUESS: rooms entered from the roofs; openings not checked); **the shells: the real blocks hold interiors too** (below), so `in` (the real block from anywhere, the shell dropped) is a candidate, an expensive one |
 | HKONG (Hong Kong) | 3 show, 9 swaps | two whole-arena swaps (`80070864`: the subway, eye at z -160..400, 447 vs 62 meshes; `80065664`: the temple room,
 the eye in it walks the inside only, 327 vs 136: section 14); four buildings as a 12-polygon box outside / 291 polygons inside their region (`80038B94`, `80038CE0`, `80049F64`, `8004A000`); **portal cards** `80063FB4`, `80064524`, `80064B40`: outside, a 4-polygon picture across a passage mouth (x or y = +-3,481), inside, the 53-58 polygons beyond; the centre's 73-polygon structure shown only from the three passages (`80048CE0`, `80048D68`, `80048DF0`) | **the passages behind the cards: yes** (retail already uses portal impostors); the arena swaps: no |
-| SWAMP | 5 show, 1 hide | cells: big parts of the arena (55-216 meshes, 198-2,265 polygons, e.g. `8005D854`, `8003B2EC`) drawn only while the eye is in the columns of space that can see them; `8002AD54` hides 16 polygons | not interiors (GUESS: visibility cells); safe to draw always with a depth buffer, at a cost |
+| SWAMP | 5 show, 1 hide | cells: big parts of the arena (55-216 meshes, 198-2,265 polygons, e.g. `8005D854`, `8003B2EC`) drawn only while the eye is in the columns of space that can see them; `8002AD54` hides 16 polygons (the ground's edge skirt, section 18) | not interiors (visibility cells, CONFIRMED by request 129); all drawn with bit 6 (section 18) |
 | BURB (Cyburbia) | 1 swap | `8008B580`: the suburb (in its region) or the ring highway around it (out), two areas that share no surface (request 119 corrected this: not two versions; section 17) | yes, request 119 |
 | SROOF (Roof Tops) | 7 show, 1 hide, 9 swaps | **an upper hall** at x 5,120..12,400, y 3,600..6,800, z 7,400..8,000 (the second region a corridor): swap `8007ED00` (outside 4,863 polygons, inside 782) + hide `8007EC3C` (120 polygons gone while inside) + 8 swaps of 12 / 10 vs 58 polygons at z 8,000..9,200 (its roof parts, GUESS); walls drawn only from one side (`8002DE34`, `8002E314`, `800392B4`, `800396F8`, 18-21 polygons; `800536C4`, `80054A10`, `8005609C` on the arena's edges, 93-109) | **the hall: yes** (GUESS); the walls: safe to draw always |
 | DISH (Moscow), DEN (Holland) | 0 | | |
@@ -1281,3 +1281,89 @@ view:
   11,520..17,280) lie wholly in the ring: from them only the suburb beyond the ring's walls was missing, which the
   same patch fixes.
 
+## 18. Request 129 (2026-11-27 playtest): Suicide Swamp, parts that pop in (built; `portVisual` bit 6, `TM2_PORT_HIDDEN_AREAS`)
+
+Asked from a player's report: driving Swamp, parts of the arena only appear once the eye is in the right column of
+space. Section 3's reading (visibility cells, not interiors) holds; this section adds what each zone holds and how
+bit 6 now draws them all.
+
+**The zones (CONFIRMED, `SWAMP.DMD`, the level model root `800670A4`).** Five "show" zones and one "hide" zone, all
+flag 0:
+
+| Zone | Its child (walked with the eye in a region) | Outside child | Regions (columns, position units) |
+|---|---|---|---|
+| `8002F23C` | `8002F104`, 97 meshes, 1,074 primitives (every record) | empty group `80027328` | 4: around x -5,100..5,400, y -5,000..900, z under 1,600 |
+| `8003B2EC` | `8003B280`, 99 / 1,417 (holds the roofed shelter `8003A680`) | empty `8002F25C` | 1: x -5,800..1,700, y -4,600..2,800, z under 1,600 |
+| `80042568` | `800424FC`, 49 / 702 | empty `8003B300` | 1: x -5,200..-2,400, y 2,000..6,000, z under 3,200 |
+| `80045974` | `800458C8`, 73 / 834 | empty `80042680` | 2: x -2,100..9,300, y -4,800..1,100, z under 3,200 |
+| `8005D854` | `8005D7EC`, 212 / 3,609 | empty `8004598C` | 1: x -3,500..10,500, y -4,800..-1,400, z under 5,760 |
+| `8002AD54` (hide, in `8002F104`) | empty `8002ACF8` | `8002ACD8`: 2 meshes, 16 quads and 5 beams | 1: x 100..3,000, y -4,500..-1,600, z under 3,200 |
+
+- **The cells** (the five children) are the arena's big parts. Outside its columns a cell draws nothing, so it popped
+  in when the eye crossed into one. The regions overlap (from most of the arena the eye is in two or three), and the
+  arena's drivable ground lies in their union.
+- **The hide zone's 16 polygons are real geometry (CONFIRMED):** a stretch of the ground's edge skirt, walls from
+  z 0 down to -400 under the ground's edge, with ground on one side only. They are the same kind of skirt that every
+  cell draws always (`80029E50`, `8002A14C`, `8002A748`, `800369B0`, `8003F204`, ...). Retail leaves this stretch out
+  while the eye is near it, LIKELY because the PS1's one-slot-per-polygon sort drew the walls below the ground over
+  it from close by (section 4). They stand in for nothing: no polygon of the level is coplanar with them. Their own
+  bands (`8002AB04` 200..500 world units, `8002ACC0` 0..600) are kept. Under the port's depth test the parts under
+  the ground stay hidden.
+- **The shelter's short bands** (`8003A680`, section 3) need nothing more: its last record is one the port's far LOD
+  extends at Farthest (`FAR_LOD.md`), and it lies in cell `8003B2EC`, which is now walked from anywhere.
+
+**The patch (bit 6, `portHiddenSwamp`, after Cyburbia's; place `TM2_VIS_HIDDEN_SWAMP` 5).**
+- **Checked first:** each zone (opcode 11, flag 0, its two children, its first region word), its children are groups,
+  and the outside groups (the hide zone's inside one) are empty. Another file patches nothing.
+- **Then 6 words:** each show zone's outside word points to its cell, and the hide zone's inside word to the skirt.
+  So every cell and the whole skirt are walked wherever the eye is. `portHiddenAreasEnd` puts them back.
+- **Drawing only:** the hit volumes and the hit walk are untouched (they read the file after End).
+
+**Drawn twice?** No mesh is reached twice. The cells' grounds do overlap a little, and that is retail's own:
+- **Where:** each cell's ground runs a little into its neighbour's, coplanar. That gives 993 overlapping pairs of
+  polygons between cells (or a cell and the always-drawn parts). Most are not the same texture.
+- **Retail draws them too:** every pair's two cells are drawn together where their regions overlap, and 477 of the
+  993 pairs are drawn together by retail somewhere at its own bands (a 200-unit grid of eyes).
+- **With the bit:** they are drawn together from more places. The port's depth rule for coplanar layers (section 11.2:
+  a later polygon passes at `new <= stored + e`, in OT order) settles them as at those overlaps today. If seams
+  flicker in the Swamp, that rule is the place to look; the same seams can already be seen today from the spots
+  where two cells' regions overlap.
+
+**Cost (a model of the walk: the level root, before the frustum).** Primitives (beams and sprites included) / meshes,
+retail -> patched, at retail's bands and at Farthest (the far LOD's extended records unbounded):
+
+| Eye (position units, z the ground + 120) | Retail bands | Farthest |
+|---|---|---|
+| (3,500, -4,000), the worst at Farthest | 984 / 94 -> 1,014 / 110 | 1,187 / 134 -> 1,493 / 184 |
+| (-4,000, 1,500), the worst at retail's bands | 818 / 81 -> 1,058 / 114 | 857 / 89 -> 1,293 / 155 |
+| over the whole arena (a 500-unit grid) | a median of +110 primitives, 120 meshes at most | a median of +501, 186 meshes at most |
+
+- **The 2,048-mesh cap:** at most 186 meshes, far under it.
+- **The packets:** at most about 1,500 primitives, under 80 KB even all as GT4. The 390,320-byte cap is not at risk.
+- **To watch:** `portRenderStats`. Swamp stays one of the lightest arenas.
+
+**Test spots (position units, z up; "look" is the point to face, and atan2 is its angle from +x toward +y).** The
+cell named was not drawn from the spot before and is now:
+
+| Cell that popped in | Eye | Look toward (atan2) | Retail -> patched at Farthest |
+|---|---|---|---|
+| `8002F23C` | (2,400, -3,500, 120) | (0, -1,555) (141°) | 865 -> 1,312 primitives |
+| `8003B2EC` (the shelter's cell) | (-3,800, 2,900, 157) | (-4,029, 457) (-95°) | 625 -> 1,142 |
+| `80042568` | (-3,600, 1,900, 138) | (-3,801, 4,353) (95°) | 694 -> 1,148 |
+| `80045974` | (-800, -1,700, 120) | (1,568, -3,283) (-34°) | 689 -> 1,025 |
+| `8005D854` | (-500, -1,250, 120) | (5,502, -3,812) (-23°) | 719 -> 1,023 |
+
+- Each spot lies just outside the named cell's columns (within 300 units of them for the first four), on the ground
+  and inside other cells' regions. With bit 6 clear, driving toward the look point shows the cell appear at the edge
+  of its column; with the bit it is there from the start.
+
+**Cyburbia (the same report).** Nothing else of it is switched by the eye: its one zone is request 119's, and it has
+no short band under other geometry (section 3). With bit 6 on, no Cyburbia cell should pop in. The report's "no
+clouds and sky" was found port-side (the Vulkan renderer only).
+
+**Checked:** `tools/check_custom.py` check 12's Swamp part.
+- **Retail's walk:** with the eye out of every zone no cell is reached; with the eye in all of them every cell is
+  reached but not the skirt.
+- **With the bit:** Begin returns 6 and place 5. The walk reaches every cell and the skirt, eye in or out, at 50, 300,
+  2,000 and 20,000 world units (the skirt's two meshes at their own bands).
+- **End** gives the file back. With a cell's zone or the hide zone changed, nothing is patched.
