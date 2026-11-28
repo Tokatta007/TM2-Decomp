@@ -12911,8 +12911,12 @@ void PORT_TEXT portCarSelUnload(int k)
  * runs (after portCarSelExtend / portAiSelExtend). `dmd` / `tms` are the car's PSXD and PSXT files in guest RAM (a
  * mod's carselect.dmd / .tms or car.dmd / .tms, Dark Tooth's BB.DMD / BB.TMS, a retail car's); `dmd` may be the
  * slot's own buffer (portCarSelLoads[k].dmd, nothing copied), the TMS is read in place. Returns 1, or a
- * TM2_CARSEL_LOAD_* error (slot k is then empty and the child the empty node). */
-int PORT_TEXT portCarSelLoad(int k, int index, const void *dmd, int dmd_len, const void *tms, int tms_len)
+ * TM2_CARSEL_LOAD_* error (slot k is then empty and the child the empty node).
+ * Request 130: `in_place` (portCarSelLoadInPlace) relocates and draws the DMD where it is, in the port's buffer, of
+ * any size (the slot's 0x20000 bytes then hold only request 74's head node); else a DMD larger than the slot is
+ * TM2_CARSEL_LOAD_LARGE. */
+static int PORT_TEXT portCarSelInstall(int k, int index, const void *dmd, int dmd_len, const void *tms, int tms_len,
+                                       int in_place)
 {
     struct PortCarSelArea area, *a = &area;
     struct TM2PortCarSelLoad *l;
@@ -12960,10 +12964,12 @@ int PORT_TEXT portCarSelLoad(int k, int index, const void *dmd, int dmd_len, con
         return TM2_CARSEL_LOAD_INDEX;
     if (l->bank == 0 && portCarSel.retail != TM2_PORT_CARSEL_RETAIL)
         return TM2_CARSEL_LOAD_VRAM;    /* the AI select's free VRAM is not mapped: banks only */
-    buf = l->dmd;
-    if (dmd_len < 0x20 || dmd_len > (int)sizeof(l->dmd) || ((const unsigned int *)dmd)[0] != 0x50535844
+    buf = in_place ? (unsigned char *)dmd : l->dmd;
+    if (dmd_len < 0x20 || ((unsigned int)dmd & 3) || ((const unsigned int *)dmd)[0] != 0x50535844
         || ((const unsigned int *)dmd)[1] != 0x43)
         return TM2_CARSEL_LOAD_DMD;
+    if (buf == l->dmd && dmd_len > (int)sizeof(l->dmd))
+        return TM2_CARSEL_LOAD_LARGE;
     DrawSync(0);                        /* the frame before may still texture from the slot */
     if ((const unsigned char *)dmd != buf)
         for (i = 0; i < dmd_len; i++)
@@ -13006,8 +13012,8 @@ int PORT_TEXT portCarSelLoad(int k, int index, const void *dmd, int dmd_len, con
        ratan2(head - target)), a truck's front its +y. Request 74's offset node had no turn: the face looked back and
        the head's bulk (its sphere 133 along its +y) hung over the truck's front. */
     if (head != 0 && l->roots == 1 && *(unsigned short *)(roots[0] + 2) == 0xF0
-        && ((dmd_len + 3) & ~3) + 44 <= (int)sizeof(l->dmd)) {
-        node = buf + ((dmd_len + 3) & ~3);
+        && (buf != l->dmd || ((dmd_len + 3) & ~3) + 44 <= (int)sizeof(l->dmd))) {
+        node = buf != l->dmd ? l->dmd : buf + ((dmd_len + 3) & ~3);   /* request 130: in place, the slot's start */
         for (i = 0; i < 44; i++)
             node[i] = 0;
         node[0] = 5;
@@ -13056,6 +13062,19 @@ int PORT_TEXT portCarSelLoad(int k, int index, const void *dmd, int dmd_len, con
     l->index = index;
     l->model = model;
     return 1;
+}
+
+int PORT_TEXT portCarSelLoad(int k, int index, const void *dmd, int dmd_len, const void *tms, int tms_len)
+{
+    return portCarSelInstall(k, index, dmd, dmd_len, tms, tms_len, 0);
+}
+
+/* Request 130: as portCarSelLoad, the DMD relocated and drawn in the port's own buffer (no copy, no size limit):
+ * `dmd` 4-aligned in guest RAM, holding the file as read; the port keeps it, unchanged, until slot k is loaded again
+ * or unloaded (portCarSelUnload), and rewrites it only after that (the C waits for the GPU, DrawSync, at each load). */
+int PORT_TEXT portCarSelLoadInPlace(int k, int index, void *dmd, int dmd_len, const void *tms, int tms_len)
+{
+    return portCarSelInstall(k, index, dmd, dmd_len, tms, tms_len, 1);
 }
 #undef CSL
 
@@ -13763,6 +13782,51 @@ static int PORT_TEXT portHiddenBurb(void)
     return 1;
 }
 
+/* Suicide Swamp (request 129, HIDDEN_AREAS.md 18; SWAMP.DMD, built for 0x80019C40). The arena is split into
+ * visibility cells: five "show" zones whose child (55-216 meshes) is walked only while the eye is in one of the zone's
+ * regions (columns of space, z under 1,600..5,760) and whose outside child is an empty group, so a cell appeared when
+ * the eye crossed into one of its columns. One "hide" zone (8002AD54, inside cell 8002F23C) leaves out a stretch of
+ * the ground's edge skirt (2 meshes, 16 polygons at the finest band: walls from z 0 down to -400 under the edge, the
+ * kind every cell draws always) while the eye is near it: real geometry, kept out only for the PS1's sorting. Every
+ * node is checked first (another file: nothing patched); then each show zone's outside word points to its cell and
+ * the hide zone's inside word to the skirt, so every cell and the skirt are walked wherever the eye is. The bands are
+ * untouched; the hit walk sees the file (End puts the words back). 6 words. Returns 1 when it patched. */
+static const unsigned int portHiddenSwampZones[] __attribute__((section(".port_rodata"))) = {
+    /* zone, its outside child, its inside child, its first region; the last is the hide zone */
+    0x8002F23C, 0x80027328, 0x8002F104, 0x8002F12C,
+    0x8003B2EC, 0x8002F25C, 0x8003B280, 0x8003B2A8,
+    0x80042568, 0x8003B300, 0x800424FC, 0x80042524,
+    0x80045974, 0x80042680, 0x800458C8, 0x800458EC,
+    0x8005D854, 0x8004598C, 0x8005D7EC, 0x8005D810,
+    0x8002AD54, 0x8002ACD8, 0x8002ACF8, 0x8002AD10,
+};
+#define PORT_SWAMP_ZONES 6
+static int PORT_TEXT portHiddenSwamp(void)
+{
+    struct TM2PortHiddenAreas *h = &portHiddenAreas;
+    const unsigned int *z;
+    int i;
+
+    for (i = 0; i < PORT_SWAMP_ZONES; i++) {
+        z = portHiddenSwampZones + 4 * i;
+        if (!portHiddenZoneIs(z[0], z[1], z[2], 0) || HIDDEN_W(z[0], 16) != z[3] ||
+            ((unsigned char *)z[1])[0] != 1 || ((unsigned char *)z[2])[0] != 1)
+            return 0;
+        /* the outside groups are empty; the hide zone's inside one too */
+        if (((unsigned char *)z[i == PORT_SWAMP_ZONES - 1 ? 2 : 1])[20] != 0)
+            return 0;
+    }
+    if (h->count + PORT_SWAMP_ZONES > TM2_VIS_HIDDEN_PATCHES)
+        return 0;
+    for (i = 0; i < PORT_SWAMP_ZONES - 1; i++) {
+        z = portHiddenSwampZones + 4 * i;
+        portHiddenPatch((unsigned int *)(z[0] + 8), z[2]);      /* outside: the cell too */
+    }
+    z = portHiddenSwampZones + 4 * i;
+    portHiddenPatch((unsigned int *)(z[0] + 12), z[1]);         /* inside: the skirt too */
+    return 1;
+}
+
 /* Request 104 (HIDDEN_AREAS.md 15): node `node` a group (opcode 1) whose child `k` is `child`. */
 static int PORT_TEXT portHiddenKidIs(unsigned int node, int k, unsigned int child)
 {
@@ -13990,6 +14054,8 @@ int PORT_TEXT portHiddenAreasBegin(int view)
             portHiddenSubway();                 /* request 104 */
         } else if (portHiddenBurb())
             h->place = TM2_VIS_HIDDEN_BURB;     /* request 119 */
+        else if (portHiddenSwamp())
+            h->place = TM2_VIS_HIDDEN_SWAMP;    /* request 129 */
         /* request 78: the eye above the roof (viewGetEyeTrans is minus the eye's position): the nave's top at the
            roof's height for this walk, the roof's turn moved to keep it at z 832 */
         if (portHiddenRoof.built == 2 && -viewGetEyeTrans(view)[2] > TM2_VIS_HIDDEN_ROOF_Z &&

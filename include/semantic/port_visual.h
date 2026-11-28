@@ -179,6 +179,8 @@ typedef char tm2_port_steady_shadow_size[(sizeof(struct TM2PortSteadyShadow) == 
 #define TM2_VIS_HIDDEN_HKONG 3      /* place: Hong Kong's temple, HKONG.DMD (request 97, HIDDEN_AREAS.md 14) */
 #define TM2_VIS_HIDDEN_BURB 4       /* place: Cyburbia's suburb and ring highway, BURB.DMD (request 119,
                                        HIDDEN_AREAS.md 17) */
+#define TM2_VIS_HIDDEN_SWAMP 5      /* place: Suicide Swamp's visibility cells and edge skirt, SWAMP.DMD (request
+                                       129, HIDDEN_AREAS.md 18) */
 struct TM2PortHiddenAreas {
     int place;                                  /* +0x00 TM2_VIS_HIDDEN_*: what the latest walk found */
     int count;                                  /* +0x04 words patched now (0 outside a walk) */

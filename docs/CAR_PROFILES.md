@@ -169,6 +169,7 @@ reads only it and the slot tables, which are already state.
 
 ```c
 int  portCarSelLoad(int k, int index, const void *dmd, int dmd_len, const void *tms, int tms_len);
+int  portCarSelLoadInPlace(int k, int index, void *dmd, int dmd_len, const void *tms, int tms_len);   /* request 130 */
 void portCarSelUnload(int k);
 ```
 
@@ -183,7 +184,7 @@ void portCarSelUnload(int k);
   - `dmd` / `tms` are the car's files in guest RAM: the mod's `carselect.dmd` / `.tms` (MODDING.md 4.1), or its
     `car.dmd` / `car.tms`, Dark Tooth's `BB.DMD` / `BB.TMS`, or a retail car's files.
   - The DMD is copied into the slot (`portCarSelLoads[k].dmd`, 128 KB). The port may also write it there directly
-    and pass that address.
+    and pass that address. A larger DMD goes through `portCarSelLoadInPlace` (5.1, request 130).
   - The TMS is read in place: it can be a temporary buffer.
 - **Return value:** 1, or an error, after which slot k is empty and the child is the empty node. The errors:
 
@@ -191,13 +192,39 @@ void portCarSelUnload(int k);
   |---|---|---|
   | `TM2_CARSEL_LOAD_SLOT` | -1 | bad k |
   | `_INDEX` | -2 | not an extra child of this screen's carousel |
-  | `_DMD` | -3 | not PSXD version 0x43, larger than 128 KB, or no root |
+  | `_DMD` | -3 | not PSXD version 0x43, not 4-aligned, or no root (before request 130 also: larger than 128 KB) |
   | `_TMS` | -4 | not PSXT, cut short, more than 32 images, or a TIM that is not 4- or 8-bit with a CLUT or 15-bit without one |
   | `_VRAM` | -5 | the images do not fit |
+  | `_LARGE` | -6 | request 130: `portCarSelLoad` only, the DMD is larger than the slot's copy (128 KB): load it with `portCarSelLoadInPlace` |
 - **`portCarSelUnload(k)`** puts slot k's child back to the empty node, unless another slot's model was set there
   since.
 - **Fields the port can read:** `portCarSelLoads[k].index` is the child slot k's model is on (-1 none) and `.model`
   the node it set.
+
+### 5.1 Request 130: a model larger than 128 KB (`portCarSelLoadInPlace`)
+
+A modder's high-poly car is about 400 KB in all; its `carselect.dmd` failed (-3) and the base car showed.
+
+- **Built: the DMD read in place**, as the TMS already is. `portCarSelLoadInPlace` takes the same arguments as
+  `portCarSelLoad` and does the same, except that it relocates the DMD where it is, in the port's buffer, and draws
+  it from there. There is no size limit and nothing is copied.
+- **The buffer:**
+  - It is in guest RAM, 4-aligned, and holds the file exactly as read. The load rewrites its pointers (the
+    relocation), so read the file again before each load: a second load of the same bytes would relocate twice.
+  - Keep it unchanged until slot k is loaded again or unloaded (`portCarSelUnload(k)`); only then may it be reused.
+    Each load waits for the GPU (`DrawSync`) before it touches anything.
+  - The slot's own 128 KB then holds only Dark Tooth's head node (request 74), at its start.
+- **The `.port_bss` cost: none.** The slots stay 0x203C0 bytes each. The other way, slots of 0x80000, would have cost
+  4 x 0x60000 = 0x180000 bytes (1.5 MB) more and still had a limit.
+- **"Too large" is its own error now:** `portCarSelLoad` returns `TM2_CARSEL_LOAD_LARGE` (-6) for a DMD over 128 KB,
+  not -3, so the port can log why and retry in place.
+- **The TMS:** read in place as before; with texture banks each slot's images get its own whole bank (1024 x 480
+  pixels, CLUTs in rows 480..511), so a large model's textures are bounded by `_VRAM` (-5) and 32 images (`_TMS`),
+  not by its size.
+- **Online: nothing.** The car select's model is only drawn; no game state.
+- **Checked:** `tools/check_custom.py` check 10. Dark Tooth's files padded to 196,608 bytes return -6 when copied and
+  leave the other slots' children alone. Loaded in place they are relocated where they are, with his head node in
+  the slot and the group over the truck and the head. A misaligned buffer returns -3.
 
 **Split screen (the request's question): 4 slots, each its own.** `TM2_PORT_CARSEL_LOADS` = 4: one slot per player, so
 4 different mod cars can be drawn at once.

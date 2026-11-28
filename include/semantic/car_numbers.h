@@ -236,10 +236,13 @@ typedef char tm2_port_special_state_size[(sizeof(struct TM2PortSpecialState) == 
                                             his second phase, the head alone where it sits on the car in a match */
 #define TM2_CARSEL_LOAD_SLOT -1          /* portCarSelLoad: k is no slot (without texture banks only slot 0) */
 #define TM2_CARSEL_LOAD_INDEX -2         /*   `index` is not one of the extended carousel's extra children */
-#define TM2_CARSEL_LOAD_DMD -3           /*   the DMD is no PSXD image, is larger than the slot, or has no root */
+#define TM2_CARSEL_LOAD_DMD -3           /*   the DMD is no PSXD image, is not 4-aligned, or has no root */
 #define TM2_CARSEL_LOAD_TMS -4           /*   the TMS is no PSXT container, is cut short, or has too many images */
 #define TM2_CARSEL_LOAD_VRAM -5          /*   its images do not fit (without banks: the AI select, or more than
                                             car select's free block) */
+#define TM2_CARSEL_LOAD_LARGE -6         /*   request 130: portCarSelLoad: the DMD is larger than the slot's copy
+                                            (TM2_PORT_CARSEL_DMD_BYTES; before request 130 this was -3); the port
+                                            can load it with portCarSelLoadInPlace instead */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -261,6 +264,10 @@ extern int  portCarSelLoad(int k, int index, const void *dmd, int dmd_len, const
                                                 /* the port's API (request 71): install a car's DMD and TMS in load
                                                     slot k and set it as carousel child `index` (slot k's previous
                                                     model freed); 1, or TM2_CARSEL_LOAD_* < 0 (nothing set) */
+extern int  portCarSelLoadInPlace(int k, int index, void *dmd, int dmd_len, const void *tms, int tms_len);
+                                                /* request 130: as portCarSelLoad, the DMD relocated and drawn in the
+                                                    port's buffer `dmd` (any size, 4-aligned; kept unchanged until slot
+                                                    k is loaded again or unloaded) */
 extern void portCarSelUnload(int k);            /* the port's API: slot k's child back to the empty node */
 #ifdef TM2_PORT_CAR_NUMBERS
 extern void portAiSelExtend(void *carousel, void *label_a, void *label_b);   /* screenAiSelect, after AICARSEL is
